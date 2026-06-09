@@ -10,7 +10,7 @@
             overflow: hidden; 
             font-family: Arial, sans-serif; 
             user-select: none; 
-            background-color: #000;
+            background-color: #87ceeb;
         }
         #score { 
             position: absolute; 
@@ -23,57 +23,72 @@
             text-shadow: 2px 2px 4px #000; 
         }
         
-        /* واجهة أزرار التحكم */
-        #controls { 
-            position: absolute; 
-            bottom: 30px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            display: flex; 
-            gap: 40px; 
-            z-index: 10; 
+        /* واجهة التحكم */
+        #ui-container {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* أزرار الاتجاهات (يسار الشاشة) */
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+        }
+        .dbtn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid #333;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+        .dbtn:active { background: #fff; }
+
+        /* أزرار السرعة (يمين الشاشة) */
+        .speed-controls {
+            display: flex;
+            gap: 20px;
         }
         .btn { 
             width: 80px; 
             height: 80px; 
             border-radius: 50%; 
-            background: rgba(255, 255, 255, 0.7); 
             border: 3px solid #333; 
             font-size: 16px; 
             font-weight: bold; 
-            color: #333; 
             cursor: pointer; 
-            outline: none;
+            color: white;
         }
-        /* تم تصحيح الكلاس هنا ليعمل تأثير الضغط بشكل صحيح */
-        .btn:active { 
-            background: #fff; 
-        } 
-        #btn-speed { 
-            background: rgba(46, 204, 113, 0.8); 
-            color: white; 
-        }
-        #btn-brake { 
-            background: rgba(231, 76, 60, 0.8); 
-            color: white; 
-        }
+        #btn-speed { background: rgba(46, 204, 113, 0.8); }
+        #btn-brake { background: rgba(231, 76, 60, 0.8); }
+        .btn:active { opacity: 0.9; transform: scale(0.95); }
 
-        /* زر بدء اللعب وتفعيل الحساسات */
-        #permission-btn { 
+        /* زر بدء اللعب */
+        #start-btn { 
             position: absolute; 
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
             padding: 15px 30px; 
-            font-size: 18px; 
+            font-size: 20px; 
             font-weight: bold; 
-            background: #007bff; 
+            background: #2ecc71; 
             color: white; 
             border: none; 
             border-radius: 8px; 
             z-index: 20; 
             cursor: pointer; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -82,164 +97,226 @@
 <body>
 
     <div id="score">النقاط: <span id="points">0</span></div>
-    <button id="permission-btn" onclick="requestTiltPermission()">اضغط لبدء اللعب وتفعيل الحساسات</button>
+    <button id="start-btn" onclick="startGame()">إقلاع وبدء اللعب</button>
 
-    <div id="controls">
-        <button class="btn" id="btn-speed">إقلاع / تسريع</button>
-        <button class="btn" id="btn-brake">كبح / هبوط</button>
+    <div id="ui-container">
+        <div class="dpad">
+            <td></td>
+            <button class="dbtn" id="up">▲</button>
+            <td></td>
+            <button class="dbtn" id="left">◀</button>
+            <td></td>
+            <button class="dbtn" id="right">▶</button>
+            <td></td>
+            <button class="dbtn" id="down">▼</button>
+            <td></td>
+        </div>
+
+        <div class="speed-controls">
+            <button class="btn" id="btn-speed">تسريع</button>
+            <button class="btn" id="btn-brake">كبح</button>
+        </div>
     </div>
 
     <script>
-        // --- 1. تهيئة Pi Network SDK لتوفير الاتصال مع البيئة التجريبية ---
-        try {
-            Pi.init({ version: "2.0", sandbox: true });
-            console.log("Pi SDK Initialized successfully.");
-        } catch (error) {
-            console.error("Pi SDK failed to initialize:", error);
-        }
+        // تهيئة Pi SDK
+        try { Pi.init({ version: "2.0", sandbox: true }); } catch (e) {}
 
-        // --- 2. إعداد المشهد ثلاثي الأبعاد ---
+        // --- 1. إعداد المشهد ثلاثي الأبعاد ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); // لون السماء
+        scene.fog = new THREE.FogExp2(0x87ceeb, 0.015); // ضباب لإعطاء عمق للمدى
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // الإضاءة
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
-
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 20, 15);
+        dirLight.position.set(20, 40, 20);
         scene.add(dirLight);
 
-        // --- 3. صناعة عناصر اللعبة ---
-        // الطائرة (مخروط أحمر مؤقت للأمام)
-        const planeGeometry = new THREE.ConeGeometry(0.5, 2, 8);
-        planeGeometry.rotateX(Math.PI / 2);
-        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        const airplane = new THREE.Mesh(planeGeometry, planeMaterial);
-        airplane.position.set(0, 0, 0);
+        // --- 2. إنشاء مدرج الإقلاع والأرضية ---
+        // الأرضية الخضراء الممتدة
+        const floorGeo = new THREE.PlaneGeometry(1000, 1000);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2ecc71 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -2;
+        scene.add(floor);
+
+        // مدرج الإقلاع (Runway) الرمادي
+        const runwayGeo = new THREE.PlaneGeometry(20, 300);
+        const runwayMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const runway = new THREE.Mesh(runwayGeo, runwayMat);
+        runway.rotation.x = -Math.PI / 2;
+        runway.position.set(0, -1.99, -100); // ممتد للأمام
+        scene.add(runway);
+
+        // خطوط المدرج البيضاء
+        for (let i = 0; i > -300; i -= 20) {
+            const lineGeo = new THREE.PlaneGeometry(0.5, 5);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            line.rotation.x = -Math.PI / 2;
+            line.position.set(0, -1.98, i);
+            scene.add(line);
+        }
+
+        // --- 3. تصميم الطائرة المركب (جسم + أجنحة + ذيل) ---
+        const airplane = new THREE.Group();
+
+        // جسم الطائرة الرئيسي
+        const bodyGeo = new THREE.ConeGeometry(0.4, 2.5, 8);
+        bodyGeo.rotateX(Math.PI / 2);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd35400 }); // لون برتقالي غامق
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        airplane.add(bodyMesh);
+
+        // الأجنحة الرئيسية
+        const wingGeo = new THREE.BoxGeometry(4, 0.1, 0.6);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0xc0392b }); // أجنحة حمراء
+        const wingMesh = new THREE.Mesh(wingGeo, wingMat);
+        wingMesh.position.set(0, 0, -0.2);
+        airplane.add(wingMesh);
+
+        // الذيل الخلفي
+        const tailGeo = new THREE.BoxGeometry(0.1, 0.8, 0.4);
+        const tailMesh = new THREE.Mesh(tailGeo, wingMat);
+        tailMesh.position.set(0, 0.4, 1);
+        airplane.add(tailMesh);
+
+        airplane.position.set(0, -1.2, 0); // تبدأ واقفة على المدرج
         scene.add(airplane);
 
-        // الحلقة (هدف المرور)
-        const ringGeometry = new THREE.TorusGeometry(1.5, 0.15, 8, 24);
-        const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
-        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-        ring.position.set(0, 0, -30);
-        scene.add(ring);
+        // مجموعات الحلقات (أهداف المرور) في السماء
+        const rings = [];
+        function createRing(zPos) {
+            const ringGeometry = new THREE.TorusGeometry(1.8, 0.2, 8, 24);
+            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00, metalness: 0.5 });
+            const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+            // توزيع الحلقات بارتفاعات مناسبة في السماء فوق المدرج
+            ringMesh.position.set((Math.random() - 0.5) * 20, Math.random() * 15 + 2, zPos);
+            scene.add(ringMesh);
+            rings.push(ringMesh);
+        }
         
-        camera.position.set(0, 2, 5);
+        // توليد أول 5 حلقات في طريق الطائرة
+        for(let i = 1; i <= 5; i++) {
+            createRing(-50 * i);
+        }
 
-        // --- 4. متغيرات التحكم واللعبة ---
-        let speed = 0; // السرعة الابتدائية صفر
-        let maxSpeed = 0.4;
+        // --- 4. متغيرات التحكم والحركة ---
+        let speed = 0;
+        let maxSpeed = 0.6;
         let points = 0;
-        let tiltX = 0; // الدوران يميناً ويساراً
-        let tiltY = 0; // الصعود والنزول
+        let isPlaying = false;
 
-        // أزرار السرعة
-        const speedBtn = document.getElementById('btn-speed');
-        const brakeBtn = document.getElementById('btn-brake');
+        // متغيرات التوجيه المدخلة من الأزرار
+        let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
+        let accelerating = false, braking = false;
 
-        let accelerating = false;
-        let braking = false;
+        // ربط أحداث الأزرار (توجيه وحركة)
+        const setupControl = (id, pressCallback, releaseCallback) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); pressCallback(); });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); releaseCallback(); });
+            el.addEventListener('mousedown', pressCallback);
+            el.addEventListener('mouseup', releaseCallback);
+        };
 
-        // أحداث اللمس للهواتف
-        speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); accelerating = true; });
-        speedBtn.addEventListener('touchend', (e) => { e.preventDefault(); accelerating = false; });
-        brakeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); braking = true; });
-        brakeBtn.addEventListener('touchend', (e) => { e.preventDefault(); braking = false; });
+        setupControl('left', () => moveLeft = true, () => moveLeft = false);
+        setupControl('right', () => moveRight = true, () => moveRight = false);
+        setupControl('up', () => moveUp = true, () => moveUp = false);
+        setupControl('down', () => moveDown = true, () => moveDown = false);
+        setupControl('btn-speed', () => accelerating = true, () => accelerating = false);
+        setupControl('btn-brake', () => braking = true, () => braking = false);
 
-        // أحداث الماوس للكمبيوتر للتجربة السريعة
-        speedBtn.addEventListener('mousedown', () => accelerating = true);
-        speedBtn.addEventListener('mouseup', () => accelerating = false);
-        brakeBtn.addEventListener('mousedown', () => braking = true);
-        brakeBtn.addEventListener('mouseup', () => braking = false);
-
-        // --- 5. نظام الإمالة (Gyroscope) الحساسات ---
-        function requestTiltPermission() {
-            document.getElementById('permission-btn').style.display = 'none';
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // هواتف الآيفون تطلب إذن صريح
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                        }
-                    }).catch(console.error);
-            } else {
-                // هواتف أندرويد وداخل متصفح Pi تعمل مباشرة
-                window.addEventListener('deviceorientation', handleOrientation);
-            }
+        function startGame() {
+            document.getElementById('start-btn').style.display = 'none';
+            isPlaying = true;
         }
 
-        function handleOrientation(event) {
-            // gamma: الإمالة يميناً ويساراً (-90 إلى 90)
-            tiltX = event.gamma * 0.01; 
-            // beta: الإمالة للأمام والخلف (-180 إلى 180) وطرح 45 لزاوية مسك مريحة
-            tiltY = (event.beta - 45) * 0.01; 
-        }
-
-        // --- 6. حلقة تشغيل وتحديث اللعبة المستمر ---
+        // --- 5. حلقة التحديث والمحرك الرئيسي للعبة ---
         function animate() {
             requestAnimationFrame(animate);
 
-            // التحكم بالسرعة (إقلاع وهبوط)
-            if (accelerating) speed = Math.min(speed + 0.005, maxSpeed);
-            if (braking) speed = Math.max(speed - 0.01, 0);
+            if (isPlaying) {
+                // نظام السرعة (الإقلاع)
+                if (accelerating) speed = Math.min(speed + 0.004, maxSpeed);
+                if (braking) speed = Math.max(speed - 0.008, 0);
 
-            // الطائرة تتحرك للأمام فقط إذا كانت هناك سرعة
-            airplane.position.z -= speed;
+                // تحريك الطائرة للأمام بشكل مستمر بناءً على السرعة الحالية
+                airplane.position.z -= speed;
 
-            // توجيه الطائرة بناءً على إمالة الهاتف (فقط إذا كانت الطائرة تحلق ولديها سرعة)
-            if (speed > 0.05) {
-                airplane.position.x += tiltX * (speed * 2);
-                airplane.position.y -= tiltY * (speed * 2); // الإمالة للأمام تهبط وللخلف تصعد
+                // التوجيه يميناً ويساراً ولأعلى ولأسفل (فقط إذا كانت الطائرة تتحرك)
+                if (speed > 0.02) {
+                    if (moveLeft) { 
+                        airplane.position.x -= 0.15; 
+                        airplane.rotation.z = Math.min(airplane.rotation.z + 0.05, 0.4); // ميلان الطائرة لليسار
+                    }
+                    if (moveRight) { 
+                        airplane.position.x += 0.15; 
+                        airplane.rotation.z = Math.max(airplane.rotation.z - 0.05, -0.4); // ميلان الطائرة لليمين
+                    }
+                    // إرجاع الطائرة لوضعها الأفقي عند ترك أزرار اليمين واليسار
+                    if (!moveLeft && !moveRight) airplane.rotation.z *= 0.9;
 
-                // محاذاة دوران جسم الطائرة مع الإمالة لشكل جمالي
-                airplane.rotation.z = -tiltX * 0.5;
-                airplane.rotation.x = -tiltY * 0.5;
-            }
+                    if (moveUp) {
+                        // الصعود لأعلى (فقط إذا تخطت سرعة معينة للإقلاع من المدرج)
+                        if(airplane.position.y < 25) airplane.position.y += 0.12;
+                        airplane.rotation.x = Math.max(airplane.rotation.x - 0.03, -0.2);
+                    }
+                    if (moveDown) {
+                        // الهبوط لأسفل ومنع الغوص تحت الأرض
+                        if(airplane.position.y > -1.2) airplane.position.y -= 0.12;
+                        airplane.rotation.x = Math.min(airplane.rotation.x + 0.03, 0.2);
+                    }
+                    if (!moveUp && !moveDown) airplane.rotation.x *= 0.9;
+                }
 
-            // الكاميرا تلحق الطائرة بسلاسة ومن خلفها
-            camera.position.z = airplane.position.z + 5;
-            camera.position.x = airplane.position.x;
-            camera.position.y = airplane.position.y + 1.5;
-            camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y, airplane.position.z - 5));
+                // الكاميرا تلحق الطائرة من الخلف بسلاسة وثبات
+                camera.position.z = airplane.position.z + 6;
+                camera.position.x = THREE.MathUtils.lerp(camera.position.x, airplane.position.x, 0.1);
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 1.8, 0.1);
+                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 0.5, airplane.position.z - 5));
 
-            // كشف المرور داخل الحلقة
-            let distance = airplane.position.distanceTo(ring.position);
-            if (distance < 1.6 && Math.abs(airplane.position.z - ring.position.z) < 0.3) {
-                points += 10;
-                document.getElementById('points').innerText = points;
+                // فحص التصادم والمرور داخل الحلقات
+                rings.forEach((ring) => {
+                    let distance = airplane.position.distanceTo(ring.position);
+                    // إذا مرت الطائرة بدقة داخل حدود الحلقة
+                    if (distance < 2.2 && Math.abs(airplane.position.z - ring.position.z) < 0.4) {
+                        points += 10;
+                        document.getElementById('points').innerText = points;
+                        
+                        // نقل الحلقة وتوليدها من جديد في مكان أبعد بالأمام
+                        ring.position.z -= 200;
+                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 25;
+                        ring.position.y = Math.max(Math.random() * 15, 0);
+                    }
 
-                // نقل الحلقة للأمام مجدداً في مكان عشوائي جديد
-                ring.position.z -= 40;
-                ring.position.x = airplane.position.x + (Math.random() - 0.5) * 15;
-                ring.position.y = airplane.position.y + (Math.random() - 0.5) * 10;
-            }
-
-            // إعادة توليد الحلقة إذا تجاوزها اللاعب دون الدخول فيها
-            if (airplane.position.z < ring.position.z - 5) {
-                ring.position.z -= 40;
-                ring.position.x = airplane.position.x + (Math.random() - 0.5) * 15;
-                ring.position.y = airplane.position.y + (Math.random() - 0.5) * 10;
+                    // إعادة توليد الحلقة إذا تجاوزها اللاعب دون المرور بها لكي لا تنتهي الحلقات
+                    if (airplane.position.z < ring.position.z - 10) {
+                        ring.position.z -= 200;
+                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 25;
+                        ring.position.y = Math.max(Math.random() * 15, 0);
+                    }
+                });
             }
 
             renderer.render(scene, camera);
         }
 
-        // ضبط الأبعاد عند تدوير الشاشة
+        // ضبط الشاشة عند تغيير أبعاد الهاتف
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // بدء تشغيل محرك اللعبة
         animate();
     </script>
 </body>
