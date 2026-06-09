@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>لعبة الطائرة ثلاثية الأبعاد - Pi Network</title>
+    <title>لعبة الطائرة ثلاثية الأبعاد - Sky Rings 3D</title>
     <style>
         body { 
             margin: 0; 
@@ -24,21 +24,19 @@
             text-shadow: 2px 2px 4px #000; 
         }
         
-        /* تنظيم أزرار السرعة أسفل الشاشة */
-        #controls-container {
+        /* واجهة أزرار السرعة (يمين الشاشة) */
+        #speed-container {
             position: absolute;
             bottom: 40px;
-            left: 0;
-            width: 100%;
+            right: 30px;
             display: flex;
-            justify-content: center;
-            gap: 50px; 
+            flex-direction: column;
+            gap: 20px; 
             z-index: 10;
-            pointer-events: none; 
         }
         .btn { 
-            width: 90px; 
-            height: 90px; 
+            width: 85px; 
+            height: 85px; 
             border-radius: 50%; 
             border: 3px solid #fff; 
             font-size: 18px; 
@@ -46,24 +44,46 @@
             cursor: pointer; 
             color: white;
             box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            pointer-events: auto; 
             outline: none;
             -webkit-tap-highlight-color: transparent;
         }
-        #btn-speed { background: rgba(46, 204, 113, 0.85); } 
-        #btn-brake { background: rgba(231, 76, 60, 0.85); } 
-        .btn:active { transform: scale(0.92); opacity: 0.95; }
+        #btn-speed { background: rgba(46, 204, 113, 0.9); } 
+        #btn-brake { background: rgba(231, 76, 60, 0.9); } 
+        .btn:active { transform: scale(0.92); }
+
+        /* الجويستيك الافتراضي المرئي (يسار الشاشة) */
+        #joystick-base {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            z-index: 10;
+            display: none; /* يظهر فقط عند اللمس */
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        #joystick-stick {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
 
         #touch-hint {
             position: absolute;
             top: 70px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.9);
+            color: white;
             font-size: 15px;
             z-index: 5;
-            pointer-events: none;
-            text-shadow: 1px 1px 2px #000;
+            text-shadow: 1px 1px 3px #000;
             text-align: center;
             width: 90%;
         }
@@ -73,7 +93,7 @@
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
-            padding: 16px 36px; 
+            padding: 16px 40px; 
             font-size: 22px; 
             font-weight: bold; 
             background: #2ecc71; 
@@ -91,189 +111,201 @@
 <body>
 
     <div id="score">النقاط: <span id="points">0</span></div>
-    <div id="touch-hint">المس الشاشة واسحب باستمرار: لأسفل (للصعود ⬆️) | لأعلى (للهبوط ⬇️)</div>
+    <div id="touch-hint">المس واسحب يسار الشاشة للتوجيه الحُر 🕹️ (اسحب لأسفل للصعود الشاهق ⬆️)</div>
     <button id="start-btn" onclick="startGame()">إقلاع وبدء اللعب</button>
 
-    <div id="controls-container">
-        <button class="btn" id="btn-brake">كبح</button>
+    <div id="joystick-base">
+        <div id="joystick-stick"></div>
+    </div>
+
+    <div id="speed-container">
         <button class="btn" id="btn-speed">تسريع</button>
+        <button class="btn" id="btn-brake">كبح</button>
     </div>
 
     <script>
         try { Pi.init({ version: "2.0", sandbox: true }); } catch (e) {}
 
+        // --- 1. إعداد المشهد والضباب ثلاثي الأبعاد ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); 
-        scene.fog = new THREE.FogExp2(0x87ceeb, 0.01); 
+        scene.fog = new THREE.FogExp2(0x87ceeb, 0.008); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-        dirLight.position.set(20, 50, 20);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        dirLight.position.set(30, 60, 30);
         scene.add(dirLight);
 
-        // --- 1. بناء الأرضية ومدرج الإقلاع ---
-        const floorGeo = new THREE.PlaneGeometry(3000, 3000);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x27ae60 });
+        // --- 2. بناء الأرضية ومدرج الإقلاع والمطار ---
+        const floorGeo = new THREE.PlaneGeometry(4000, 4000);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x556b2f }); // لون عشبي داكن واقعي
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -40; // مستوى الأرض
+        floor.position.y = -50; 
         scene.add(floor);
 
-        // مدرج الإقلاع يبدأ عند قدم الطائرة تماماً
-        const runwayGeo = new THREE.PlaneGeometry(24, 500);
-        const runwayMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+        const runwayGeo = new THREE.PlaneGeometry(30, 600);
+        const runwayMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
         const runway = new THREE.Mesh(runwayGeo, runwayMat);
         runway.rotation.x = -Math.PI / 2;
-        runway.position.set(0, -39.9, -200); 
+        runway.position.set(0, -49.9, -250); 
         scene.add(runway);
 
-        for (let i = 0; i > -500; i -= 30) {
-            const lineGeo = new THREE.PlaneGeometry(0.8, 8);
+        for (let i = 0; i > -600; i -= 40) {
+            const lineGeo = new THREE.PlaneGeometry(1, 10);
             const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const line = new THREE.Mesh(lineGeo, lineMat);
             line.rotation.x = -Math.PI / 2;
-            line.position.set(0, -39.8, i);
+            line.position.set(0, -49.8, i);
             scene.add(line);
         }
 
-        // --- 2. إضافة جبال أرضية واضحة كمعالم حركية ---
-        function createMountain(x, z, height, width, color) {
-            const mGeo = new THREE.ConeGeometry(width, height, 4);
-            const mMat = new THREE.MeshStandardMaterial({ color: color, flatShading: true });
+        // توزيع جبال محيطية واقعية في المدى البعيد
+        function createMountain(x, z, height, width) {
+            const mGeo = new THREE.ConeGeometry(width, height, 5);
+            const mMat = new THREE.MeshStandardMaterial({ color: 0x8b8c89, flatShading: true });
             const mountain = new THREE.Mesh(mGeo, mMat);
-            mountain.position.set(x, -40 + height / 2, z);
+            mountain.position.set(x, -50 + height / 2, z);
             scene.add(mountain);
         }
-
-        const colors = [0xd35400, 0x95a5a6, 0x7f8c8d, 0x27ae60]; 
-        for(let i = 1; i <= 25; i++) {
-            const h = 50 + Math.random() * 50;
-            const w = 40 + Math.random() * 30;
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            // توزيع يمين ويسار بعيداً عن المدرج
-            const sideX = (Math.random() > 0.5 ? 1 : -1) * (40 + Math.random() * 150);
-            createMountain(sideX, -150 * i, h, w, color);
+        for(let i = 1; i <= 30; i++) {
+            const h = 70 + Math.random() * 80;
+            const w = 60 + Math.random() * 40;
+            const sideX = (Math.random() > 0.5 ? 1 : -1) * (80 + Math.random() * 200);
+            createMountain(sideX, -180 * i, h, w);
         }
 
-        // --- 3. مجسم الطائرة المركب وثبات الكاميرا البدئي ---
+        // --- 3. تصميم طائرة واقعية بالكامل مع مروحة ومحركات نفاثة ---
         const airplane = new THREE.Group();
+        const metalMat = new THREE.MeshStandardMaterial({ color: 0xdcdde1, metalness: 0.7, roughness: 0.2 }); // جسم معدني فضي
+        const trimMat = new THREE.MeshStandardMaterial({ color: 0xc23616 }); // تقليم أحمر رياضى
 
-        const bodyGeo = new THREE.ConeGeometry(0.5, 2.8, 8);
+        // جسم الطائرة الانسيابي الفعلي
+        const bodyGeo = new THREE.CylinderGeometry(0.4, 0.2, 3.2, 12);
         bodyGeo.rotateX(Math.PI / 2);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe67e22 }); 
-        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        const bodyMesh = new THREE.Mesh(bodyGeo, metalMat);
         airplane.add(bodyMesh);
 
-        const wingGeo = new THREE.BoxGeometry(4.5, 0.1, 0.7);
-        const wingMat = new THREE.MeshStandardMaterial({ color: 0xc0392b }); 
-        const wingMesh = new THREE.Mesh(wingGeo, wingMat);
-        wingMesh.position.set(0, 0, -0.2);
+        // مقدمة الطائرة الدائرية الكابتن
+        const noseGeo = new THREE.SphereGeometry(0.4, 12, 12);
+        noseGeo.scale(1, 1, 1.5);
+        const noseMesh = new THREE.Mesh(noseGeo, trimMat);
+        noseMesh.position.set(0, 0, -1.6);
+        airplane.add(noseMesh);
+
+        // الأجنحة الكبيرة الواقعية
+        const wingGeo = new THREE.BoxGeometry(5.5, 0.06, 0.8);
+        const wingMesh = new THREE.Mesh(wingGeo, metalMat);
+        wingMesh.position.set(0, 0, -0.3);
         airplane.add(wingMesh);
 
-        const tailGeo = new THREE.BoxGeometry(0.1, 0.9, 0.4);
-        const tailMesh = new THREE.Mesh(tailGeo, wingMat);
-        tailMesh.position.set(0, 0.5, 1.2);
-        airplane.add(tailMesh);
+        // محركات نفاثة وهمية تحت الأجنحة يمين ويسار
+        const engineGeo = new THREE.CylinderGeometry(0.15, 0.12, 0.8, 8);
+        engineGeo.rotateX(Math.PI / 2);
+        const leftEngine = new THREE.Mesh(engineGeo, trimMat); leftEngine.position.set(-1.4, -0.15, -0.3);
+        const rightEngine = new THREE.Mesh(engineGeo, trimMat); rightEngine.position.set(1.4, -0.15, -0.3);
+        airplane.add(leftEngine, rightEngine);
 
-        // الطائرة تستقر فوق المدرج تماماً في البداية
-        airplane.position.set(0, -38.5, 0); 
+        // المروحة الأمامية المتحركة
+        const propGroup = new THREE.Group();
+        const propBladeGeo = new THREE.BoxGeometry(1.4, 0.08, 0.02);
+        const propBlade = new THREE.Mesh(propBladeGeo, THREE.MeshBasicMaterial) ; propBlade.material.color.setHex(0x111111);
+        propGroup.add(propBlade);
+        propGroup.position.set(0, 0, -2.1);
+        airplane.add(propGroup);
+
+        // أجنحة الاتزان الخلفية (الذيل)
+        const tailGeo = new THREE.BoxGeometry(0.06, 0.8, 0.5);
+        const tailMesh = new THREE.Mesh(tailGeo, trimMat); tailMesh.position.set(0, 0.4, 1.3);
+        const tailFlapsGeo = new THREE.BoxGeometry(1.5, 0.04, 0.4);
+        const tailFlaps = new THREE.Mesh(tailFlapsGeo, metalMat); tailFlaps.position.set(0, 0, 1.2);
+        airplane.add(tailMesh, tailFlaps);
+
+        airplane.position.set(0, -48.4, 0); // مستقرة على أرض المطار المحدث
         scene.add(airplane);
 
-        // --- 4. توليد الحلقات الصفراء بمستوى نظر الطائرة المتصاعد ---
+        // --- 4. توليد الحلقات بمحاذاة وارتفاعات السماء الشاهقة ---
         const rings = [];
         function createRing(zPos) {
-            const ringGeometry = new THREE.TorusGeometry(2.2, 0.2, 8, 24);
-            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.4 });
+            const ringGeometry = new THREE.TorusGeometry(2.4, 0.22, 8, 24);
+            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xfbc531, metalness: 0.5 });
             const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
             
-            // جعل الحلقات تبدأ قريبة من مستوى الطائرة وتتصاعد تدريجياً في السماء لتجبر اللاعب على الصعود
-            const randomX = (Math.random() - 0.5) * 40;
-            const randomY = -35 + (Math.random() * 50); // نطاق الارتفاع من -35 إلى +15
+            // توزيع الحلقات بارتفاعات متموجة حقيقية (من قريبة للمدرج وحتى الارتفاع الشاهق)
+            const randomX = (Math.random() - 0.5) * 60;
+            const randomY = -40 + (Math.random() * 80); // ممتدة من -40 حتى +40 في أعالي السماء
             
             ringMesh.position.set(randomX, randomY, zPos);
             scene.add(ringMesh);
             rings.push(ringMesh);
         }
-        
-        // توليد الحلقات ممتدة للأمام
-        for(let i = 1; i <= 6; i++) {
-            createRing(-80 * i);
-        }
+        for(let i = 1; i <= 6; i++) { createRing(-90 * i); }
 
-        // --- 5. متغيرات الحركة ونظام السحب المستمر الاحترافي ---
-        let speed = 0;
-        let maxSpeed = 0.7;
-        let points = 0;
-        let isPlaying = false;
+        // --- 5. نظام الجويستيك الافتراضي وعزل أزرار الطيران ---
+        let speed = 0, maxSpeed = 0.75, points = 0, isPlaying = false;
+        let moveX = 0, moveY = 0; // قيم التحكم الصادرة من الجويستيك
 
-        let controlX = 0; // معدل الحركة المستمر يميناً ويساراً
-        let controlY = 0; // معدل الحركة المستمر صعوداً وهبوطاً
-        let isTouching = false;
-        let touchStartX = 0;
-        let touchStartY = 0;
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickStick = document.getElementById('joystick-stick');
 
-        let accelerating = false;
-        let braking = false;
+        let joyActive = false, joyStartX = 0, joyStartY = 0;
+        let accelerating = false, braking = false;
 
-        // ربط أزرار السرعة والكبح باللمس والماوس
-        const speedBtn = document.getElementById('btn-speed');
-        const brakeBtn = document.getElementById('btn-brake');
+        // ربط أزرار الدفع والمكابح (يمين الشاشة)
+        document.getElementById('btn-speed').addEventListener('touchstart', (e) => { e.preventDefault(); accelerating = true; });
+        document.getElementById('btn-speed').addEventListener('touchend', () => accelerating = false);
+        document.getElementById('btn-brake').addEventListener('touchstart', (e) => { e.preventDefault(); braking = true; });
+        document.getElementById('btn-brake').addEventListener('touchend', () => braking = false);
 
-        speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); accelerating = true; });
-        speedBtn.addEventListener('touchend', () => accelerating = false);
-        brakeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); braking = true; });
-        brakeBtn.addEventListener('touchend', () => braking = false);
-        speedBtn.addEventListener('mousedown', () => accelerating = true);
-        speedBtn.addEventListener('mouseup', () => accelerating = false);
-        brakeBtn.addEventListener('mousedown', () => braking = true);
-        brakeBtn.addEventListener('mouseup', () => braking = false);
-
-        // حساب السحب باللمس بطريقة جويستيك مستمر
+        // تفعيل الجويستيك عند لمس أي نقطة في النصف الأيسر من الشاشة
         window.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === 'BUTTON') return;
-            isTouching = true;
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
+            if (e.touches[0].clientX > window.innerWidth / 2) return; // تجاهل النصف الأيمن المخصص للسرعة
+            
+            joyActive = true;
+            joyStartX = e.touches[0].clientX;
+            joyStartY = e.touches[0].clientY;
+
+            // إظهار قاعدة الجويستيك في مكان اللمس تماماً
+            joystickBase.style.display = 'flex';
+            joystickBase.style.left = (joyStartX - 60) + 'px';
+            joystickBase.style.bottom = (window.innerHeight - joyStartY - 60) + 'px';
         });
 
         window.addEventListener('touchmove', (e) => {
-            if (!isTouching) return;
-            const deltaX = e.touches[0].clientX - touchStartX;
-            const deltaY = e.touches[0].clientY - touchStartY;
+            if (!joyActive) return;
 
-            // تحديد قوة التوجيه بناءً على مسافة السحب من نقطة اللمس البدئية
-            controlX = Math.max(Math.min(deltaX / 100, 1), -1);
-            controlY = Math.max(Math.min(deltaY / 100, 1), -1);
+            let touchX = e.touches[0].clientX;
+            let touchY = e.touches[0].clientY;
+
+            let deltaX = touchX - joyStartX;
+            let deltaY = touchY - joyStartY;
+            let dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            // تحديد أقصى مسافة لحركة عصا الجويستيك داخل دائرته (50 بكسل)
+            if (dist > 50) {
+                deltaX = (deltaX / dist) * 50;
+                deltaY = (deltaY / dist) * 50;
+            }
+
+            // تحريك العصا بصرياً أمام عين اللاعب
+            joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            // استخراج نسب التوجيه الدقيقة (-1 إلى 1)
+            moveX = deltaX / 50;
+            moveY = deltaY / 50; // السحب لأسفل يعطي قيمة موجبة (لصعود حاد مستمر)
         });
 
         window.addEventListener('touchend', () => {
-            isTouching = false;
-            controlX = 0;
-            controlY = 0;
-        });
-
-        // دعم الماوس للكمبيوتر بسحب مستمر أيضاً
-        window.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'BUTTON') return;
-            isTouching = true;
-            touchStartX = e.clientX;
-            touchStartY = e.clientY;
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (!isTouching) return;
-            controlX = Math.max(Math.min((e.clientX - touchStartX) / 100, 1), -1);
-            controlY = Math.max(Math.min((e.clientY - touchStartY) / 100, 1), -1);
-        });
-        window.addEventListener('mouseup', () => {
-            isTouching = false;
-            controlX = 0;
-            controlY = 0;
+            joyActive = false;
+            moveX = 0; moveY = 0;
+            joystickBase.style.display = 'none'; // إخفاء الجويستيك عند رفع الإصبع
+            joystickStick.style.transform = 'translate(0px, 0px)';
         });
 
         function startGame() {
@@ -281,65 +313,64 @@
             isPlaying = true;
         }
 
-        // --- 6. محرك تشغيل اللعبة الرئيسي وتحديث الطيران ---
+        // --- 6. محرك اللعبة الرئيسي وتحديث المحاكاة الحرة ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (isPlaying) {
-                // التحكم في طاقة وسرعة الدفع
-                if (accelerating) speed = Math.min(speed + 0.006, maxSpeed);
+                // تدوير المروحة الأمامية للطائرة باستمرار لإعطاء طابع واقعي وحي
+                propGroup.rotation.z += (speed + 0.1) * 2;
+
+                if (accelerating) speed = Math.min(speed + 0.005, maxSpeed);
                 if (braking) speed = Math.max(speed - 0.01, 0);
 
-                // دفع الطائرة الدائم للأمام
+                // طيران تقدمي مستمر للأمام
                 airplane.position.z -= speed;
 
-                // تنفيذ التوجيه المستمر والحر طالما الإصبع على الشاشة
                 if (speed > 0.02) {
-                    // حركة أفقية مستمرة (يمين ويسار)
-                    airplane.position.x += controlX * 0.35;
-                    airplane.rotation.z = -controlX * 0.6; // إمالة جسم الطائرة أثناء الدوران
+                    // حركة يمين ويسار مع انسيابية كاملة
+                    airplane.position.x += moveX * 0.45;
+                    airplane.rotation.z = -moveX * 0.7; // إمالة جناح الطائرة عند الدوران
 
-                    // حركة عمودية مستمرة وحرة (صعود وهبوط) بدون حدود تمنعها
-                    // السحب لأسفل الشاشة (controlY موجب) يرفع الطائرة لأعلى في السماء
-                    airplane.position.y -= controlY * 0.35; 
-                    airplane.rotation.x = controlY * 0.4; // إمالة المقدمة لأعلى ولأسفل
+                    // التحكم الحر وغير المقيد في الارتفاع صعوداً ونزولاً
+                    // سحب الجويستيك لأسفل الشاشة (moveY موجب) يرفع الطائرة لأعلى باستمرار ودون حدود عائقة
+                    airplane.position.y -= moveY * 0.45; 
+                    airplane.rotation.x = moveY * 0.45; // توجيه مقدمة الطائرة رأسياً
 
-                    // منع الطائرة من الغوص تحت الأرض الصلبة فقط
-                    if (airplane.position.y < -38.5) airplane.position.y = -38.5;
-                    // وضع حد أعلى في الفضاء البعيد جداً لمنع الضياع
-                    if (airplane.position.y > 60) airplane.position.y = 60;
+                    // تأمين مستويات الطيران (عدم الاختراق للأرض وتحديد أقصى ارتفاع فضاء)
+                    if (airplane.position.y < -48.4) airplane.position.y = -48.4;
+                    if (airplane.position.y > 100) airplane.position.y = 100;
 
-                    // تراجع تدريجي لوضع الاتزان الأفقي عند رفع اليد
-                    if (!isTouching) {
+                    // تراجع انسيابي لوضع الاتزان الأفقي الطبيعي عند ترك الجويستيك
+                    if (!joyActive) {
                         airplane.rotation.z *= 0.85;
                         airplane.rotation.x *= 0.85;
                     }
                 }
 
-                // الكاميرا تتبع الطائرة بثبات مطلق لمنع مرور الحلقات من فوقك بشكل مفاجئ
-                camera.position.z = airplane.position.z + 7.0;
+                // الكاميرا تتبع جسم الطائرة الواقعي من الخلف بمرونة فائقة وثبات زاوية الرؤية
+                camera.position.z = airplane.position.z + 7.5;
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, airplane.position.x, 0.15);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 1.8, 0.15);
-                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 0.5, airplane.position.z - 5));
+                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 0.4, airplane.position.z - 5));
 
-                // فحص المرور الدقيق في الحلقات الصفراء
+                // فحص النقاط وتجاوز الحلقات الصفراء
                 rings.forEach((ring) => {
                     let distance = airplane.position.distanceTo(ring.position);
-                    if (distance < 2.5 && Math.abs(airplane.position.z - ring.position.z) < 0.5) {
+                    if (distance < 2.8 && Math.abs(airplane.position.z - ring.position.z) < 0.6) {
                         points += 10;
                         document.getElementById('points').innerText = points;
                         
-                        // إعادة توليد الحلقة في الأمام البعيد بمستوى متوافق مع الطائرة
-                        ring.position.z -= 450; 
-                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 50;
-                        ring.position.y = airplane.position.y + (Math.random() - 0.5) * 20;
+                        // إعادة توليد الحلقة في مسافة متقدمة بمستوى طيران اللاعب الحالي تماماً
+                        ring.position.z -= 500; 
+                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 60;
+                        ring.position.y = airplane.position.y + (Math.random() - 0.5) * 30;
                     }
 
-                    // توليد الحلقة من جديد إذا تجاوزها اللاعب دون أخذها
-                    if (airplane.position.z < ring.position.z - 20) {
-                        ring.position.z -= 450;
-                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 50;
-                        ring.position.y = airplane.position.y + (Math.random() - 0.5) * 20;
+                    if (airplane.position.z < ring.position.z - 25) {
+                        ring.position.z -= 500;
+                        ring.position.x = airplane.position.x + (Math.random() - 0.5) * 60;
+                        ring.position.y = airplane.position.y + (Math.random() - 0.5) * 30;
                     }
                 });
             }
