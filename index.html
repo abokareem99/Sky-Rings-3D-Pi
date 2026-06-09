@@ -104,6 +104,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
@@ -175,79 +176,26 @@
             createMountain(sideX, -180 * i, h, w);
         }
 
-        // --- بناء الطائرة الجديدة لمحاكاة الصورة ---
-        const airplane = new THREE.Group();
-        
-        // خامات الألوان المأخوذة من صورتك
-        const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }); // أبيض للجسم
-        const redMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.3 }); // أحمر للمحركات والذيل
-        const glassMat = new THREE.MeshStandardMaterial({ color: 0x3498db, metalness: 0.8, roughness: 0.1 }); // زجاج قمرة القيادة
-        const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111 }); // أسود للعجلات وداخل المحرك
-        const metalMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, metalness: 0.6 }); // معدن فضي لأعمدة العجلات
+        // --- استدعاء الطائرة الجديدة من ملف GLB ---
+        let airplane; // تعريف المتغير ليكون متاحاً في كل الكود
+        const loader = new THREE.GLTFLoader();
 
-        // الجسم الرئيسي (أبيض وانسيابي)
-        const bodyGeo = new THREE.CylinderGeometry(0.6, 0.4, 4.0, 16);
-        bodyGeo.rotateX(Math.PI / 2);
-        const bodyMesh = new THREE.Mesh(bodyGeo, whiteMat);
-        airplane.add(bodyMesh);
-
-        // مقدمة الطائرة
-        const noseGeo = new THREE.SphereGeometry(0.6, 16, 16);
-        noseGeo.scale(1, 0.9, 1.8);
-        const noseMesh = new THREE.Mesh(noseGeo, whiteMat);
-        noseMesh.position.set(0, 0, -2.0);
-        airplane.add(noseMesh);
-
-        // زجاج قمرة القيادة (أزرق)
-        const cockpitGeo = new THREE.BoxGeometry(0.7, 0.4, 0.6);
-        const cockpit = new THREE.Mesh(cockpitGeo, glassMat);
-        cockpit.position.set(0, 0.4, -2.2);
-        cockpit.rotation.x = 0.35;
-        airplane.add(cockpit);
-
-        // الأجنحة الرئيسية (أبيض)
-        const wingGeo = new THREE.BoxGeometry(7.5, 0.08, 1.5);
-        const wingMesh = new THREE.Mesh(wingGeo, whiteMat);
-        wingMesh.position.set(0, -0.1, -0.2);
-        airplane.add(wingMesh);
-
-        // المحركات النفاثة الضخمة (غلاف أحمر، وداخل أسود)
-        const engineGeo = new THREE.CylinderGeometry(0.35, 0.35, 1.2, 16);
-        engineGeo.rotateX(Math.PI / 2);
-        const leftEngine = new THREE.Mesh(engineGeo, redMat); leftEngine.position.set(-2.0, -0.3, -0.4);
-        const rightEngine = new THREE.Mesh(engineGeo, redMat); rightEngine.position.set(2.0, -0.3, -0.4);
-        
-        const engineInsideGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.25, 16);
-        engineInsideGeo.rotateX(Math.PI / 2);
-        const leftEngineIn = new THREE.Mesh(engineInsideGeo, blackMat); leftEngineIn.position.set(-2.0, -0.3, -0.4);
-        const rightEngineIn = new THREE.Mesh(engineInsideGeo, blackMat); rightEngineIn.position.set(2.0, -0.3, -0.4);
-        
-        airplane.add(leftEngine, rightEngine, leftEngineIn, rightEngineIn);
-
-        // الذيل (أحمر) وأجنحة الاتزان الخلفية (أبيض)
-        const tailGeo = new THREE.BoxGeometry(0.08, 1.4, 1.0);
-        const tailMesh = new THREE.Mesh(tailGeo, redMat); tailMesh.position.set(0, 0.7, 1.6);
-        const tailFlapsGeo = new THREE.BoxGeometry(2.5, 0.06, 0.6);
-        const tailFlaps = new THREE.Mesh(tailFlapsGeo, whiteMat); tailFlaps.position.set(0, 0.2, 1.6);
-        airplane.add(tailMesh, tailFlaps);
-
-        // عجلات الهبوط (لإضافة واقعية على المدرج)
-        const wheelGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
-        wheelGeo.rotateZ(Math.PI / 2);
-        const frontWheel = new THREE.Mesh(wheelGeo, blackMat); frontWheel.position.set(0, -0.8, -1.8);
-        const leftWheel = new THREE.Mesh(wheelGeo, blackMat); leftWheel.position.set(-1.0, -0.8, 0);
-        const rightWheel = new THREE.Mesh(wheelGeo, blackMat); rightWheel.position.set(1.0, -0.8, 0);
-        
-        const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5);
-        const frontLeg = new THREE.Mesh(legGeo, metalMat); frontLeg.position.set(0, -0.5, -1.8);
-        const leftLeg = new THREE.Mesh(legGeo, metalMat); leftLeg.position.set(-1.0, -0.5, 0);
-        const rightLeg = new THREE.Mesh(legGeo, metalMat); rightLeg.position.set(1.0, -0.5, 0);
-
-        airplane.add(frontWheel, leftWheel, rightWheel, frontLeg, leftLeg, rightLeg);
-
-        // ضبط ارتفاع الطائرة لتقف العجلات على المدرج تماماً
-        airplane.position.set(0, -48.9, 0); 
-        scene.add(airplane);
+        loader.load('airplane.glb', function (gltf) {
+            airplane = gltf.scene;
+            
+            // ضبط مقاس الطائرة (يمكنك تعديل الرقم إذا كانت الطائرة تبدو كبيرة أو صغيرة جداً)
+            airplane.scale.set(0.6, 0.6, 0.6); 
+            
+            // إذا كانت الطائرة من الموقع متجهة للخلف، يمكنك تفعيل هذا السطر لتدويرها 180 درجة
+            // airplane.rotation.y = Math.PI; 
+            
+            // ضبط موقع الطائرة الأولي فوق المدرج تماماً
+            airplane.position.set(0, -48.9, 0); 
+            
+            scene.add(airplane);
+        }, undefined, function (error) {
+            console.error('حدث خطأ أثناء تحميل ملف الطائرة:', error);
+        });
 
         // توليد الحلقات
         const rings = [];
@@ -327,7 +275,8 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            if (isPlaying) {
+            // تم إضافة شرط (&& airplane) للتأكد من أن الطائرة قد تم تحميلها قبل بدء التحريك
+            if (isPlaying && airplane) {
                 if (accelerating) speed = Math.min(speed + 0.005, maxSpeed);
                 if (braking) speed = Math.max(speed - 0.01, 0);
 
@@ -351,7 +300,7 @@
                 }
 
                 // الكاميرا تتبع الطائرة
-                camera.position.z = airplane.position.z + 8.5; // تم إرجاع الكاميرا لتظهر الطائرة كاملة
+                camera.position.z = airplane.position.z + 8.5; 
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, airplane.position.x, 0.15);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 2.5, 0.15);
                 camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 0.5, airplane.position.z - 5));
