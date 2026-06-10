@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران الاحترافي - بيئات متعددة</title>
+    <title>محاكي الطيران الاحترافي V2 - بيئات جمالية مجسمة</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #87ceeb; user-select: none; }
-        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); color: white; padding: 15px; border-radius: 8px; font-size: 15px; line-height: 1.6; z-index: 10; direction: ltr; text-align: left; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-size: 15px; line-height: 1.6; z-index: 10; direction: ltr; text-align: left; border: 1px solid #34495e; }
         #top-bar { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px #000; z-index: 10; display: flex; gap: 20px; }
         #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 5px #000; z-index: 20; }
-        #start-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 15; display: flex; justify-content: center; align-items: center; }
-        #start-btn { padding: 15px 40px; font-size: 22px; font-weight: bold; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .hud-badge { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 5px; }
+        #start-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 15; display: flex; justify-content: center; align-items: center; }
+        #start-btn { padding: 15px 40px; font-size: 24px; font-weight: bold; background: #e67e22; color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: 0.2s; }
+        #start-btn:hover { background: #d35400; transform: scale(1.05); }
+        .hud-badge { background: rgba(0,0,0,0.6); padding: 8px 18px; border-radius: 5px; border: 1px solid #2c3e50; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -23,187 +24,260 @@
         • W / S : Pitch Up / Down (Hold W to Takeoff!)<br>
         • A / D : Roll Left / Right<br>
         • Space : Engine Boost<br>
-        <span id="environment-log" style="color: #f1c40f; font-weight:bold;">المنطقة الحالية: المدرج 🛫</span>
+        <span id="environment-log" style="color: #2ecc71; font-weight:bold;">المدرج: جاهز للإقلاع فخامة الباشمهندس 🛫</span>
     </div>
 
     <div id="top-bar">
         <div class="hud-badge">النقاط: <span id="points">0</span></div>
-        <div class="hud-badge">البيئة: <span id="env-text">الصحراء 🏜️</span></div>
+        <div class="hud-badge">المنطقة: <span id="env-text">صحراء النوبة 🏜️</span></div>
     </div>
     
-    <div id="loading">جاري تجهيز محاكي الطيران والملفات الـ 3D...</div>
+    <div id="loading">جاري تحميل مجسم الطائرة وتوليد البيئات الجمالية...</div>
     
     <div id="start-mask" style="display:none;">
-        <button id="start-btn" onclick="startGame()">تشغيل المحرك والإقلاع 🚀</button>
+        <button id="start-btn" onclick="startGame()">تشغيل المحرك وإقلاع الطائرة العملاقة ✈️🚀</button>
     </div>
 
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87ceeb);
-        const fog = new THREE.FogExp2(0x87ceeb, 0.0012);
+        scene.background = new THREE.Color(0xbae1ff); // سماء أنقى وأجمل
+        const fog = new THREE.FogExp2(0xbae1ff, 0.001);
         scene.fog = fog;
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2500);
+        // الكاميرا مضبوطة لتتناسب مع الحجم الكبير الجديد للطائرة
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        sunLight.position.set(150, 300, 100);
+        // إضاءة جمالية سينمائية
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+        sunLight.position.set(200, 400, 200);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 1000;
+        const d = 300;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
         scene.add(sunLight);
 
         let airplane = null;
         let isPlaying = false;
-        let hasTakenOff = false; // لم تقلع بعد
+        let hasTakenOff = false;
         let score = 0;
         let currentSpeed = 1.5;
         const rings = [];
+        const environmentObjects = [];
         const keys = { w: false, s: false, a: false, d: false, space: false };
 
-        // نظام الصوت البرمجي للمحرك (Audio Synthesis)
+        // نظام الصوت البرمجي للمحرك
         let audioCtx, engineOsc, engineFilter, engineGain;
 
         function initEngineSound() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // إنشاء الهزاز ومصفي الصوت لمحاكاة دوي المحرك النفاث
             engineOsc = audioCtx.createOscillator();
-            const noise = audioCtx.createOscillator(); // هزاز إضافي للعمق
             engineFilter = audioCtx.createBiquadFilter();
             engineGain = audioCtx.createGain();
 
             engineOsc.type = 'sawtooth';
-            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // تردد منخفض للمحرك
+            engineOsc.frequency.setValueAtTime(50, audioCtx.currentTime); // صوت أعمق ليناسب الطائرة الكبيرة
 
             engineFilter.type = 'lowpass';
-            engineFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+            engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
 
-            engineGain.gain.setValueAtTime(0.15, audioCtx.currentTime); // مستوى الصوت
+            engineGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
             engineOsc.connect(engineFilter);
             engineFilter.connect(engineGain);
             engineGain.connect(audioCtx.destination);
-            
             engineOsc.start();
         }
 
         function updateEngineSound(speedUp) {
             if (!engineOsc) return;
-            // رفع حدة الصوت والفلتر عند التسريع (Boost)
-            const targetFreq = speedUp ? 90 : 55;
-            const targetFilter = speedUp ? 450 : 250;
+            const targetFreq = speedUp ? 85 : 50;
+            const targetFilter = speedUp ? 500 : 280;
             engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.3);
             engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.4);
         }
 
-        // بناء الأرض التفاعلية والمدرج
         const terrainGroup = new THREE.Group();
         scene.add(terrainGroup);
 
-        // ألوان البيئات المتغيرة
         const envColors = {
-            desert: 0xe3a857,  // أصفر صحراوي
-            mountain: 0x7f8c8d, // رمادي صخري للجبال
-            forest: 0x27ae60    // أخضر للغابات
+            desert: 0xecc48f,   // رمال ذهبية ناعمة
+            mountain: 0x95a5a6, // صخور رمادية للجبال
+            forest: 0x27ae60    // غابات خضراء زاهية
         };
 
         let currentEnv = 'desert';
 
-        function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const width = 800;
-            const length = 1000;
-            const geometry = new THREE.PlaneGeometry(width, length, 20, 20);
+        // دالة لتوليد أشجار وصخور مجسمة كجماليات في البيئة المحيطة
+        function addEnvironmentDecorations(zPos, envType) {
+            const count = 12;
+            for(let i=0; i<count; i++) {
+                let mesh;
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const x = (Math.random() * 250 + 70) * side; // توزيعهما على جانبي المسار لترك المنتصف آمناً
+                
+                if (envType === 'desert') {
+                    // توليد صخور صحراوية صفراء
+                    const geo = new THREE.DodecahedronGeometry(Math.random() * 8 + 4);
+                    const mat = new THREE.MeshStandardMaterial({ color: 0xd35400, roughness: 0.9 });
+                    mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.set(x, -6, zPos + (Math.random() * 1000 - 500));
+                } else if (envType === 'forest' || envType === 'mountain') {
+                    // توليد أشجار منخفضة المضلعات (Low-poly Trees)
+                    const tree = new THREE.Group();
+                    const trunkGeo = new THREE.CylinderGeometry(1.5, 2.5, 12, 5);
+                    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                    trunk.position.y = 6;
+                    tree.add(trunk);
+
+                    const leavesGeo = new THREE.ConeGeometry(8, 18, 5);
+                    const leavesMat = new THREE.MeshStandardMaterial({ color: envType === 'forest' ? 0x1e824c : 0xbdc3c7, roughness: 0.8 });
+                    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                    leaves.position.y = 17;
+                    tree.add(leaves);
+                    
+                    mesh = tree;
+                    mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
+                }
+                
+                if(mesh) {
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    scene.add(mesh);
+                    environmentObjects.push(mesh);
+                }
+            }
+        }
+
+        // دالة توليد الغيوم الجمالية في السماء فوق اللاعب
+        function createCloud(zPos) {
+            const cloud = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true });
+            const numBlobs = Math.floor(Math.random() * 3) + 3;
             
-            // إضافة تضاريس خفيفة إذا لم يكن مدرجاً
+            for(let i=0; i<numBlobs; i++) {
+                const geo = new THREE.SphereGeometry(Math.random() * 12 + 8, 8, 8);
+                const blob = new THREE.Mesh(geo, mat);
+                blob.position.set(i * 12, Math.random() * 6, Math.random() * 6);
+                cloud.add(blob);
+            }
+            cloud.position.set((Math.random() - 0.5) * 400, Math.random() * 80 + 120, zPos);
+            scene.add(cloud);
+            environmentObjects.push(cloud);
+        }
+
+        function createTerrainSegment(zPos, colorHex, isRunway = false) {
+            const width = 1000;
+            const length = 1000;
+            const geometry = new THREE.PlaneGeometry(width, length, 16, 16);
+            
             if(!isRunway) {
                 const pos = geometry.attributes.position;
                 for (let i = 0; i < pos.count; i++) {
                     const x = pos.getX(i);
-                    // جبال على الأطراف لترك مساحة للطيران في المنتصف
-                    if (Math.abs(x) > 80) {
-                        let heightFactor = currentEnv === 'mountain' ? 70 : (currentEnv === 'forest' ? 35 : 15);
+                    if (Math.abs(x) > 100) {
+                        let heightFactor = currentEnv === 'mountain' ? 120 : (currentEnv === 'forest' ? 50 : 20);
                         pos.setZ(i, Math.random() * heightFactor);
                     }
                 }
                 geometry.computeVertexNormals();
             }
 
-            const material = new THREE.MeshStandardMaterial({ 
-                color: colorHex, 
-                roughness: 0.9, 
-                metalness: 0.1,
-                flatShading: true 
-            });
+            const material = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.9, flatShading: true });
             const terrain = new THREE.Mesh(geometry, material);
             terrain.rotation.x = -Math.PI / 2;
             terrain.position.set(0, -10, zPos);
+            terrain.receiveShadow = true;
             terrainGroup.add(terrain);
 
-            // إذا كان هذا هو الجزء الأول، ارسم مدرج الإقلاع في المنتصف
             if (isRunway) {
-                const runwayGeo = new THREE.PlaneGeometry(30, 800);
-                const runwayMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.8 });
+                // مدرج الإقلاع أسود احترافي عريض ليناسب حجم الطائرة الكبير الجديد
+                const runwayGeo = new THREE.PlaneGeometry(50, 800);
+                const runwayMat = new THREE.MeshStandardMaterial({ color: 0x1a252f, roughness: 0.7 });
                 const runway = new THREE.Mesh(runwayGeo, runwayMat);
                 runway.rotation.x = -Math.PI / 2;
-                runway.position.set(0, -9.9, zPos + 100);
+                runway.position.set(0, -9.8, zPos + 100);
+                runway.receiveShadow = true;
                 scene.add(runway);
 
-                // خطوط المدرج الصفراء
-                const lineGeo = new THREE.PlaneGeometry(1, 40);
+                const lineGeo = new THREE.PlaneGeometry(1.5, 40);
                 const lineMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f });
                 for(let l = 0; l < 10; l++) {
                     const line = new THREE.Mesh(lineGeo, lineMat);
                     line.rotation.x = -Math.PI / 2;
-                    line.position.set(0, -9.8, zPos + 350 - (l * 80));
+                    line.position.set(0, -9.7, zPos + 350 - (l * 80));
                     scene.add(line);
                 }
+            } else {
+                addEnvironmentDecorations(zPos, currentEnv);
+                if(Math.random() > 0.4) createCloud(zPos);
             }
         }
 
-        // إنشاء القطع الأولى للأرض (البداية بالمدرج والصحراء)
+        // إنشاء القطع الأولى
         createTerrainSegment(0, envColors.desert, true);
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // جلب مجسم الطائرة الأصلي
+        // تحميل الطائرة وزيادة حجمها
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', 
             (gltf) => {
                 airplane = gltf.scene;
-                airplane.scale.set(1.5, 1.5, 1.5);
-                // الطائرة تبدأ مستقرة تماماً على المدرج الأرضي
-                airplane.position.set(0, -9.9, 300);
-                airplane.rotation.set(0, Math.PI, 0); 
+                
+                // 🛑 هنا تم تكبير الطائرة إلى الحجم السوبر (3.0 بدلاً من 1.5) بناءً على طلبك
+                airplane.scale.set(3.0, 3.0, 3.0); 
+                
+                airplane.position.set(0, -9.8, 300);
+                airplane.rotation.set(0, Math.PI, 0);
+                
+                // تفعيل استقبال وإرسال الظلال للطائرة
+                airplane.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
                 
                 scene.add(airplane);
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('start-mask').style.display = 'flex';
 
-                camera.position.set(0, -5, 320);
+                // ضبط الكاميرا خلف حجم الطائرة الجديد لتعطي زاوية رؤية مريحة وممتازة
+                camera.position.set(0, 0, 345);
                 camera.lookAt(airplane.position);
             },
             undefined,
             (error) => {
-                document.getElementById('loading').innerText = "خطأ: تأكد من رفع ملف الطائرة بالمساحة الصحيحة";
+                document.getElementById('loading').innerText = "خطأ في تحميل ملف الطائرة .glb";
                 console.error(error);
             }
         );
 
-        // توليد الحلقات في السماء المرتفعة
+        // توليد حلقات جمع النقاط في مسار الطيران مرتفعة ومتناسبة مع الحجم الكبير
         function createRing(zPos) {
-            const geometry = new THREE.TorusGeometry(8, 0.8, 16, 40);
-            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8 });
+            const geometry = new THREE.TorusGeometry(12, 1.2, 16, 40); // تكبير الحلقات قليلاً لتناسب الطائرة
+            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.1 });
             const ring = new THREE.Mesh(geometry, material);
-            // الحلقات تبدأ بارتفاع مناسب بعد المدرج
-            ring.position.set((Math.random() - 0.5) * 140, Math.random() * 50 + 15, zPos);
+            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 60 + 25, zPos);
+            ring.castShadow = true;
             scene.add(ring);
             rings.push(ring);
         }
 
-        // توزيع أول مجموعة من الحلقات بعيداً عن المدرج قليلاً
         for (let i = 1; i <= 20; i++) {
             createRing(-i * 150);
         }
@@ -224,95 +298,104 @@
             requestAnimationFrame(animate);
 
             if (isPlaying && airplane) {
-                const speedMultiplier = keys.space ? 3.5 : 1.8;
+                const speedMultiplier = keys.space ? 4.0 : 2.0;
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                 updateEngineSound(keys.space);
 
-                // التحرك الدائم للأمام
                 airplane.position.z -= currentSpeed;
                 distanceTraveled = Math.abs(airplane.position.z);
 
-                // ديناميكية الإقلاع والحركة
+                // ميكانيكية المدرج والإقلاع
                 if (!hasTakenOff) {
-                    // على المدرج: لا ترتفع إلا بالضغط المطول على W للإقلاع
                     if (keys.w) {
-                        airplane.position.y += 0.2;
-                        airplane.rotation.x = 0.15; // رفع المقدمة للأعلى عند الإقلاع
-                        if (airplane.position.y > -5) {
+                        airplane.position.y += 0.25;
+                        airplane.rotation.x = 0.12; // رفع طفيف لمقدمة الطائرة العملاقة
+                        if (airplane.position.y > -2) {
                             hasTakenOff = true;
-                            document.getElementById('environment-log').innerText = "الحالة: طيران حر في الأجواء ✈️";
+                            document.getElementById('environment-log').innerText = "الحالة: طيران حر مستقر في الأجواء ☁️✈️";
                         }
                     } else {
-                        airplane.rotation.x = 0; // مستقرة على الأرض
+                        airplane.rotation.x = 0;
                     }
                 } else {
-                    // التحكم الطليق بعد الإقلاع الناجح
-                    if (keys.w) airplane.position.y += 0.4;
-                    if (keys.s) airplane.position.y -= 0.4;
+                    if (keys.w) airplane.position.y += 0.5;
+                    if (keys.s) airplane.position.y -= 0.5;
                     
-                    // منع الطائرة من الغوص تحت الأرض بعد الإقلاع
-                    if(airplane.position.y < -8) airplane.position.y = -8;
+                    if(airplane.position.y < -7) airplane.position.y = -7;
 
-                    // الدوران والميلان يميناً ويساراً
                     if (keys.a) { 
-                        airplane.position.x -= 0.6; 
-                        airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, 0.4, 0.1); 
+                        airplane.position.x -= 0.8; 
+                        airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, 0.45, 0.1); 
                     }
                     if (keys.d) { 
-                        airplane.position.x += 0.6; 
-                        airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, -0.4, 0.1); 
+                        airplane.position.x += 0.8; 
+                        airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, -0.45, 0.1); 
                     }
                     if (!keys.a && !keys.d) {
                         airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, 0, 0.1);
                     }
                 }
 
-                // الكاميرا تتبع الطائرة بسلاسة احترافية خلفها
+                // الكاميرا تتبع الطائرة بحجمها الجديد بمرونة سينمائية مذهلة
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, airplane.position.x, 0.08);
-                camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 4.5, 0.08);
-                camera.position.z = airplane.position.z + 24;
-                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 1, airplane.position.z - 30));
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 7.0, 0.08); // مرتفعة قليلاً لتكشف الطريق
+                camera.position.z = airplane.position.z + 42; // مسافة أبعد تناسب الحجم الكبير
+                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 2, airplane.position.z - 40));
 
-                // نظام إدارة وتغيير البيئات اللانهائي بناءً على المسافة المقطوعة
-                if (distanceTraveled > 2500 && currentEnv === 'desert') {
+                // تحديث موقع الإضاءة مع اللاعب لتحديث الظلال بسلاسة
+                sunLight.position.set(airplane.position.x + 200, airplane.position.y + 400, airplane.position.z + 200);
+
+                // إدارة البيئات الجمالية والانتقال بينها بناءً على المسافة المقطوعة
+                if (distanceTraveled > 3000 && currentEnv === 'desert') {
                     currentEnv = 'mountain';
-                    document.getElementById('env-text').innerText = "الجبال الصخرية ⛰️";
-                    scene.background.setHex(0x95a5a6);
-                    fog.color.setHex(0x95a5a6);
-                } else if (distanceTraveled > 5500 && currentEnv === 'mountain') {
+                    document.getElementById('env-text').innerText = "سلسلة الجبال الصخرية ⛰️";
+                    scene.background.setHex(0xa6b8c7);
+                    fog.color.setHex(0xa6b8c7);
+                } else if (distanceTraveled > 6500 && currentEnv === 'mountain') {
                     currentEnv = 'forest';
-                    document.getElementById('env-text').innerText = "الغابات الكثيفة 🌲";
-                    scene.background.setHex(0x7ed6df);
-                    fog.color.setHex(0x7ed6df);
+                    document.getElementById('env-text').innerText = "الغابات الاستوائية الكثيفة 🌲";
+                    scene.background.setHex(0x90e0ef);
+                    fog.color.setHex(0x90e0ef);
                 }
 
-                // توليد وإعادة تدوير الأرض أمام الطائرة باستمرار
+                // تدوير وتوليد الأرض الجديدة أمام اللاعب باستمرار
                 if (airplane.position.z < lastTerrainZ + 1500) {
                     lastTerrainZ -= 1000;
                     const activeColor = envColors[currentEnv];
                     createTerrainSegment(lastTerrainZ, activeColor);
                 }
 
-                // فحص الاصطدام بالحلقات وجمع النقاط
+                // فحص الحلقات وجمع النقاط وتوليد الجديد
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i];
+                    // تدوير الحلقات ببطء كحركة جمالية في السماء
+                    ring.rotation.y += 0.01;
+                    
                     const dist = airplane.position.distanceTo(ring.position);
 
-                    if (dist < 12 && Math.abs(airplane.position.z - ring.position.z) < 6) {
+                    if (dist < 18 && Math.abs(airplane.position.z - ring.position.z) < 8) { // زيادة نطاق الاصطدام ليناسب حجم الطائرة الكبير
                         scene.remove(ring);
                         rings.splice(i, 1);
                         score += 10;
                         document.getElementById('points').innerText = score;
                         
-                        // توليد حلقة جديدة في الأمام فوراً
                         const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
                         createRing(lowestZ - 150);
                     } 
-                    else if (airplane.position.z < ring.position.z - 50) {
+                    else if (airplane.position.z < ring.position.z - 80) {
                         scene.remove(ring);
                         rings.splice(i, 1);
                         const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
                         createRing(lowestZ - 150);
+                    }
+                }
+
+                // تنظيف كائنات البيئة القديمة التي أصبحت خلف الطائرة لتوفير رامات الكمبيوتر
+                for (let i = environmentObjects.length - 1; i >= 0; i--) {
+                    const obj = environmentObjects[i];
+                    if (obj.position.z > airplane.position.z + 100) {
+                        scene.remove(obj);
+                        environmentObjects.splice(i, 1);
                     }
                 }
             }
