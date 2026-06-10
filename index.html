@@ -68,7 +68,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 15; display: flex; flex-direction: column; justify-content: space-between;
             padding: 40px 20px 20px 20px; box-sizing: border-box;
-            background: radial-gradient(circle at top, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.6) 100%);
+            background: radial-gradient(circle at top, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.5) 100%);
             pointer-events: none;
         }
         .menu-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
@@ -77,10 +77,10 @@
 
         .menu-bottom { display: flex; flex-direction: column; align-items: center; width: 100%; pointer-events: auto; }
         
-        /* قائمة الطائرات المنزلقة (متجر الطائرات) */
+        /* قائمة الطائرات المنزلقة (متجر الطائرات السفلي) */
         .fleet-slider {
             display: flex; overflow-x: auto; gap: 12px; width: 100%; max-width: 600px;
-            padding: 12px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--panel-border);
+            padding: 12px; background: rgba(6, 11, 25, 0.85); border: 1px solid var(--panel-border);
             border-radius: 12px; backdrop-filter: blur(8px); margin-bottom: 20px; box-sizing: border-box;
             direction: rtl;
         }
@@ -88,12 +88,12 @@
         .fleet-slider::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 3px; }
         
         .plane-card {
-            flex: 0 0 auto; width: 130px; background: rgba(10, 15, 30, 0.8);
+            flex: 0 0 auto; width: 130px; background: rgba(255, 255, 255, 0.03);
             border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px;
             padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s;
         }
-        .plane-card.active { border-color: var(--neon-green); background: rgba(0, 255, 102, 0.1); box-shadow: 0 0 10px rgba(0, 255, 102, 0.2); }
-        .plane-card h4 { margin: 0 0 8px 0; font-size: 12px; color: #fff; line-height: 1.3; }
+        .plane-card.active { border-color: var(--neon-green); background: rgba(0, 255, 102, 0.12); box-shadow: 0 0 12px rgba(0, 255, 102, 0.3); }
+        .plane-card h4 { margin: 0 0 8px 0; font-size: 12px; color: #fff; line-height: 1.3; font-weight: 700; }
         .plane-price { font-size: 13px; font-weight: 900; }
 
         .start-btn { 
@@ -145,7 +145,7 @@
         <div class="menu-bottom">
             <div class="fleet-slider" id="fleet-slider"></div>
             
-            <button id="start-btn" class="start-btn" onclick="startGame()">إقلاع للطيران</button>
+            <button id="start-btn" class="start-btn" onclick="startGame()">إقلاع للطيران 🛫</button>
         </div>
     </div>
 
@@ -211,12 +211,13 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
 
+        // أسطول الطائرات المعروضة للشراء بأسعارها المحددة
         const fleet = [
-            { id: 0, type: 'passenger', name: 'ركاب كلاسيك بيضاء', unlockCost: 0, colorHex: null },
+            { id: 0, type: 'passenger', name: 'ركاب بيضاء', unlockCost: 0, colorHex: null },
             { id: 1, type: 'passenger', name: 'ركاب الجناح الأحمر', unlockCost: 30, colorHex: 0xff3333 },
             { id: 2, type: 'passenger', name: 'الصقر الأزرق النفاث', unlockCost: 60, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: 'زمردة الأجواء', unlockCost: 100, colorHex: 0x2ecc71 },
-            { id: 4, type: 'fighter', name: 'مقاتلة الاعتراض', unlockCost: 200, colorHex: null },
+            { id: 3, type: 'passenger', name: 'زمردة الأجواء الخضراء', unlockCost: 100, colorHex: 0x2ecc71 },
+            { id: 4, type: 'fighter', name: 'مقاتلة الاعتراض F16', unlockCost: 200, colorHex: null },
             { id: 5, type: 'fighter', name: 'شبح التخفي السوداء', unlockCost: 280, colorHex: 0x111111 }
         ];
         let currentSelectionIndex = 0;
@@ -249,10 +250,10 @@
         }
         createTerrainSegment(0, true); createTerrainSegment(-1000, true); createTerrainSegment(-2000, true); createTerrainSegment(-3000, true);
 
-        // وظيفة تغليف الموديل لضمان توجيه المقدمة للأمام (عكس اتجاه الكاميرا) بشكل افتراضي
+        // الحاوية البرمجية لضمان توجيه الطائرة الصحيح للأمام (-Z) دون التأثير على الفيزياء
         function wrapModelForward(modelMesh, scale) {
             const group = new THREE.Group();
-            modelMesh.rotation.y = Math.PI; // تدوير الموديل 180 درجة ليواجه الأمام (-Z)
+            modelMesh.rotation.y = 0; // ضبط الزاوية الافتراضية لتطير للأمام دائماً
             group.add(modelMesh);
             group.scale.set(scale, scale, scale);
             return group;
@@ -285,7 +286,7 @@
             }
         }
 
-        // بناء قائمة الطائرات السفلية
+        // إنشاء وعرض كروت الطائرات بأسعارها وحالتها في السلايدر السفلي
         function buildFleetUI() {
             const slider = document.getElementById('fleet-slider');
             slider.innerHTML = '';
@@ -316,9 +317,11 @@
 
             if (totalPoints >= planeData.unlockCost) {
                 startBtn.disabled = false;
+                startBtn.style.background = "linear-gradient(90deg, #00d2ff, #0056b3)";
                 startBtn.innerText = "إقلاع للطيران 🛫";
             } else {
                 startBtn.disabled = true;
+                startBtn.style.background = "#3d434e";
                 startBtn.innerText = "رصيد غير كافٍ 🔒";
             }
             renderPlaneInMenu(planeData);
@@ -336,14 +339,13 @@
                 });
             }
             currentActiveAirplane.position.set(0, -5, 0); 
-            // التوجيه تم معالجته مسبقاً في دالة wrapModelForward
             scene.add(currentActiveAirplane);
         }
 
-        // وضع الكاميرا خلف الطائرة لتظهر المقدمة متجهة للأمام نحو المدرج
+        // وضع الكاميرا في شاشة القائمة أمام الطائرة لعرض مقدمتها بشكل سينمائي ممتاز
         function positionCameraForMenu() {
-            camera.position.set(0, 8, 25);
-            camera.lookAt(0, -2, -20);
+            camera.position.set(25, 5, -35);
+            camera.lookAt(0, -2, 0);
         }
 
         function createRing(zPos) {
@@ -431,13 +433,15 @@
         function animate() {
             requestAnimationFrame(animate);
 
+            // استعراض حي لمقدمة الطائرة وجسمها في شاشة البداية
             if (!isPlaying && currentActiveAirplane) {
-                // حركة كاميرا خفيفة وواقعية في شاشة البداية لتظهر الطائرة من الخلف ومقدمتها للأمام
-                camera.position.x = Math.sin(Date.now() * 0.001) * 2; 
-                camera.position.y = 8 + Math.sin(Date.now() * 0.0015) * 1; 
-                camera.lookAt(0, -2, -30);
+                camera.position.x = Math.sin(Date.now() * 0.0004) * 25;
+                camera.position.z = -32 + Math.cos(Date.now() * 0.0004) * 12;
+                camera.position.y = 5 + Math.sin(Date.now() * 0.0005) * 1.5;
+                camera.lookAt(0, -3, 0);
             }
 
+            // طور اللعب الفعلي للأمام
             if (isPlaying && currentActiveAirplane) {
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
                 let speedMultiplier = keys.space ? (isFighter ? 20.0 : 16.0) : (isFighter ? 12.0 : 9.0);
@@ -445,6 +449,7 @@
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.05;
                 if (engineOsc) engineOsc.frequency.setTargetAtTime(keys.space ? 120 : 70, audioCtx.currentTime, 0.1);
 
+                // الطائرة تطير للأمام باتجاه عمق المحاكاة
                 currentActiveAirplane.position.z -= currentSpeed;
 
                 document.getElementById('dash-speed').innerText = (currentSpeed * 22).toFixed(0);
@@ -462,6 +467,7 @@
                 currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, inputY * 0.3, 0.1);
                 currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.6 * inputX, 0.1);
 
+                // ملاحقة وتتبع الكاميرا الخلفي أثناء الطيران
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.1);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 10, 0.1);
                 camera.position.z = currentActiveAirplane.position.z + 40; 
