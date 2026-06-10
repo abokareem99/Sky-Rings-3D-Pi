@@ -20,6 +20,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
@@ -31,7 +32,7 @@
     
     <div id="touch-hint">قم بإمالة الهاتف أو استخدم عصا التحكم للتوجيه ✈️</div>
     <button id="start-btn" onclick="startGame()">إقلاع وبدء اللعب</button>
-    <div id="loading">جاري تحميل الطائرة...</div>
+    <div id="loading">جاري تحميل وفك تشفير الطائرة...</div>
     
     <div id="joystick-base"><div id="joystick-stick"></div></div>
     
@@ -88,36 +89,41 @@
         let targetRotationZ = 0;
         const rings = [];
 
-        // تحميل الطائرة وضبط اتجاه الحركة والأبعاد التلقائية
+        // إعداد الـ GLTFLoader ودعمه بـ DRACOLoader لفك الضغط تلقائياً
         document.getElementById('loading').style.display = 'block';
         const loader = new THREE.GLTFLoader();
-        loader.load('airplane.glb_', 
+        const dracoLoader = new THREE.DRACOLoader();
+        // جلب أدوات فك التشفير من خوادم جوجل الرسمية لسرعة الأداء
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.4.1/');
+        loader.setDRACOLoader(dracoLoader);
+
+        // تحميل الطائرة باستخدام المسار النسبي المباشر الصريح
+        loader.load('./airplane.glb_', 
             (gltf) => {
                 airplane = gltf.scene;
                 
-                // تعيين الحجم المباشر المتوافق مع أبعاد المجسم المرفوع
+                // تعيين الحجم والموقع المناسبين في الفضاء ثلاثي الأبعاد
                 airplane.scale.set(5.0, 5.0, 5.0);
                 airplane.position.set(0, 0, 0);
-                
-                // تصحيح اتجاه الطائرة الافتراضي لتنظر للأمام مباشرة باتجاه الحلقات
                 airplane.rotation.set(0, 0, 0);
                 
                 scene.add(airplane);
                 document.getElementById('loading').style.display = 'none';
                 
-                // ضبط موضع الكاميرا الأولي خلف الطائرة مباشرة
+                // وضع الكاميرا خلف مجسم الطائرة
                 camera.position.set(0, 8, 25);
                 camera.lookAt(airplane.position);
+                console.log("تم تحميل الطائرة وفك تشفيرها بنجاح!");
             }, 
             undefined, 
             (error) => {
-                console.error('خطأ في تحميل الطائرة:', error);
-                document.getElementById('loading').innerText = "خطأ في قراءة ملف المجسم";
+                console.error('تفاصيل خطأ التحميل الحقيقية في المتصفح:', error);
+                document.getElementById('loading').innerText = "خطأ في قراءة ملف المجسم. يرجى مراجعة الـ Console.";
             }
         );
 
         // ==========================================
-        // 4. توليد الحلقات (Rings) في الاتجاه السلبي للمحور Z
+        // 4. توليد الحلقات (Rings)
         // ==========================================
         function createRing(zPos) {
             const geometry = new THREE.TorusGeometry(10, 0.9, 16, 50);
@@ -133,7 +139,7 @@
             rings.push(ring);
         }
 
-        // توزيع الحلقات أمام الطائرة في المسار الممتد سالب Z
+        // توزيع الحلقات
         for (let i = 1; i <= 25; i++) {
             createRing(-i * 120);
         }
@@ -211,43 +217,36 @@
         }
 
         // ==========================================
-        // 6. حلقة الفيزياء والمحاكاة الحركة للأمام (-Z)
+        // 6. حلقة الفيزياء ومحاكاة الحركة
         // ==========================================
         function animate() {
             requestAnimationFrame(animate);
 
             if (isPlaying && airplane) {
-                // تدوير الطائرة بسلاسة بناء على المدخلات
                 airplane.rotation.x += (targetRotationX - airplane.rotation.x) * 0.1;
                 airplane.rotation.z += (targetRotationZ - airplane.rotation.z) * 0.1;
                 airplane.rotation.y += targetRotationZ * 0.02;
 
-                // تحريك الطائرة للأمام بشكل مباشر في الفضاء العالمي لضمان التوجه الصحيح نحو الحلقات
                 airplane.translateZ(-speed);
 
-                // الكاميرا تتبع الطائرة بنعومة فائقة من الخلف والارتفاع المناسب للمشهد
                 const relativeCameraOffset = new THREE.Vector3(0, 6, 25);
                 const cameraPosition = relativeCameraOffset.applyMatrix4(airplane.matrixWorld);
                 camera.position.lerp(cameraPosition, 0.1);
                 camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 2, airplane.position.z - 20));
 
-                // فحص الاصطدامات وتدمير الحلقات الخلفية
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i];
                     const distance = airplane.position.distanceTo(ring.position);
 
-                    // معيار الاصطدام الدقيق بداخل قطر الحلقة الافتراضي
                     if (distance < 14 && Math.abs(airplane.position.z - ring.position.z) < 6) {
                         scene.remove(ring);
                         rings.splice(i, 1);
                         score += 10;
                         document.getElementById('points').innerText = score;
                         
-                        // إضافة حلقة جديدة في مدى بعيد مستقبلي للمسار
                         const furthestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
                         createRing(furthestZ - 120);
                     } 
-                    // تدمير الحلقات إذا تجاوزتها الطائرة للخلف لمنع استهلاك الذاكرة
                     else if (airplane.position.z < ring.position.z - 40) {
                         scene.remove(ring);
                         rings.splice(i, 1);
