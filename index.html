@@ -65,14 +65,14 @@
         // ==========================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb);
-        scene.fog = new THREE.Fog(0x87ceeb, 100, 800); // إضافة ضباب ليعطي عمق للرؤية
+        scene.fog = new THREE.Fog(0x87ceeb, 100, 1000);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
         dirLight.position.set(50, 100, 50);
         scene.add(dirLight);
@@ -83,42 +83,49 @@
         let airplane = null;
         let isPlaying = false;
         let score = 0;
-        let speed = 1.0;
+        let speed = 1.5; 
         let targetRotationX = 0;
         let targetRotationZ = 0;
         const rings = [];
 
-        // تحميل الطائرة
+        // تحميل الطائرة وضبط اتجاه الحركة والأبعاد التلقائية
         document.getElementById('loading').style.display = 'block';
         const loader = new THREE.GLTFLoader();
-        loader.load('airplane.glb', 
+        loader.load('airplane.glb_', 
             (gltf) => {
                 airplane = gltf.scene;
-                airplane.scale.set(0.6, 0.6, 0.6);
+                
+                // تعيين الحجم المباشر المتوافق مع أبعاد المجسم المرفوع
+                airplane.scale.set(5.0, 5.0, 5.0);
                 airplane.position.set(0, 0, 0);
-                // تدوير الطائرة لتواجه الاتجاه الصحيح إذا لزم الأمر
-                airplane.rotation.y = Math.PI; 
+                
+                // تصحيح اتجاه الطائرة الافتراضي لتنظر للأمام مباشرة باتجاه الحلقات
+                airplane.rotation.set(0, 0, 0);
+                
                 scene.add(airplane);
                 document.getElementById('loading').style.display = 'none';
+                
+                // ضبط موضع الكاميرا الأولي خلف الطائرة مباشرة
+                camera.position.set(0, 8, 25);
+                camera.lookAt(airplane.position);
             }, 
             undefined, 
             (error) => {
                 console.error('خطأ في تحميل الطائرة:', error);
-                document.getElementById('loading').innerText = "خطأ: تأكد من وجود ملف airplane.glb";
+                document.getElementById('loading').innerText = "خطأ في قراءة ملف المجسم";
             }
         );
 
         // ==========================================
-        // 4. توليد الحلقات (Rings)
+        // 4. توليد الحلقات (Rings) في الاتجاه السلبي للمحور Z
         // ==========================================
         function createRing(zPos) {
-            const geometry = new THREE.TorusGeometry(8, 0.8, 16, 50);
-            const material = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide });
+            const geometry = new THREE.TorusGeometry(10, 0.9, 16, 50);
+            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.3, metalness: 0.8 });
             const ring = new THREE.Mesh(geometry, material);
             
-            // مواقع عشوائية للحلقات
             ring.position.set(
-                (Math.random() - 0.5) * 80, 
+                (Math.random() - 0.5) * 100, 
                 (Math.random() - 0.5) * 60, 
                 zPos
             );
@@ -126,24 +133,22 @@
             rings.push(ring);
         }
 
-        // إنشاء الحلقات المبدئية
-        for (let i = 1; i <= 20; i++) {
-            createRing(-i * 100);
+        // توزيع الحلقات أمام الطائرة في المسار الممتد سالب Z
+        for (let i = 1; i <= 25; i++) {
+            createRing(-i * 120);
         }
 
         // ==========================================
-        // 5. التحكم باللعبة (الجيروسكوب والأزرار)
+        // 5. التحكم باللعبة (الجيروسكوب وعصا التحكم)
         // ==========================================
-        // أزرار السرعة
         const btnSpeed = document.getElementById('btn-speed');
         const btnBrake = document.getElementById('btn-brake');
         
-        btnSpeed.addEventListener('touchstart', () => speed = 2.5);
-        btnSpeed.addEventListener('touchend', () => speed = 1.0);
-        btnBrake.addEventListener('touchstart', () => speed = 0.3);
-        btnBrake.addEventListener('touchend', () => speed = 1.0);
+        btnSpeed.addEventListener('touchstart', () => speed = 3.5);
+        btnSpeed.addEventListener('touchend', () => speed = 1.5);
+        btnBrake.addEventListener('touchstart', () => speed = 0.5);
+        btnBrake.addEventListener('touchend', () => speed = 1.5);
 
-        // عصا التحكم (Joystick) كبديل
         const joystickBase = document.getElementById('joystick-base');
         const joystickStick = document.getElementById('joystick-stick');
         let isDragging = false;
@@ -168,9 +173,8 @@
             
             joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
             
-            // تحويل الحركة إلى دوران للطائرة
-            targetRotationZ = (deltaX / maxRadius) * 0.8;
-            targetRotationX = (deltaY / maxRadius) * 0.8;
+            targetRotationZ = -(deltaX / maxRadius) * 0.6;
+            targetRotationX = -(deltaY / maxRadius) * 0.5;
         });
         joystickBase.addEventListener('touchend', () => {
             isDragging = false;
@@ -179,27 +183,22 @@
             targetRotationZ = 0;
         });
 
-        // المستشعرات (Gyroscope) لتمييل الهاتف
         function handleOrientation(event) {
-            if (!isPlaying || isDragging) return; // تعطيل الجيروسكوب إذا كان اللاعب يستخدم العصا
-            
-            let pitch = event.beta;  // الانحناء للأمام/الخلف
-            let roll = event.gamma;  // الميل لليمين/اليسار
+            if (!isPlaying || isDragging) return;
+            let pitch = event.beta; 
+            let roll = event.gamma; 
 
-            // تحجيم القيم لتناسب حركة الطائرة
             if (pitch !== null && roll !== null) {
-                targetRotationX = THREE.MathUtils.clamp((pitch - 45) * 0.02, -0.8, 0.8);
-                targetRotationZ = THREE.MathUtils.clamp(roll * 0.02, -0.8, 0.8);
+                targetRotationX = THREE.MathUtils.clamp(-(pitch - 45) * 0.02, -0.6, 0.6);
+                targetRotationZ = THREE.MathUtils.clamp(-roll * 0.02, -0.7, 0.7);
             }
         }
 
         function startGame() {
-            if (!airplane) return; // لا تبدأ إذا لم تحمل الطائرة
-            
+            if (!airplane) return;
             document.getElementById('start-btn').style.display = 'none';
             isPlaying = true;
 
-            // طلب صلاحية الجيروسكوب لأنظمة iOS 13+ إن وجدت
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(permissionState => {
                     if (permissionState === 'granted') {
@@ -212,50 +211,48 @@
         }
 
         // ==========================================
-        // 6. حلقة الرسم والفيزياء (Animation Loop)
+        // 6. حلقة الفيزياء والمحاكاة الحركة للأمام (-Z)
         // ==========================================
         function animate() {
             requestAnimationFrame(animate);
 
             if (isPlaying && airplane) {
-                // 1. تحديث دوران الطائرة بنعومة
+                // تدوير الطائرة بسلاسة بناء على المدخلات
                 airplane.rotation.x += (targetRotationX - airplane.rotation.x) * 0.1;
                 airplane.rotation.z += (targetRotationZ - airplane.rotation.z) * 0.1;
-                
-                // إضافة ميلان الطائرة لليسار/اليمين للمحور Y للدوران الفعلي
-                airplane.rotation.y -= targetRotationZ * 0.05;
+                airplane.rotation.y += targetRotationZ * 0.02;
 
-                // 2. حركة الطائرة للأمام بناءً على اتجاهها
-                airplane.translateZ(speed); // تحرك في اتجاه المحور Z المحلي للطائرة
+                // تحريك الطائرة للأمام بشكل مباشر في الفضاء العالمي لضمان التوجه الصحيح نحو الحلقات
+                airplane.translateZ(-speed);
 
-                // 3. تحديث موقع الكاميرا لتتبع الطائرة بسلاسة
-                const cameraOffset = new THREE.Vector3(0, 10, -35); // الكاميرا خلف الطائرة
-                const cameraTarget = cameraOffset.applyMatrix4(airplane.matrixWorld);
-                camera.position.lerp(cameraTarget, 0.1);
-                camera.lookAt(airplane.position);
+                // الكاميرا تتبع الطائرة بنعومة فائقة من الخلف والارتفاع المناسب للمشهد
+                const relativeCameraOffset = new THREE.Vector3(0, 6, 25);
+                const cameraPosition = relativeCameraOffset.applyMatrix4(airplane.matrixWorld);
+                camera.position.lerp(cameraPosition, 0.1);
+                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 2, airplane.position.z - 20));
 
-                // 4. التحقق من الاصطدام بالحلقات
+                // فحص الاصطدامات وتدمير الحلقات الخلفية
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i];
-                    
-                    // حساب المسافة بين الطائرة والحلقة
                     const distance = airplane.position.distanceTo(ring.position);
 
-                    // إذا مرت الطائرة من داخل الحلقة
-                    if (distance < 15 && Math.abs(airplane.position.z - ring.position.z) < 5) {
+                    // معيار الاصطدام الدقيق بداخل قطر الحلقة الافتراضي
+                    if (distance < 14 && Math.abs(airplane.position.z - ring.position.z) < 6) {
                         scene.remove(ring);
                         rings.splice(i, 1);
                         score += 10;
                         document.getElementById('points').innerText = score;
                         
-                        // توليد حلقة جديدة في الأمام
-                        createRing(airplane.position.z + 2000); 
+                        // إضافة حلقة جديدة في مدى بعيد مستقبلي للمسار
+                        const furthestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
+                        createRing(furthestZ - 120);
                     } 
-                    // إذا تجاوزت الطائرة الحلقة دون أن تعبرها
-                    else if (airplane.position.z > ring.position.z + 50) {
+                    // تدمير الحلقات إذا تجاوزتها الطائرة للخلف لمنع استهلاك الذاكرة
+                    else if (airplane.position.z < ring.position.z - 40) {
                         scene.remove(ring);
                         rings.splice(i, 1);
-                        createRing(airplane.position.z + 2000);
+                        const furthestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
+                        createRing(furthestZ - 120);
                     }
                 }
             }
@@ -264,7 +261,6 @@
         }
         animate();
 
-        // تحديث الأبعاد عند تدوير الشاشة
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
