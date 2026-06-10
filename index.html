@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران - مرآب الطائرات</title>
+    <title>محاكي الطيران المتقدم - الحظيرة الرقمية</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3498db;
+            --primary: #00d2ff;
             --secondary: #2ecc71;
-            --accent: #e67e22;
-            --danger: #e74c3c;
-            --bg-glass: rgba(15, 23, 42, 0.65);
-            --border-glass: rgba(255, 255, 255, 0.15);
+            --accent: #ff9f43;
+            --danger: #ff4757;
+            --bg-glass: rgba(10, 15, 30, 0.75);
+            --border-glass: rgba(0, 210, 255, 0.2);
         }
 
         body { 
             margin: 0; 
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #0f172a; 
+            background-color: #050814; 
             user-select: none;
             -webkit-user-select: none;
         }
         
-        /* واجهة اللعب (HUD) */
+        /* واجهة اللعب العليا (HUD) */
         #hud-container {
             position: absolute;
             top: 20px;
@@ -38,125 +38,124 @@
 
         .glass-panel {
             background: var(--bg-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 210, 255, 0.1);
         }
 
         .hud-card {
             color: #ffffff; 
-            font-size: 20px; 
+            font-size: 18px; 
             font-weight: 700; 
-            padding: 12px 24px; 
+            padding: 10px 20px; 
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        #time-card { color: #ff7675; }
-        #score-card { color: #ffeaa7; font-size: 24px; }
+        #time-card { color: #ff4757; border-color: rgba(255, 71, 87, 0.3); }
+        #score-card { color: #ffd32a; font-size: 22px; border-color: rgba(255, 211, 42, 0.3); }
         #total-score-card { 
-            color: #81ecec; 
-            font-size: 16px; 
-            margin-top: 8px; 
-            padding: 8px 16px;
+            color: #00d2ff; 
+            font-size: 14px; 
+            margin-top: 6px; 
+            padding: 6px 14px;
             display: inline-block;
         }
 
-        /* شاشات البداية والنهاية */
+        /* شاشات الواجهة الأوفرلاي */
         .overlay-mask { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.8); 
-            backdrop-filter: blur(8px);
+            background: radial-gradient(circle at center, rgba(5, 8, 20, 0.4) 0%, rgba(5, 8, 20, 0.85) 100%);
+            backdrop-filter: blur(4px);
             z-index: 15; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             color: white; text-align: center; 
         }
 
         .main-title {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 900;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #00d2ff 0%, #3a7bd5 100%);
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #00d2ff 0%, #00e676 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0px 4px 20px rgba(58, 123, 213, 0.4);
+            filter: drop-shadow(0px 4px 15px rgba(0, 210, 255, 0.3));
         }
 
-        .subtitle { font-size: 1.2rem; color: #bdc3c7; margin-bottom: 30px; }
+        .subtitle { font-size: 1.1rem; color: #a4b0be; margin-bottom: 25px; }
 
-        /* الأزرار */
+        /* الأزرار الاحترافية */
         .main-btn { 
-            padding: 16px 40px; 
-            font-size: 22px; 
+            padding: 14px 45px; 
+            font-size: 20px; 
             font-family: 'Cairo', sans-serif;
             font-weight: 700; 
-            background: linear-gradient(135deg, var(--primary), #2980b9); 
+            background: linear-gradient(135deg, #00d2ff, #0056b3); 
             color: white; 
             border: none; 
             border-radius: 50px; 
             cursor: pointer; 
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3); 
-            transition: all 0.3s ease; 
-            margin-top: 25px; 
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            margin-top: 20px; 
         }
-        .main-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(52, 152, 219, 0.5); }
-        .main-btn:active { transform: translateY(1px); }
-        .main-btn:disabled { background: #7f8c8d; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
+        .main-btn:hover { transform: scale(1.05); box-shadow: 0 12px 30px rgba(0, 210, 255, 0.6); }
+        .main-btn:active { transform: scale(0.98); }
+        .main-btn:disabled { background: #57606f; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.5; }
         
-        /* معرض الطائرات */
+        /* معرض اختيار الطائرات */
         #shop-carousel { 
-            display: flex; align-items: center; justify-content: center; gap: 25px; 
-            padding: 25px 40px; 
-            width: 400px;
+            display: flex; align-items: center; justify-content: center; gap: 20px; 
+            padding: 20px 30px; 
+            width: 380px;
             max-width: 90vw;
+            border: 1px solid rgba(0, 210, 255, 0.3);
         }
         .carousel-btn { 
-            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); 
-            width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; 
-            transition: 0.3s; 
-            display: flex; justify-content: center; align-items: center;
+            background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.3); 
+            width: 45px; height: 45px; border-radius: 50%; font-size: 18px; cursor: pointer; 
+            transition: 0.2s; display: flex; justify-content: center; align-items: center;
         }
-        .carousel-btn:hover { background: var(--primary); border-color: var(--primary); }
+        .carousel-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
         .plane-info { flex-grow: 1; }
-        .plane-name { font-size: 24px; color: #00d2ff; margin: 0 0 8px 0; font-weight: 700; }
-        .plane-status { font-size: 16px; font-weight: 700; margin: 0; }
+        .plane-name { font-size: 22px; color: #ffffff; margin: 0 0 5px 0; font-weight: 700; text-shadow: 0 2px 8px rgba(0,210,255,0.4); }
+        .plane-status { font-size: 15px; font-weight: 700; margin: 0; }
 
-        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 28px; font-weight: 700; z-index: 20; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00d2ff; font-size: 24px; font-weight: 700; z-index: 20; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
 
-        /* ضوابط اللمس للهواتف (عصا التحكم وزر السرعة) */
+        /* عناصر التحكم باللمس المتقدمة للهواتف */
         #touch-controls { display: none; }
         #joystick-zone {
-            position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
-            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15);
+            position: absolute; bottom: 40px; left: 40px; width: 130px; height: 130px;
+            background: rgba(0, 210, 255, 0.03); border: 2px solid rgba(0, 210, 255, 0.2);
             border-radius: 50%; z-index: 100; backdrop-filter: blur(4px);
+            box-shadow: inset 0 0 20px rgba(0,210,255,0.1);
         }
         #joystick-knob {
-            position: absolute; top: 35px; left: 35px; width: 70px; height: 70px;
-            background: rgba(52, 152, 219, 0.7); border-radius: 50%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); transform: translate(0px, 0px);
-            pointer-events: none; transition: transform 0.05s linear;
+            position: absolute; top: 35px; left: 35px; width: 60px; height: 60px;
+            background: linear-gradient(135deg, #00d2ff, #0056b3); border-radius: 50%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 10px rgba(0,210,255,0.5); 
+            transform: translate(0px, 0px); pointer-events: none;
         }
         #speed-btn {
-            position: absolute; bottom: 55px; right: 40px; width: 90px; height: 90px;
-            background: rgba(230, 126, 34, 0.7); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
-            color: white; font-weight: 900; font-family: 'Cairo', sans-serif; font-size: 20px;
-            z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: absolute; bottom: 50px; right: 40px; width: 85px; height: 85px;
+            background: linear-gradient(135deg, #ff9f43, #ff4757); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+            color: white; font-weight: 900; font-family: 'Cairo', sans-serif; font-size: 18px;
+            z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 6px 20px rgba(255,71,87,0.4);
             display: flex; justify-content: center; align-items: center; cursor: pointer;
-            user-select: none; -webkit-user-select: none;
         }
-        #speed-btn:active { background: rgba(211, 84, 0, 0.9); transform: scale(0.95); }
 
         @media (max-width: 768px) {
             #touch-controls { display: block; }
-            .main-title { font-size: 2.2rem; }
-            #shop-carousel { width: 300px; padding: 15px; }
+            .main-title { font-size: 2rem; }
+            #shop-carousel { width: 280px; padding: 12px; }
             .plane-name { font-size: 18px; }
-            #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
-            #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
-            #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 20px; font-size: 16px; }
+            #joystick-zone { width: 110px; height: 110px; bottom: 30px; left: 30px; }
+            #joystick-knob { width: 50px; height: 50px; top: 30px; left: 30px; }
+            #speed-btn { width: 75px; height: 75px; bottom: 40px; right: 30px; font-size: 15px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -179,38 +178,38 @@
         <div id="speed-btn">تيربو 🚀</div>
     </div>
 
-    <div id="loading">جاري إعداد المدرج...</div>
+    <div id="loading">جاري تهيئة الأنظمة وتجهيز الحظيرة...</div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <h1 class="main-title">محاكي الطيران المتقدم ✈️</h1>
-        <p class="subtitle">اجمع الحلقات الذهبية لزيادة رصيدك وفتح طائرات جديدة!</p>
+        <p class="subtitle">قم بإدارة أسطولك واجمع الحلقات الذهبية لترقية الطائرات</p>
         
         <div id="shop-carousel" class="glass-panel">
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
+                <h3 id="cp-name" class="plane-name">جاري الفحص...</h3>
                 <p id="cp-status" class="plane-status">-</p>
             </div>
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
         </div>
 
-        <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع</button>
+        <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع من الحظيرة</button>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
-        <h1 class="main-title" style="background: linear-gradient(45deg, #ff416c, #ff4b2b); -webkit-background-clip: text;">انتهى الوقت! ⏱️</h1>
-        <p class="subtitle">لقد نفد الوقود.</p>
-        <div class="glass-panel" style="padding: 20px 40px; margin-bottom: 20px;">
-            <h2 style="font-size: 24px; color: #f1c40f; margin: 0;">نقاط هذه الجولة: <span id="final-score" style="font-size: 32px;">0</span></h2>
+        <h1 class="main-title" style="background: linear-gradient(45deg, #ff4757, #ff6b81); -webkit-background-clip: text;">انتهت الجولة! ⏱️</h1>
+        <p class="subtitle">لقد نفد الوقود العضوي للطائرة.</p>
+        <div class="glass-panel" style="padding: 15px 35px; margin-bottom: 20px; border-color: rgba(255,71,87,0.4)">
+            <h2 style="font-size: 22px; color: #ffd32a; margin: 0;">النقاط المكتسبة: <span id="final-score" style="font-size: 30px;">0</span></h2>
         </div>
-        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60);" onclick="restartGame()">العودة للمرآب 🔄</button>
+        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #218c74); box-shadow: 0 8px 25px rgba(46,204,113,0.4);" onclick="restartGame()">العودة للحظيرة 🔄</button>
     </div>
 
     <script>
-        // إعداد المشهد
+        // إعداد المشهد الأساسي والإضاءة والضباب المتطور
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xa3d2f7);
-        const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
+        scene.background = new THREE.Color(0x0a1128);
+        const fog = new THREE.FogExp2(0x0a1128, 0.0006);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -221,12 +220,14 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        sunLight.position.set(300, 500, 200);
+        // إضاءة عامة محسنة وأضواء كاشفة سينمائية
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const sunLight = new THREE.DirectionalLight(0x00d2ff, 1.2);
+        sunLight.position.set(200, 400, 200);
         sunLight.castShadow = true;
         scene.add(sunLight);
 
+        // متغيرات اللعبة وحفظ البيانات المحلية
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
 
@@ -238,40 +239,42 @@
         let hasTakenOff = false;
         let score = 0;
         let timeLeft = 30;
-        let currentSpeed = 1.5;
+        let currentSpeed = 3.0; // تم رفع السرعة المبدئية
         let timerInterval = null;
         const rings = [];
         const environmentObjects = [];
+        const hangarGroup = new THREE.Group();
+        scene.add(hangarGroup);
         
-        // المتغيرات الخاصة بالكيبورد وعصا التحكم
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
 
+        // أسطول الطائرات المتاحة
         const fleet = [
-            { id: 0, type: 'passenger', name: '✈️ طائرة ركاب (بيضاء)', unlockCost: 0, colorHex: null },
-            { id: 1, type: 'passenger', name: '✈️ طائرة ركاب (حمراء)', unlockCost: 50, colorHex: 0xff3333 },
-            { id: 2, type: 'passenger', name: '✈️ طائرة ركاب (زرقاء)', unlockCost: 100, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: '✈️ طائرة ركاب (خضراء)', unlockCost: 150, colorHex: 0x33ff33 },
-            { id: 4, type: 'passenger', name: '✈️ طائرة ركاب (ذهبية)', unlockCost: 200, colorHex: 0xffd700 },
-            { id: 5, type: 'fighter', name: '🚀 مقاتلة (رمادية)', unlockCost: 300, colorHex: null },
-            { id: 6, type: 'fighter', name: '🚀 مقاتلة (شبح سوداء)', unlockCost: 400, colorHex: 0x222222 },
-            { id: 7, type: 'fighter', name: '🚀 مقاتلة (صحراوية)', unlockCost: 500, colorHex: 0xcc9955 },
-            { id: 8, type: 'fighter', name: '🚀 مقاتلة (بحرية)', unlockCost: 600, colorHex: 0x003366 },
-            { id: 9, type: 'fighter', name: '🚀 مقاتلة (أوميجا حمراء)', unlockCost: 750, colorHex: 0x8b0000 }
+            { id: 0, type: 'passenger', name: '✈️ ركاب كلاسيك بيضاء', unlockCost: 0, colorHex: null },
+            { id: 1, type: 'passenger', name: '✈️ ركاب الجناح الأحمر', unlockCost: 30, colorHex: 0xff3333 },
+            { id: 2, type: 'passenger', name: '✈️ الصقر الأزرق النفاث', unlockCost: 60, colorHex: 0x3366ff },
+            { id: 3, type: 'passenger', name: '✈️ زمردة الأجواء الخضراء', unlockCost: 100, colorHex: 0x2ecc71 },
+            { id: 4, type: 'passenger', name: '✈️ الإمبراطور الذهبي الملكي', unlockCost: 150, colorHex: 0xf1c40f },
+            { id: 5, type: 'fighter', name: '🚀 مقاتلة الاعتراض العسكري', unlockCost: 200, colorHex: null },
+            { id: 6, type: 'fighter', name: '🚀 شبح التخفي السوداء Stealth', unlockCost: 280, colorHex: 0x111111 },
+            { id: 7, type: 'fighter', name: '🚀 مقاتلة العاصفة الرملية', unlockCost: 350, colorHex: 0xe67e22 },
+            { id: 8, type: 'fighter', name: '🚀 نسر المارينز البحري الأدكن', unlockCost: 450, colorHex: 0x130f40 },
+            { id: 9, type: 'fighter', name: '🚀 أوميجا الفضاء الهجومية Red', unlockCost: 600, colorHex: 0xd63031 }
         ];
         let currentSelectionIndex = 0;
 
-        // إعداد الصوت
+        // توليد صوت المحرك النفاث ديناميكياً عبر Web Audio API
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             engineOsc = audioCtx.createOscillator(); engineOsc2 = audioCtx.createOscillator();
             engineFilter = audioCtx.createBiquadFilter(); engineGain = audioCtx.createGain();
-            engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(45, audioCtx.currentTime); 
-            engineOsc2.type = 'triangle'; engineOsc2.frequency.setValueAtTime(90, audioCtx.currentTime); 
-            engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(200, audioCtx.currentTime);
-            engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime); 
+            engineOsc2.type = 'triangle'; engineOsc2.frequency.setValueAtTime(110, audioCtx.currentTime); 
+            engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+            engineGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter);
             engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
             engineOsc.start(); engineOsc2.start();
@@ -280,102 +283,160 @@
         function updateEngineSound(speedUp) {
             if (!engineOsc) return;
             let isFighter = fleet[currentSelectionIndex].type === 'fighter';
-            let baseFreq = isFighter ? 60 : 45;
-            const targetFreq = speedUp ? (baseFreq + 35) : baseFreq;
-            const targetFilter = speedUp ? 500 : 200;
-            engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.2);
-            engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.3);
+            let baseFreq = isFighter ? 75 : 55;
+            const targetFreq = speedUp ? (baseFreq + 45) : baseFreq;
+            const targetFilter = speedUp ? 600 : 250;
+            engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.15);
+            engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.2);
         }
 
         function stopEngineSound() { if(audioCtx) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-        // البيئة والتضاريس
+        // بناء حظيرة الطائرات ثلاثية الأبعاد (3D Hangar Layout)
+        function build3DHangar() {
+            hangarGroup.clear();
+            
+            const hangarWidth = 140; const hangarHeight = 80; const hangarLength = 180;
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.4, metalness: 0.7, side: THREE.BackSide });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x2f3640, roughness: 0.15, metalness: 0.8 });
+            
+            // هيكل الحظيرة الأساسي (صندوق داخلي)
+            const boxGeo = new THREE.BoxGeometry(hangarWidth, hangarHeight, hangarLength);
+            const structure = new THREE.Mesh(boxGeo, wallMat);
+            structure.position.set(0, hangarHeight/2 - 10, 300);
+            structure.receiveShadow = true;
+            hangarGroup.add(structure);
+
+            // أرضية منفصلة لامعة لإضافة خطوط الأمان والمدرج الداخلي
+            const floorGeo = new THREE.PlaneGeometry(hangarWidth, hangarLength);
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(0, -9.9, 300);
+            floor.receiveShadow = true;
+            hangarGroup.add(floor);
+
+            // أضواء النيون السقفية وخطوط التحذير الصفراء بالحظيرة
+            for(let i = -2; i <= 2; i++) {
+                const lineGeo = new THREE.BoxGeometry(2, 0.1, hangarLength);
+                const lineMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.position.set(i * 30, -9.85, 300);
+                hangarGroup.add(line);
+
+                // كشافات سقف نيون (Cyberpunk Style)
+                const lightGeo = new THREE.CylinderGeometry(0.5, 0.5, 40);
+                const lightMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
+                const neon = new THREE.Mesh(lightGeo, lightMat);
+                neon.rotation.z = Math.PI / 2;
+                neon.position.set(0, 45, 300 + (i * 35));
+                hangarGroup.add(neon);
+
+                const pointLight = new THREE.PointLight(0x00d2ff, 0.6, 80);
+                pointLight.position.set(0, 40, 300 + (i * 35));
+                hangarGroup.add(pointLight);
+            }
+        }
+        build3DHangar();
+
+        // البيئة المحيطة والتضاريس الخارجية
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175, mountain: 0x7a8b99, forest: 0x1e5631 };
+        const envColors = { desert: 0xdfb175, mountain: 0x485460, forest: 0x05c46b };
         let currentEnv = 'desert';
 
         function addEnvironmentDecorations(zPos, envType) {
-            const count = 20;
+            const count = 25;
             for(let i=0; i<count; i++) {
-                let mesh; const side = Math.random() > 0.5 ? 1 : -1; const x = (Math.random() * 350 + 90) * side;
+                let mesh; const side = Math.random() > 0.5 ? 1 : -1; const x = (Math.random() * 380 + 100) * side;
                 if (envType === 'desert') {
-                    mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(Math.random() * 14 + 6), new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.9, flatShading: true }));
-                    mesh.position.set(x, -8, zPos + (Math.random() * 1000 - 500)); mesh.scale.set(1, Math.random() * 2 + 1, 1);
+                    mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(Math.random() * 16 + 6), new THREE.MeshStandardMaterial({ color: 0xd27d2d, roughness: 0.9, flatShading: true }));
+                    mesh.position.set(x, -8, zPos + (Math.random() * 1000 - 500)); mesh.scale.set(1, Math.random() * 3 + 1, 1);
                 } else if (envType === 'forest') {
                     const tree = new THREE.Group();
-                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.5, 15, 6), new THREE.MeshStandardMaterial({ color: 0x4a3728 })); trunk.position.y = 7.5; tree.add(trunk);
-                    const leaves = new THREE.Mesh(new THREE.ConeGeometry(10, 24, 6), new THREE.MeshStandardMaterial({ color: 0x145a32, flatShading:true })); leaves.position.y = 22; tree.add(leaves); 
+                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(2, 3, 18, 6), new THREE.MeshStandardMaterial({ color: 0x5c3d2e })); trunk.position.y = 9; tree.add(trunk);
+                    const leaves = new THREE.Mesh(new THREE.ConeGeometry(12, 28, 6), new THREE.MeshStandardMaterial({ color: 0x019031, flatShading:true })); leaves.position.y = 26; tree.add(leaves); 
                     mesh = tree; mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
                 } else if (envType === 'mountain') {
-                    mesh = new THREE.Mesh(new THREE.ConeGeometry(Math.random() * 40 + 20, Math.random() * 90 + 40, 5), new THREE.MeshStandardMaterial({ color: 0x566573, flatShading:true }));
-                    mesh.position.set(x * 1.5, Math.random() * 10 - 10, zPos + (Math.random() * 1000 - 500));
+                    mesh = new THREE.Mesh(new THREE.ConeGeometry(Math.random() * 50 + 25, Math.random() * 110 + 50, 5), new THREE.MeshStandardMaterial({ color: 0x2f3542, flatShading:true }));
+                    mesh.position.set(x * 1.6, Math.random() * 15 - 10, zPos + (Math.random() * 1000 - 500));
                 }
                 if(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); environmentObjects.push(mesh); }
             }
         }
 
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const width = 1200; const length = 1000;
-            const geometry = new THREE.PlaneGeometry(width, length, 16, 16);
+            const width = 1400; const length = 1000;
+            const geometry = new THREE.PlaneGeometry(width, length, 20, 20);
             const pos = geometry.attributes.position;
             for (let i = 0; i < pos.count; i++) {
                 const x = pos.getX(i); const y = pos.getY(i);
-                if (Math.abs(x) > 120 && !isRunway) {
-                    let heightFactor = currentEnv === 'mountain' ? 140 : (currentEnv === 'forest' ? 60 : 30);
-                    pos.setZ(i, Math.abs(Math.sin(x * 0.02) * Math.cos(y * 0.02) * heightFactor));
+                if (Math.abs(x) > 130 && !isRunway) {
+                    let heightFactor = currentEnv === 'mountain' ? 160 : (currentEnv === 'forest' ? 70 : 35);
+                    pos.setZ(i, Math.abs(Math.sin(x * 0.015) * Math.cos(y * 0.015) * heightFactor));
                 }
             }
             geometry.computeVertexNormals();
-            const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
+            const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.9, flatShading: true }));
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
 
             if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x212121 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
+                const runway = new THREE.Mesh(new THREE.PlaneGeometry(70, 900), new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.5 }));
+                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 50); runway.receiveShadow = true; scene.add(runway);
             } else { addEnvironmentDecorations(zPos, currentEnv); }
         }
 
+        // إنشاء البيئات المتتابعة خارج الحظيرة
         createTerrainSegment(0, envColors.desert, true);
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل النماذج
+        // نظام المحاكاة الاحتياطي الفوري (Fallback Meshes) لمنع الفشل البصري
+        function buildMockPassenger() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 15, 8), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.3}));
+            body.rotation.x = Math.PI / 2; group.add(body);
+            const wings = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 3), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            wings.position.set(0, 0, -1); group.add(wings);
+            const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 2), new THREE.MeshStandardMaterial({color: 0x00d2ff}));
+            tail.position.set(0, 2, 6); group.add(tail);
+            group.scale.set(3, 3, 3);
+            return group;
+        }
+
+        function buildMockFighter() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.ConeGeometry(2, 14, 4), new THREE.MeshStandardMaterial({color: 0x4f5d75, metalness: 0.8, roughness: 0.2}));
+            body.rotation.x = Math.PI / 2; group.add(body);
+            const wings = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 4), new THREE.MeshStandardMaterial({color: 0x2d3748, metalness: 0.7}));
+            wings.position.set(0, -0.2, 1); group.add(wings);
+            group.scale.set(3, 3, 3);
+            return group;
+        }
+
+        // تحميل مجسمات الطائرات مع تفعيل المعالجة السريعة
         const loader = new THREE.GLTFLoader();
-        
         loader.load('airplane.glb', (gltf) => {
-            basePassengerModel = gltf.scene;
-            basePassengerModel.scale.set(3.0, 3.0, 3.0);
+            basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.5, 3.5, 3.5);
             basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-            checkAllLoaded();
-        }, undefined, (err) => { 
-            // Mock object fallback if model fails to load
-            const geom = new THREE.BoxGeometry(5,2,10); const mat = new THREE.MeshStandardMaterial({color: 0xffffff});
-            basePassengerModel = new THREE.Mesh(geom, mat);
-            checkAllLoaded();
-        });
+            checkInit();
+        }, undefined, (err) => { basePassengerModel = buildMockPassenger(); checkInit(); });
 
         loader.load('Fighter.glb.glb', (gltf) => { 
-            baseFighterModel = gltf.scene;
-            baseFighterModel.scale.set(3.0, 3.0, 3.0); 
+            baseFighterModel = gltf.scene; baseFighterModel.scale.set(3.5, 3.5, 3.5); 
             baseFighterModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-            checkAllLoaded();
-        }, undefined, (err) => { 
-            const geom = new THREE.ConeGeometry(3,12,3); const mat = new THREE.MeshStandardMaterial({color: 0x555555});
-            baseFighterModel = new THREE.Mesh(geom, mat); baseFighterModel.rotation.x = Math.PI/2;
-            checkAllLoaded(); 
-        });
+            checkInit();
+        }, undefined, (err) => { baseFighterModel = buildMockFighter(); checkInit(); });
 
-        let loadedCount = 0;
-        function checkAllLoaded() {
-            loadedCount++;
-            if(loadedCount >= 1) { 
+        let loadedModels = 0;
+        function checkInit() {
+            loadedModels++;
+            if(loadedModels >= 2) { 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('start-mask').style.display = 'flex';
                 updateShopUI();
             }
         }
 
-        // المتجر والواجهة
+        // نظام التنقل واختيار الطائرات بالحظيرة
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
@@ -386,16 +447,16 @@
             const startBtn = document.getElementById('start-btn');
 
             if (totalPoints >= planeData.unlockCost) {
-                statusEl.innerText = "متاح للإقلاع ✔️";
+                statusEl.innerText = "جاهزة وجاهزة للإقلاع داخل الحظيرة ✔️";
                 statusEl.style.color = "#2ecc71";
                 startBtn.disabled = false;
-                startBtn.innerText = "إقلاع الآن";
+                startBtn.innerText = "تشغيل المحرك والإقلاع";
                 renderPlaneInMenu(planeData);
             } else {
-                statusEl.innerText = `مغلق (تحتاج ${planeData.unlockCost} نقطة) 🔒`;
-                statusEl.style.color = "#e74c3c";
+                statusEl.innerText = `مغلقة (تتطلب رصيد إجمالي ${planeData.unlockCost} نقطة) 🔒`;
+                statusEl.style.color = "#ff4757";
                 startBtn.disabled = true;
-                startBtn.innerText = "رصيد غير كافٍ";
+                startBtn.innerText = "الرصيد غير كافٍ";
                 if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             }
         }
@@ -411,23 +472,25 @@
                     if (c.isMesh && c.material) {
                         c.material = c.material.clone();
                         c.material.color.setHex(planeData.colorHex);
+                        if(c.material.metalness !== undefined) c.material.metalness = 0.8;
                     }
                 });
             }
+            // وضع الطائرة في قلب الحظيرة الجديدة ثلاثية الأبعاد
             currentActiveAirplane.position.set(0, -9.8, 300);
             currentActiveAirplane.rotation.set(0, Math.PI, 0);
             scene.add(currentActiveAirplane);
         }
 
         function createRing(zPos) {
-            const geometry = new THREE.TorusGeometry(13, 1.4, 16, 40);
-            const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xd4af37, emissiveIntensity: 0.2 }));
-            ring.position.set((Math.random() - 0.5) * 180, Math.random() * 65 + 25, zPos);
+            const geometry = new THREE.TorusGeometry(14, 1.6, 16, 40);
+            const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xffb300, emissiveIntensity: 0.3 }));
+            ring.position.set((Math.random() - 0.5) * 200, Math.random() * 70 + 20, zPos);
             scene.add(ring); rings.push(ring);
         }
-        for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
+        for (let i = 1; i <= 20; i++) { createRing(-i * 170); }
 
-        // --- مستمعي أحداث لوحة المفاتيح ---
+        // --- أحداث لوحة المفاتيح والأزرار ---
         window.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
             if(e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
@@ -443,11 +506,11 @@
             if(e.code === 'Space') keys.space = false;
         });
 
-        // --- مستمعي أحداث اللمس (عصا التحكم وزر السرعة) ---
+        // --- نظام اللمس وعصا التحكم السلس واللحظي (Fixed Responsiveness) ---
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
-        const maxJoyRadius = 35; // أقصى مسافة يتحركها الزر الداخلي
+        const maxJoyRadius = 40; 
 
         function handleTouchMove(e) {
             e.preventDefault();
@@ -464,7 +527,7 @@
             
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
             joyState.x = dx / maxJoyRadius;
-            joyState.y = dy / maxJoyRadius;
+            joyState.y = dy / maxJoyRadius; // قيم مباشرة ودقيقة بين -1 و 1
         }
 
         joyZone.addEventListener('touchstart', (e) => {
@@ -479,21 +542,18 @@
 
         joyZone.addEventListener('touchend', (e) => {
             e.preventDefault();
-            joyState.active = false;
-            joyState.x = 0; joyState.y = 0;
+            joyState.active = false; joyState.x = 0; joyState.y = 0;
             joyKnob.style.transform = `translate(0px, 0px)`;
         });
 
-        // زر السرعة (تيربو)
         const speedBtn = document.getElementById('speed-btn');
         speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, {passive: false});
         speedBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; });
-        speedBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); keys.space = false; });
 
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
             initEngineSound();
-            if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            if(audioCtx) engineGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             isPlaying = true;
             score = 0;
             document.getElementById('points').innerText = score;
@@ -520,106 +580,112 @@
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none';
-            hasTakenOff = false; currentSpeed = 1.5;
+            hasTakenOff = false; currentSpeed = 3.0;
             updateShopUI(); 
             rings.forEach(r => scene.remove(r)); rings.length = 0;
-            for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
+            for (let i = 1; i <= 20; i++) { createRing(-i * 170); }
             document.getElementById('start-mask').style.display = 'flex';
         }
 
         let distanceTraveled = 0; let lastTerrainZ = -2000;
 
+        // حلقة التحديث والمحاكاة الفيزيائية فائقة السرعة والاستجابة
         function animate() {
             requestAnimationFrame(animate);
 
             if (isPlaying && currentActiveAirplane) {
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
-                let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
-                currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
+                // تم رفع المعاملات لتصبح السرعة الضعف تقريباً لشعور تيربو ممتاز
+                let speedMultiplier = keys.space ? (isFighter ? 11.0 : 8.5) : (isFighter ? 6.5 : 5.0);
+                currentSpeed += (speedMultiplier - currentSpeed) * 0.15;
                 updateEngineSound(keys.space);
 
                 currentActiveAirplane.position.z -= currentSpeed;
                 distanceTraveled = Math.abs(currentActiveAirplane.position.z);
 
-                // دمج أوامر الكيبورد واللمس
+                // دمج ومعالجة توجيه الكيبورد واللمس الفوري
                 let inputY = 0;
                 let inputX = 0;
 
-                // الكيبورد
-                if (keys.w) inputY += 1;
-                if (keys.s) inputY -= 1;
-                if (keys.a) inputX -= 1;
-                if (keys.d) inputX += 1;
+                if (keys.w) inputY += 1.0;
+                if (keys.s) inputY -= 1.0;
+                if (keys.a) inputX -= 1.0;
+                if (keys.d) inputX += 1.0;
 
-                // عصا التحكم (اللمس)
                 if (joyState.active) {
                     inputX += joyState.x;
-                    inputY -= joyState.y; // عكسنا Y لأن سحب العصا للأعلى (سالب) يعني الصعود
+                    inputY -= joyState.y; // سحب لأسفل يرفع الطائرة لأعلى
                 }
 
-                // منع تجاوز الحد الأقصى للتوجيه
                 inputX = Math.max(-1, Math.min(1, inputX));
                 inputY = Math.max(-1, Math.min(1, inputY));
 
+                // ميكانيكية إقلاع فورية ومعدلة بالكامل
                 if (!hasTakenOff) {
                     if (inputY > 0) {
-                        currentActiveAirplane.position.y += 0.25 * inputY;
-                        currentActiveAirplane.rotation.x = 0.1;
-                        if (currentActiveAirplane.position.y > -1) { hasTakenOff = true; }
-                    } else { currentActiveAirplane.rotation.x = 0; }
+                        currentActiveAirplane.position.y += 0.8 * inputY; // الرفع السريع جداً
+                        currentActiveAirplane.rotation.x = 0.15;
+                        if (currentActiveAirplane.position.y > -6.0) { hasTakenOff = true; } // عتبة فك الإقلاع أسرع الآن
+                    } else { 
+                        currentActiveAirplane.rotation.x = 0; 
+                    }
                 } else {
-                    currentActiveAirplane.position.y += 0.65 * inputY;
+                    // حركة مرنة في الجو بدون معوقات الاستجابة
+                    currentActiveAirplane.position.y += 1.3 * inputY;
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    if(currentActiveAirplane.position.y > 150) currentActiveAirplane.position.y = 150; // حد السقف
+                    if(currentActiveAirplane.position.y > 160) currentActiveAirplane.position.y = 160;
 
-                    currentActiveAirplane.position.x += 1.2 * inputX;
+                    currentActiveAirplane.position.x += 1.9 * inputX;
                     
-                    // دوران الطائرة للجانبين (Roll) حسب اتجاه الحركة
+                    // التفاف الطائرة الدوراني التفاعلي أثناء الانعطاف
                     if (inputX !== 0) {
-                        currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.45 * inputX, 0.08);
+                        currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.55 * inputX, 0.1);
                     } else {
-                        currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0, 0.08);
+                        currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0, 0.1);
                     }
                 }
 
-                camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
-                camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 7.5, 0.07);
-                camera.position.z = currentActiveAirplane.position.z + 45; 
-                camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1.5, currentActiveAirplane.position.z - 45));
+                // متابعة ديناميكية ناعمة ومثيرة للكاميرا
+                camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.1);
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 8.0, 0.1);
+                camera.position.z = currentActiveAirplane.position.z + 42; 
+                camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1.0, currentActiveAirplane.position.z - 40));
 
-                sunLight.position.set(currentActiveAirplane.position.x + 300, currentActiveAirplane.position.y + 500, currentActiveAirplane.position.z + 200);
+                sunLight.position.set(currentActiveAirplane.position.x + 200, currentActiveAirplane.position.y + 400, currentActiveAirplane.position.z + 100);
 
-                if (distanceTraveled > 3500 && currentEnv === 'desert') {
-                    currentEnv = 'mountain'; scene.background.setHex(0x8ba3b5); fog.color.setHex(0x8ba3b5);
-                } else if (distanceTraveled > 7500 && currentEnv === 'mountain') {
-                    currentEnv = 'forest'; scene.background.setHex(0x7ecbb3); fog.color.setHex(0x7ecbb3);
+                // تغيير البيئة حسب المسافة المقطوعة خارج الحظيرة
+                if (distanceTraveled > 4000 && currentEnv === 'desert') {
+                    currentEnv = 'mountain'; scene.background.setHex(0x1e272e); fog.color.setHex(0x1e272e);
+                } else if (distanceTraveled > 8500 && currentEnv === 'mountain') {
+                    currentEnv = 'forest'; scene.background.setHex(0x05c46b); fog.color.setHex(0x05c46b);
                 }
 
                 if (currentActiveAirplane.position.z < lastTerrainZ + 1500) {
                     lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
                 }
 
+                // كشف التصادم الدقيق مع الحلقات
                 for (let i = rings.length - 1; i >= 0; i--) {
-                    const ring = rings[i]; ring.rotation.y += 0.015;
+                    const ring = rings[i]; ring.rotation.y += 0.02;
                     const dist = currentActiveAirplane.position.distanceTo(ring.position);
 
-                    if (dist < 20 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 8) { 
+                    if (dist < 22 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 10) { 
                         scene.remove(ring); rings.splice(i, 1);
                         score += 10; timeLeft += 3;
                         document.getElementById('points').innerText = score;
                         document.getElementById('time-left').innerText = timeLeft;
                         const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
-                        createRing(lowestZ - 160);
+                        createRing(lowestZ - 170);
                     } 
-                    else if (currentActiveAirplane.position.z < ring.position.z - 80) {
+                    else if (currentActiveAirplane.position.z < ring.position.z - 90) {
                         scene.remove(ring); rings.splice(i, 1);
                         const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
-                        createRing(lowestZ - 160);
+                        createRing(lowestZ - 170);
                     }
                 }
                 for (let i = environmentObjects.length - 1; i >= 0; i--) {
                     const obj = environmentObjects[i];
-                    if (obj.position.z > currentActiveAirplane.position.z + 120) { scene.remove(obj); environmentObjects.splice(i, 1); }
+                    if (obj.position.z > currentActiveAirplane.position.z + 150) { scene.remove(obj); environmentObjects.splice(i, 1); }
                 }
             }
             renderer.render(scene, camera);
