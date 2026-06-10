@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران - تحدي الوقت والترقيات</title>
+    <title>محاكي الطيران - أسطول الطائرات المتعددة</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #bae1ff; user-select: none; }
         
-        /* شريط العدادات العلوي الصافي */
         #hud-container {
             position: absolute;
             top: 25px;
@@ -29,19 +28,18 @@
             border: 1px solid rgba(255,255,255,0.1);
             backdrop-filter: blur(5px);
         }
-        #time-card { color: #ff4757; } /* لون أحمر مثير للوقت */
+        #time-card { color: #ff4757; }
 
         #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 5px #000; z-index: 20; }
         
-        /* الشاشات المركبة (البداية والنهاية) */
         .overlay-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 15; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
         .main-btn { padding: 18px 45px; font-size: 24px; font-weight: bold; background: #e67e22; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.5); transition: 0.3s; margin-top: 20px; }
         .main-btn:hover { background: #f39c12; transform: translateY(-3px); }
         
-        /* تصميم قائمة الطائرات المتاحة للشراء بالنقاط */
-        #shop-info { margin-top: 25px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 320px; }
+        #shop-info { margin-top: 25px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 340px; }
         .shop-item { display: flex; justify-content: space-between; margin: 8px 0; font-size: 16px; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .unlocked { color: #2ecc71; font-weight: bold; }
+        .active-plane { color: #3498db; font-weight: bold; }
         .locked { color: #f1c40f; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -54,27 +52,26 @@
         <div id="score-card" class="hud-card">🪙 النقاط: <span id="points">0</span></div>
     </div>
     
-    <div id="loading">جاري معالجة أنظمة التحدي والمتجر...</div>
+    <div id="loading">جاري جلب أسطول الطائرات وإعداد المدرج...</div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        <h1 style="font-size: 42px; margin-bottom: 5px; color: #e67e22;">تحدي اختراق الوقت ✈️💥</h1>
-        <p style="font-size: 18px; color: #bdc3c7;">اخترق الحلقات لتكسب (+3 ثوانٍ) وتمنع المحرك من التوقف!</p>
+        <h1 style="font-size: 42px; margin-bottom: 5px; color: #e67e22;">مرآب طائرات الباشمهندس عطية 🏁</h1>
+        <p style="font-size: 18px; color: #bdc3c7;">اجمع 100 نقطة للانتقال تلقائياً إلى المقاتلة الحربية النفاثة!</p>
         
         <div id="shop-info">
-            <h3 style="margin: 0 0 10px 0; color: #3498db;">أسطول طائرات الباشمهندس عطية:</h3>
-            <div class="shop-item"><span id="plane1-name">✈️ الطائرة العادية F-16</span> <span class="unlocked">متاحة حالياً</span></div>
-            <div class="shop-item"><span>✨ الطائرة الذهبية السريعة</span> <span id="plane2-status" class="locked">قفل (100 نقطة)</span></div>
-            <div class="shop-item"><span>🚀 الطائرة النفاثة الخارقة</span> <span id="plane3-status" class="locked">قفل (250 نقطة)</span></div>
+            <h3 style="margin: 0 0 10px 0; color: #3498db;">الطائرات المتوفرة بالمستودع:</h3>
+            <div class="shop-item"><span>✈️ طائرة الركاب الأصلية</span> <span id="plane1-status" class="active-plane">قيد الطيران حالياً</span></div>
+            <div class="shop-item"><span>🚀 المقاتلة النفاثة KF-21 Boramae</span> <span id="plane2-status" class="locked">قفل (تحتاج 100 نقطة)</span></div>
         </div>
 
-        <button id="start-btn" class="main-btn" onclick="startGame()">تشغيل المحرك والإقلاع الفوري</button>
+        <button id="start-btn" class="main-btn" onclick="startGame()">تشغيل المحرك والإقلاع</button>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
         <h1 style="font-size: 48px; color: #ff4757; margin-bottom: 5px;">انتهى الوقت! ⏱️❌</h1>
-        <p style="font-size: 22px;">المحرك توقف عن العمل لعدم جمع وقود الحلقات كافٍ.</p>
-        <h2 style="font-size: 28px; color: #f1c40f; margin-top: 10px;">مجموع نقاطك: <span id="final-score">0</span></h2>
-        <button class="main-btn" style="background: #2ecc71;" onclick="restartGame()">إعادة المحاولة وشحن الوقود 🔄</button>
+        <p style="font-size: 22px;">المحرك بحاجة إلى وقود الحلقات الذهبية.</p>
+        <h2 style="font-size: 28px; color: #f1c40f; margin-top: 10px;">مجموع النقاط: <span id="final-score">0</span></h2>
+        <button class="main-btn" style="background: #2ecc71;" onclick="restartGame()">إعادة المحاولة وشحن الخزان 🔄</button>
     </div>
 
     <script>
@@ -95,15 +92,17 @@
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
         sunLight.position.set(300, 500, 200);
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 1024;
-        sunLight.shadow.mapSize.height = 1024;
         scene.add(sunLight);
 
-        let airplane = null;
+        // متغيرات للتحكم في الطائرتين
+        let currentActiveAirplane = null; 
+        let passengerPlane = null; // الطائرة الأولى
+        let fighterJet = null;     // الطائرة الحربية الجديدة KF-21
+        
         let isPlaying = false;
         let hasTakenOff = false;
         let score = 0;
-        let highScore = 0; // لحفظ النقاط لفتح الطائرات بالمتجر
+        let highScore = 0; 
         let timeLeft = 30;
         let currentSpeed = 1.5;
         let timerInterval = null;
@@ -141,16 +140,16 @@
 
         function updateEngineSound(speedUp) {
             if (!engineOsc) return;
-            const targetFreq = speedUp ? 80 : 45;
-            const targetFilter = speedUp ? 450 : 200;
+            // إذا كانت الطائرة حربية، نجعل الصوت أكثر حدة وقوة لمحاكاة كسر جدار الصوت
+            let baseFreq = (highScore >= 100) ? 60 : 45;
+            const targetFreq = speedUp ? (baseFreq + 35) : baseFreq;
+            const targetFilter = speedUp ? 500 : 200;
             engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.2);
             engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.3);
         }
 
         function stopEngineSound() {
-            if(audioCtx) {
-                engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-            }
+            if(audioCtx) { engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
         }
 
         const terrainGroup = new THREE.Group();
@@ -161,14 +160,10 @@
         function addEnvironmentDecorations(zPos, envType) {
             const count = 20;
             for(let i=0; i<count; i++) {
-                let mesh;
-                const side = Math.random() > 0.5 ? 1 : -1;
-                const x = (Math.random() * 350 + 90) * side;
-                
+                let mesh; const side = Math.random() > 0.5 ? 1 : -1; const x = (Math.random() * 350 + 90) * side;
                 if (envType === 'desert') {
                     const geo = new THREE.DodecahedronGeometry(Math.random() * 14 + 6);
-                    const mat = new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.9, flatShading: true });
-                    mesh = new THREE.Mesh(geo, mat);
+                    mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.9, flatShading: true }));
                     mesh.position.set(x, -8, zPos + (Math.random() * 1000 - 500));
                     mesh.scale.set(1, Math.random() * 2 + 1, 1);
                 } else if (envType === 'forest') {
@@ -176,8 +171,7 @@
                     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.5, 15, 6), new THREE.MeshStandardMaterial({ color: 0x4a3728 }));
                     trunk.position.y = 7.5; tree.add(trunk);
                     const leaves = new THREE.Mesh(new THREE.ConeGeometry(10, 24, 6), new THREE.MeshStandardMaterial({ color: 0x145a32, flatShading:true }));
-                    leaves.position.y = 22; tree.add(leaves);
-                    mesh = tree; mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
+                    leaves.position.y = 22; tree.add(leaves); mesh = tree; mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
                 } else if (envType === 'mountain') {
                     const geo = new THREE.ConeGeometry(Math.random() * 40 + 20, Math.random() * 90 + 40, 5);
                     mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x566573, flatShading:true }));
@@ -206,81 +200,86 @@
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x212121 }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
-            } else {
-                addEnvironmentDecorations(zPos, currentEnv);
-            }
+            } else { addEnvironmentDecorations(zPos, currentEnv); }
         }
 
         createTerrainSegment(0, envColors.desert, true);
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        const loader = new THREE.GLTFLoader();
-        loader.load('airplane.glb', 
-            (gltf) => {
-                airplane = gltf.scene;
-                airplane.scale.set(3.0, 3.0, 3.0); 
-                airplane.position.set(0, -9.8, 300);
-                airplane.rotation.set(0, Math.PI, 0);
-                
-                airplane.traverse((child) => {
-                    if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
-                });
-                
-                scene.add(airplane);
+        // تحميل الطائرتين معاً وإدارتهما برمجياً بشكل منفصل
+        let totalLoaded = 0;
+        
+        // 1. تحميل طائرة الركاب الأولى الأصلية
+        loader.load('airplane.glb', (gltf) => {
+            passengerPlane = gltf.scene;
+            passengerPlane.scale.set(3.0, 3.0, 3.0);
+            passengerPlane.position.set(0, -9.8, 300);
+            passengerPlane.rotation.set(0, Math.PI, 0);
+            passengerPlane.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            checkLoadingProgress();
+        });
+
+        // 2. تحميل الطائرة الحربية الجديدة KF-21 باسمها دون تغيير لقفل المتجر
+        loader.load('Kf-21a_boramae_fighter_jet.glb', (gltf) => {
+            fighterJet = gltf.scene;
+            fighterJet.scale.set(3.0, 3.0, 3.0); // نفس الحجم المتناسق والمثالي للمدرج
+            fighterJet.position.set(0, -9.8, 300);
+            fighterJet.rotation.set(0, Math.PI, 0);
+            fighterJet.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            checkLoadingProgress();
+        }, undefined, (err) => {
+            console.log("في انتظار رفع ملف المقاتلة الجديدة...");
+        });
+
+        function checkLoadingProgress() {
+            totalLoaded++;
+            // عندما يتم تحميل الطائرة المتوفرة، تفتح اللعبة فوراً دون مشاكل
+            if (passengerPlane) {
                 document.getElementById('loading').style.display = 'none';
-                updateShopDisplay(); // تحديث المتجر بناء على مجموع النقاط السابقة
+                switchActivePlane(); // دالة تحديد الطائرة النشطة
                 document.getElementById('start-mask').style.display = 'flex';
-
-                camera.position.set(0, 0, 345);
-                camera.lookAt(airplane.position);
             }
-        );
-
-        // لتحديث شكل الطائرة (الشراء) برمجياً بصبغ هيكلها بألوان خارقة
-        function applyPlaneUpgrades() {
-            if (!airplane) return;
-            airplane.traverse((child) => {
-                if (child.isMesh) {
-                    if (highScore >= 250) {
-                        // طائرة الفضاء الخارقة الفاخرة
-                        child.material.color.setHex(0x111111); // لون أسود ملكي
-                        child.material.roughness = 0.1;
-                        child.material.metalness = 1.0; // معدنية بالكامل تبرق
-                    } else if (highScore >= 100) {
-                        // طائرة ذهبية مذهلة
-                        child.material.color.setHex(0xd4af37); // لون الذهب الخالص
-                        child.material.roughness = 0.2;
-                        child.material.metalness = 0.8;
-                    } else {
-                        // الطائرة العادية الأصلية
-                        child.material.color.setHex(0xffffff);
-                    }
-                }
-            });
         }
 
-        function updateShopDisplay() {
-            if (highScore >= 100) {
-                document.getElementById('plane2-status').innerText = "تم فتحها وتفعيلها! ✨";
-                document.getElementById('plane2-status').className = "unlocked";
+        // دالة تبديل الطائرات الذكية بناء على النقاط المحققة
+        function switchActivePlane() {
+            // إزالة الطائرات الحالية من المشهد أولاً لتفادي تداخلهما
+            if(passengerPlane) scene.remove(passengerPlane);
+            if(fighterJet) scene.remove(fighterJet);
+
+            if (highScore >= 100 && fighterJet) {
+                // إذا حقق الباشمهندس 100 نقطة وكان الملف مرفوعاً، تطير الـ KF-21 الحربية!
+                currentActiveAirplane = fighterJet;
+                document.getElementById('plane1-status').innerText = "في المستودع";
+                document.getElementById('plane1-status').className = "unlocked";
+                document.getElementById('plane2-status').innerText = "قيد الإقلاع حالياً 🚀";
+                document.getElementById('plane2-status').className = "active-plane";
+            } else {
+                // البداية بطائرة الركاب العادية مجاناً
+                currentActiveAirplane = passengerPlane;
+                document.getElementById('plane1-status').innerText = "قيد الإقلاع حالياً ✈️";
+                document.getElementById('plane1-status').className = "active-plane";
+                if(fighterJet) {
+                    document.getElementById('plane2-status').innerText = "تم الفتح! جاهزة للاستخدام";
+                    document.getElementById('plane2-status').className = "unlocked";
+                }
             }
-            if (highScore >= 250) {
-                document.getElementById('plane3-status').innerText = "تم فتحها وتفعيلها! 🚀";
-                document.getElementById('plane3-status').className = "unlocked";
+            
+            // إضافة الطائرة المحددة إلى ساحة الطيران والمدرج
+            if(currentActiveAirplane) {
+                currentActiveAirplane.position.set(0, -9.8, 300);
+                currentActiveAirplane.rotation.set(0, Math.PI, 0);
+                scene.add(currentActiveAirplane);
             }
-            applyPlaneUpgrades();
         }
 
         function createRing(zPos) {
             const geometry = new THREE.TorusGeometry(13, 1.4, 16, 40);
-            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xd4af37, emissiveIntensity: 0.2 });
-            const ring = new THREE.Mesh(geometry, material);
+            const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xd4af37, emissiveIntensity: 0.2 }));
             ring.position.set((Math.random() - 0.5) * 180, Math.random() * 65 + 25, zPos);
-            scene.add(ring);
-            rings.push(ring);
+            scene.add(ring); rings.push(ring);
         }
-
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
         window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); if(key in keys || key===' ') keys[key===' '?'space':key] = true; });
@@ -292,95 +291,73 @@
             if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
             isPlaying = true;
 
-            // إطلاق مؤقت الوقت المثير للعد التنازلي
             timeLeft = 30;
             document.getElementById('time-left').innerText = timeLeft;
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if(isPlaying) {
-                    timeLeft--;
-                    document.getElementById('time-left').innerText = timeLeft;
-                    
-                    if(timeLeft <= 0) {
-                        endGame();
-                    }
+                    timeLeft--; document.getElementById('time-left').innerText = timeLeft;
+                    if(timeLeft <= 0) { endGame(); }
                 }
             }, 1000);
         }
 
         function endGame() {
-            isPlaying = false;
-            stopEngineSound();
-            clearInterval(timerInterval);
+            isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
-            
-            // تخزين أعلى النقاط لفتح طائرات المتجر في الجولة القادمة
-            if (score > highScore) {
-                highScore = score;
-            }
+            if (score > highScore) { highScore = score; }
         }
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none';
-            score = 0;
-            document.getElementById('points').innerText = score;
-            hasTakenOff = false;
-            currentSpeed = 1.5;
+            score = 0; document.getElementById('points').innerText = score;
+            hasTakenOff = false; currentSpeed = 1.5;
             
-            // إعادة الطائرة لمدرج البداية
-            if(airplane) {
-                airplane.position.set(0, -9.8, 300);
-                airplane.rotation.set(0, Math.PI, 0);
-            }
+            switchActivePlane(); // التحقق إذا كان يستحق ركوب الطائرة الحربية في الجولة الجديدة!
             
-            // تنظيف الحلقات وإعادتها
-            rings.forEach(r => scene.remove(r));
-            rings.length = 0;
+            rings.forEach(r => scene.remove(r)); rings.length = 0;
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
-
-            updateShopDisplay(); // تحديث قفل طائرات المتجر قبل البدء
             document.getElementById('start-mask').style.display = 'flex';
         }
 
-        let distanceTraveled = 0;
-        let lastTerrainZ = -2000;
+        let distanceTraveled = 0; let lastTerrainZ = -2000;
 
         function animate() {
             requestAnimationFrame(animate);
 
-            if (isPlaying && airplane) {
-                // الطائرة الذهبية والخارقة تعطي سرعة إضافية مدمجة
-                let baseBonus = highScore >= 250 ? 1.0 : (highScore >= 100 ? 0.5 : 0);
-                const speedMultiplier = keys.space ? (4.5 + baseBonus) : (2.2 + baseBonus);
+            if (isPlaying && currentActiveAirplane) {
+                // الطائرة الحربية KF-21 تعطيك سرعة وقدرة نفاثة أكبر تلقائياً عند فتحها!
+                let isFighter = (currentActiveAirplane === fighterJet);
+                let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                 updateEngineSound(keys.space);
 
-                airplane.position.z -= currentSpeed;
-                distanceTraveled = Math.abs(airplane.position.z);
+                currentActiveAirplane.position.z -= currentSpeed;
+                distanceTraveled = Math.abs(currentActiveAirplane.position.z);
 
                 if (!hasTakenOff) {
                     if (keys.w) {
-                        airplane.position.y += 0.22;
-                        airplane.rotation.x = 0.1;
-                        if (airplane.position.y > -1) { hasTakenOff = true; }
-                    } else { airplane.rotation.x = 0; }
+                        currentActiveAirplane.position.y += 0.22;
+                        currentActiveAirplane.rotation.x = 0.1;
+                        if (currentActiveAirplane.position.y > -1) { hasTakenOff = true; }
+                    } else { currentActiveAirplane.rotation.x = 0; }
                 } else {
-                    if (keys.w) airplane.position.y += 0.55;
-                    if (keys.s) airplane.position.y -= 0.55;
-                    if(airplane.position.y < -7) airplane.position.y = -7;
+                    if (keys.w) currentActiveAirplane.position.y += 0.55;
+                    if (keys.s) currentActiveAirplane.position.y -= 0.55;
+                    if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
 
-                    if (keys.a) { airplane.position.x -= 0.9; airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, 0.45, 0.08); }
-                    if (keys.d) { airplane.position.x += 0.9; airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, -0.45, 0.08); }
-                    if (!keys.a && !keys.d) { airplane.rotation.z = THREE.MathUtils.lerp(airplane.rotation.z, 0, 0.08); }
+                    if (keys.a) { currentActiveAirplane.position.x -= 0.9; currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0.45, 0.08); }
+                    if (keys.d) { currentActiveAirplane.position.x += 0.9; currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.45, 0.08); }
+                    if (!keys.a && !keys.d) { currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0, 0.08); }
                 }
 
-                camera.position.x = THREE.MathUtils.lerp(camera.position.x, airplane.position.x, 0.07);
-                camera.position.y = THREE.MathUtils.lerp(camera.position.y, airplane.position.y + 7.5, 0.07);
-                camera.position.z = airplane.position.z + 45; 
-                camera.lookAt(new THREE.Vector3(airplane.position.x, airplane.position.y + 1.5, airplane.position.z - 45));
+                camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 7.5, 0.07);
+                camera.position.z = currentActiveAirplane.position.z + 45; 
+                camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1.5, currentActiveAirplane.position.z - 45));
 
-                sunLight.position.set(airplane.position.x + 300, airplane.position.y + 500, airplane.position.z + 200);
+                sunLight.position.set(currentActiveAirplane.position.x + 300, currentActiveAirplane.position.y + 500, currentActiveAirplane.position.z + 200);
 
                 if (distanceTraveled > 3500 && currentEnv === 'desert') {
                     currentEnv = 'mountain'; scene.background.setHex(0x8ba3b5); fog.color.setHex(0x8ba3b5);
@@ -388,40 +365,31 @@
                     currentEnv = 'forest'; scene.background.setHex(0x7ecbb3); fog.color.setHex(0x7ecbb3);
                 }
 
-                if (airplane.position.z < lastTerrainZ + 1500) {
-                    lastTerrainZ -= 1000;
-                    createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
+                if (currentActiveAirplane.position.z < lastTerrainZ + 1500) {
+                    lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
                 }
 
-                // فحص الاصطدامات وجمع النقاط ومكافأة الوقت (الإثارة الكبرى)
                 for (let i = rings.length - 1; i >= 0; i--) {
-                    const ring = rings[i];
-                    ring.rotation.y += 0.015;
-                    const dist = airplane.position.distanceTo(ring.position);
+                    const ring = rings[i]; ring.rotation.y += 0.015;
+                    const dist = currentActiveAirplane.position.distanceTo(ring.position);
 
-                    if (dist < 20 && Math.abs(airplane.position.z - ring.position.z) < 8) { 
-                        scene.remove(ring);
-                        rings.splice(i, 1);
-                        
-                        score += 10;
-                        timeLeft += 3; // 🛑 مكافأة الإثارة: زيادة الوقت 3 ثوانٍ إضافية عند كل حلقة!
-                        
+                    if (dist < 20 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 8) { 
+                        scene.remove(ring); rings.splice(i, 1);
+                        score += 10; timeLeft += 3;
                         document.getElementById('points').innerText = score;
                         document.getElementById('time-left').innerText = timeLeft;
-                        
-                        const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
+                        const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
                         createRing(lowestZ - 160);
                     } 
-                    else if (airplane.position.z < ring.position.z - 80) {
+                    else if (currentActiveAirplane.position.z < ring.position.z - 80) {
                         scene.remove(ring); rings.splice(i, 1);
-                        const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, airplane.position.z);
+                        const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
                         createRing(lowestZ - 160);
                     }
                 }
-
                 for (let i = environmentObjects.length - 1; i >= 0; i--) {
                     const obj = environmentObjects[i];
-                    if (obj.position.z > airplane.position.z + 120) { scene.remove(obj); environmentObjects.splice(i, 1); }
+                    if (obj.position.z > currentActiveAirplane.position.z + 120) { scene.remove(obj); environmentObjects.splice(i, 1); }
                 }
             }
             renderer.render(scene, camera);
