@@ -130,7 +130,7 @@
 
             engineOsc.connect(engineFilter);
             engineOsc2.connect(engineFilter);
-            filter.connect(engineGain); // ملاحظة: تم تعديل المرجع الصغير هنا لـ engineFilter لضمان السلامة
+            // 💡 تم إصلاح الربط هنا ليعمل الصوت واللعبة بنجاح دون أي توقف
             engineFilter.connect(engineGain);
             engineGain.connect(audioCtx.destination);
             
@@ -225,7 +225,6 @@
         });
 
         function loadFighterJet() {
-            // 💡 هنا المربط الحقيقي! استدعاء اسم الملف الصحيح تماماً المتواجد بالمستودع
             loader.load('Fighter.glb', (gltf) => { 
                 fighterJet = gltf.scene;
                 fighterJet.scale.set(3.0, 3.0, 3.0); 
