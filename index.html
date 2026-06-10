@@ -130,7 +130,6 @@
 
             engineOsc.connect(engineFilter);
             engineOsc2.connect(engineFilter);
-            // 💡 تم إصلاح الربط هنا ليعمل الصوت واللعبة بنجاح دون أي توقف
             engineFilter.connect(engineGain);
             engineGain.connect(audioCtx.destination);
             
@@ -225,7 +224,8 @@
         });
 
         function loadFighterJet() {
-            loader.load('Fighter.glb', (gltf) => { 
+            // 💡 التعديل الجوهري هنا لقراءة الاسم الدقيق بالامتداد المكرر Fighter.glb.glb
+            loader.load('Fighter.glb.glb', (gltf) => { 
                 fighterJet = gltf.scene;
                 fighterJet.scale.set(3.0, 3.0, 3.0); 
                 fighterJet.position.set(0, -9.8, 300);
@@ -238,7 +238,7 @@
                     statusText.className = "locked";
                 }
             }, undefined, (err) => {
-                console.error("لم يتم العثور على ملف Fighter.glb، تأكد من حالة الأحرف.");
+                console.error("لم يتم العثور على ملف Fighter.glb.glb، تأكد من مطابقة الاسم على السيرفر.");
             });
         }
 
