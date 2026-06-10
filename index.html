@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران المتقدم - التحكم المطلق</title>
+    <title>محاكي الطيران المتقدم - نظام الطيران الحقيقي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -125,7 +125,7 @@
         #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00d2ff; font-size: 24px; font-weight: 700; z-index: 20; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
 
         /* عناصر التحكم باللمس */
-        #touch-controls { display: none; }
+        #touch-controls { display: block; }
         #joystick-zone {
             position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
             background: rgba(0, 210, 255, 0.05); border: 2px solid rgba(0, 210, 255, 0.3);
@@ -147,10 +147,6 @@
         }
 
         @media (max-width: 768px) {
-            #touch-controls { display: block; }
-            .main-title { font-size: 2rem; }
-            #shop-carousel { width: 280px; padding: 12px; }
-            .plane-name { font-size: 18px; }
             #joystick-zone { width: 120px; height: 120px; bottom: 30px; left: 30px; }
             #joystick-knob { width: 50px; height: 50px; top: 35px; left: 35px; }
             #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 30px; font-size: 15px; }
@@ -180,7 +176,7 @@
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <h1 class="main-title">محاكي الطيران المتقدم ✈️</h1>
-        <p class="subtitle">تحكم مطلق وحرية إقلاع كاملة فورية</p>
+        <p class="subtitle">نظام الملاحة الجوية الفعلي والتحكم الاحترافي</p>
         
         <div id="shop-carousel" class="glass-panel">
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
@@ -233,7 +229,7 @@
         let isPlaying = false;
         let score = 0;
         let timeLeft = 30;
-        let currentSpeed = 7.0; // زيادة سرعة البدء الافتراضية بشكل كبير
+        let currentSpeed = 7.0; 
         let timerInterval = null;
         const rings = [];
         const environmentObjects = [];
@@ -285,7 +281,7 @@
 
         function stopEngineSound() { if(audioCtx) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-        // بناء الحظيرة الاحترافية ثلاثية الأبعاد
+        // بناء الحظيرة ثلاثية الأبعاد
         function build3DHangar() {
             hangarGroup.clear();
             const hangarWidth = 160; const hangarHeight = 90; const hangarLength = 200;
@@ -372,7 +368,6 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // نماذج الطائرات الاحتياطية (توليد داخلي سريع)
         function buildMockPassenger() {
             const group = new THREE.Group();
             const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 16, 8), new THREE.MeshStandardMaterial({color: 0xffffff}));
@@ -462,17 +457,14 @@
             scene.add(currentActiveAirplane);
         }
 
-        // الحلقات مرتفعة لزيادة التحدي
         function createRing(zPos) {
             const geometry = new THREE.TorusGeometry(15, 1.8, 16, 40);
             const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xffb300, emissiveIntensity: 0.4 }));
-            // ضبط الارتفاع ليكون ممتداً لأعلى وبشكل ديناميكي ملحوظ
             ring.position.set((Math.random() - 0.5) * 220, Math.random() * 85 + 25, zPos);
             scene.add(ring); rings.push(ring);
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 170); }
 
-        // أحداث الكيبورد
         window.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
             if(e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
@@ -488,7 +480,6 @@
             if(e.code === 'Space') keys.space = false;
         });
 
-        // نظام عصا التحكم المحسن بالكامل (حساسية لمس فائقة ومباشرة)
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
@@ -570,14 +561,12 @@
 
         let distanceTraveled = 0; let lastTerrainZ = -2000;
 
-        // حلقة التحديث والمحاكاة الفيزيائية فائقة الاستجابة والسرعة
         function animate() {
             requestAnimationFrame(animate);
 
             if (isPlaying && currentActiveAirplane) {
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
                 
-                // مضاعفة معاملات السرعة النفاثة والتيربو لحل مشكلة البطء
                 let speedMultiplier = keys.space ? (isFighter ? 19.0 : 15.0) : (isFighter ? 11.5 : 9.0);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.15;
                 updateEngineSound(keys.space);
@@ -588,30 +577,26 @@
                 let inputY = 0;
                 let inputX = 0;
 
-                // قراءة الكيبورد
-                if (keys.w) inputY += 1.0;     // W أو السهم العلوي للارتفاع المباشر السريع
-                if (keys.s) inputY -= 1.0;     // S أو السهم السفلي للهبوط
+                if (keys.w) inputY += 1.0;     
+                if (keys.s) inputY -= 1.0;     
                 if (keys.a) inputX -= 1.0;
                 if (keys.d) inputX += 1.0;
 
-                // قراءة عصا التحكم باللمس التناظرية
+                // قراءة عصا التحكم باللمس التناظرية بنظام الطيران المحاكي الحقيقي
                 if (joyState.active) {
                     inputX += joyState.x;
-                    inputY -= joyState.y; // سحب العصا للأعلى يحرك الطائرة للأعلى فوراً وسلاسة كاجوال هاتفية
+                    inputY += joyState.y; // تم التعديل هنا: سحب العصا للخلف/الأسفل يعطي قيمة موجبة للارتفاع (ترتفع الطائرة)
                 }
 
                 inputX = Math.max(-1, Math.min(1, inputX));
                 inputY = Math.max(-1, Math.min(1, inputY));
 
-                // حركات فيزيائية حرة ومباشرة بدون شروط تأخير أو قفل
-                currentActiveAirplane.position.y += 2.2 * inputY; // رفع القوة الرأسية لقفز الارتفاعات بنسبة 2.2
-                currentActiveAirplane.position.x += 2.6 * inputX; // زيادة حساسية الدوران الأفقي
+                currentActiveAirplane.position.y += 2.2 * inputY; 
+                currentActiveAirplane.position.x += 2.6 * inputX; 
 
-                // حماية الأرضية والسقف والاصطدام التضاريسي
                 if(currentActiveAirplane.position.y < -9.5) currentActiveAirplane.position.y = -9.5;
                 if(currentActiveAirplane.position.y > 180) currentActiveAirplane.position.y = 180;
 
-                // محاكاة زوايا الطيران الانسيابية (Pitch & Roll Rotation) بشكل ديناميكي مرن
                 currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, inputY * 0.4, 0.15);
                 if (inputX !== 0) {
                     currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.65 * inputX, 0.12);
@@ -619,7 +604,6 @@
                     currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0, 0.1);
                 }
 
-                // الكاميرا السينمائية الملاحقة بدقة وسرعة
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.12);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 8.5, 0.12);
                 camera.position.z = currentActiveAirplane.position.z + 40; 
@@ -627,7 +611,6 @@
 
                 sunLight.position.set(currentActiveAirplane.position.x + 200, currentActiveAirplane.position.y + 400, currentActiveAirplane.position.z + 100);
 
-                // تغيير تدرجات الألوان الجوية والضباب عند قطع مسافات معينة خارج الحظيرة
                 if (distanceTraveled > 4000 && currentEnv === 'desert') {
                     currentEnv = 'mountain'; scene.background.setHex(0x1e272e); fog.color.setHex(0x1e272e);
                 } else if (distanceTraveled > 8500 && currentEnv === 'mountain') {
@@ -638,7 +621,6 @@
                     lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
                 }
 
-                // كشف التقاط الحلقات المرتفعة
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i]; ring.rotation.y += 0.025;
                     const dist = currentActiveAirplane.position.distanceTo(ring.position);
