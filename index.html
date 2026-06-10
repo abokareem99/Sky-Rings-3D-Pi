@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران - أسطول الطائرات المتعددة</title>
+    <title>محاكي الطيران - أسطول الطائرات المرن</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #bae1ff; user-select: none; }
         
@@ -94,10 +94,9 @@
         sunLight.castShadow = true;
         scene.add(sunLight);
 
-        // متغيرات للتحكم في الطائرتين
         let currentActiveAirplane = null; 
-        let passengerPlane = null; // الطائرة الأولى
-        let fighterJet = null;     // الطائرة الحربية الجديدة KF-21
+        let passengerPlane = null; 
+        let fighterJet = null;     
         
         let isPlaying = false;
         let hasTakenOff = false;
@@ -140,8 +139,7 @@
 
         function updateEngineSound(speedUp) {
             if (!engineOsc) return;
-            // إذا كانت الطائرة حربية، نجعل الصوت أكثر حدة وقوة لمحاكاة كسر جدار الصوت
-            let baseFreq = (highScore >= 100) ? 60 : 45;
+            let baseFreq = (highScore >= 100 && fighterJet) ? 60 : 45;
             const targetFreq = speedUp ? (baseFreq + 35) : baseFreq;
             const targetFilter = speedUp ? 500 : 200;
             engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.2);
@@ -207,66 +205,77 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل الطائرتين معاً وإدارتهما برمجياً بشكل منفصل
-        let totalLoaded = 0;
+        const loader = new THREE.GLTFLoader();
         
-        // 1. تحميل طائرة الركاب الأولى الأصلية
+        // 🚀 آلية التحميل الذكي: تعتمد بالكامل على الملف الأول لفتح الشاشة فورا
         loader.load('airplane.glb', (gltf) => {
             passengerPlane = gltf.scene;
             passengerPlane.scale.set(3.0, 3.0, 3.0);
             passengerPlane.position.set(0, -9.8, 300);
             passengerPlane.rotation.set(0, Math.PI, 0);
             passengerPlane.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-            checkLoadingProgress();
-        });
-
-        // 2. تحميل الطائرة الحربية الجديدة KF-21 باسمها دون تغيير لقفل المتجر
-        loader.load('Kf-21a_boramae_fighter_jet.glb', (gltf) => {
-            fighterJet = gltf.scene;
-            fighterJet.scale.set(3.0, 3.0, 3.0); // نفس الحجم المتناسق والمثالي للمدرج
-            fighterJet.position.set(0, -9.8, 300);
-            fighterJet.rotation.set(0, Math.PI, 0);
-            fighterJet.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-            checkLoadingProgress();
+            
+            // فتح اللعبة فورا بمجرد توفر طائرة الركاب
+            document.getElementById('loading').style.display = 'none';
+            switchActivePlane(); 
+            document.getElementById('start-mask').style.display = 'flex';
+            
+            // البدء في جلب الطائرة العسكرية في الخلفية دون تعطيل الشاشة
+            loadFighterJetSilently();
         }, undefined, (err) => {
-            console.log("في انتظار رفع ملف المقاتلة الجديدة...");
+            document.getElementById('loading').innerText = "خطأ: لم يتم العثور على ملف airplane.glb الأساسي.";
         });
 
-        function checkLoadingProgress() {
-            totalLoaded++;
-            // عندما يتم تحميل الطائرة المتوفرة، تفتح اللعبة فوراً دون مشاكل
-            if (passengerPlane) {
-                document.getElementById('loading').style.display = 'none';
-                switchActivePlane(); // دالة تحديد الطائرة النشطة
-                document.getElementById('start-mask').style.display = 'flex';
+        function loadFighterJetSilently() {
+            loader.load('Kf-21a_boramae_fighter_jet.glb', (gltf) => {
+                fighterJet = gltf.scene;
+                fighterJet.scale.set(3.0, 3.0, 3.0); 
+                fighterJet.position.set(0, -9.8, 300);
+                fighterJet.rotation.set(0, Math.PI, 0);
+                fighterJet.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+                
+                // تحديث القائمة لإظهار المقاتلة بدلاً من كلمة "قفل مجهول"
+                updateShopText();
+            }, undefined, (err) => {
+                console.log("ملف الطائرة المقاتلة KF-21 غير متوفر حالياً على الخادم، سيتم استخدام طائرة الركاب الافتراضية.");
+            });
+        }
+
+        function updateShopText() {
+            if(fighterJet) {
+                let statusText = document.getElementById('plane2-status');
+                if (highScore < 100) {
+                    statusText.innerText = "قفل (تحتاج 100 نقطة) 🔒";
+                    statusText.className = "locked";
+                }
             }
         }
 
-        // دالة تبديل الطائرات الذكية بناء على النقاط المحققة
         function switchActivePlane() {
-            // إزالة الطائرات الحالية من المشهد أولاً لتفادي تداخلهما
             if(passengerPlane) scene.remove(passengerPlane);
             if(fighterJet) scene.remove(fighterJet);
 
             if (highScore >= 100 && fighterJet) {
-                // إذا حقق الباشمهندس 100 نقطة وكان الملف مرفوعاً، تطير الـ KF-21 الحربية!
                 currentActiveAirplane = fighterJet;
                 document.getElementById('plane1-status').innerText = "في المستودع";
                 document.getElementById('plane1-status').className = "unlocked";
                 document.getElementById('plane2-status').innerText = "قيد الإقلاع حالياً 🚀";
                 document.getElementById('plane2-status').className = "active-plane";
             } else {
-                // البداية بطائرة الركاب العادية مجاناً
                 currentActiveAirplane = passengerPlane;
                 document.getElementById('plane1-status').innerText = "قيد الإقلاع حالياً ✈️";
                 document.getElementById('plane1-status').className = "active-plane";
+                
+                let statusText = document.getElementById('plane2-status');
                 if(fighterJet) {
-                    document.getElementById('plane2-status').innerText = "تم الفتح! جاهزة للاستخدام";
-                    document.getElementById('plane2-status').className = "unlocked";
+                    statusText.innerText = "متوفرة (تفتح عند 100 نقطة)";
+                    statusText.className = "locked";
+                } else {
+                    statusText.innerText = "غير مرفوعة بالموقع بعد 🚫";
+                    statusText.className = "locked";
                 }
             }
             
-            // إضافة الطائرة المحددة إلى ساحة الطيران والمدرج
             if(currentActiveAirplane) {
                 currentActiveAirplane.position.set(0, -9.8, 300);
                 currentActiveAirplane.rotation.set(0, Math.PI, 0);
@@ -314,7 +323,7 @@
             score = 0; document.getElementById('points').innerText = score;
             hasTakenOff = false; currentSpeed = 1.5;
             
-            switchActivePlane(); // التحقق إذا كان يستحق ركوب الطائرة الحربية في الجولة الجديدة!
+            switchActivePlane(); 
             
             rings.forEach(r => scene.remove(r)); rings.length = 0;
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
@@ -327,7 +336,6 @@
             requestAnimationFrame(animate);
 
             if (isPlaying && currentActiveAirplane) {
-                // الطائرة الحربية KF-21 تعطيك سرعة وقدرة نفاثة أكبر تلقائياً عند فتحها!
                 let isFighter = (currentActiveAirplane === fighterJet);
                 let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
