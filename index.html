@@ -211,9 +211,9 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
 
-        // أسطول الطائرات المعروضة للشراء بأسعارها المحددة
+        // أسطول الطائرات المعروضة للشراء بالنقاط
         const fleet = [
-            { id: 0, type: 'passenger', name: 'ركاب بيضاء', unlockCost: 0, colorHex: null },
+            { id: 0, type: 'passenger', name: 'ركاب كلاسيك بيضاء', unlockCost: 0, colorHex: null },
             { id: 1, type: 'passenger', name: 'ركاب الجناح الأحمر', unlockCost: 30, colorHex: 0xff3333 },
             { id: 2, type: 'passenger', name: 'الصقر الأزرق النفاث', unlockCost: 60, colorHex: 0x3366ff },
             { id: 3, type: 'passenger', name: 'زمردة الأجواء الخضراء', unlockCost: 100, colorHex: 0x2ecc71 },
@@ -250,10 +250,10 @@
         }
         createTerrainSegment(0, true); createTerrainSegment(-1000, true); createTerrainSegment(-2000, true); createTerrainSegment(-3000, true);
 
-        // الحاوية البرمجية لضمان توجيه الطائرة الصحيح للأمام (-Z) دون التأثير على الفيزياء
+        // الحاوية البرمجية لضمان توجيه الطائرة الصحيح للأمام (-Z)
         function wrapModelForward(modelMesh, scale) {
             const group = new THREE.Group();
-            modelMesh.rotation.y = 0; // ضبط الزاوية الافتراضية لتطير للأمام دائماً
+            modelMesh.rotation.y = Math.PI; // تم تعديلها إلى Math.PI لقلب المجسم 180 درجة ليواجه الأمام دائماً
             group.add(modelMesh);
             group.scale.set(scale, scale, scale);
             return group;
@@ -286,7 +286,7 @@
             }
         }
 
-        // إنشاء وعرض كروت الطائرات بأسعارها وحالتها في السلايدر السفلي
+        // إنشاء وعرض كروت الطائرات
         function buildFleetUI() {
             const slider = document.getElementById('fleet-slider');
             slider.innerHTML = '';
@@ -342,7 +342,7 @@
             scene.add(currentActiveAirplane);
         }
 
-        // وضع الكاميرا في شاشة القائمة أمام الطائرة لعرض مقدمتها بشكل سينمائي ممتاز
+        // وضع الكاميرا في شاشة القائمة لاستعراض المقدمة
         function positionCameraForMenu() {
             camera.position.set(25, 5, -35);
             camera.lookAt(0, -2, 0);
@@ -433,7 +433,7 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // استعراض حي لمقدمة الطائرة وجسمها في شاشة البداية
+            // استعراض الكاميرا حول الطائرة في شاشة القائمة بشكل متناسق مع الاتجاه الجديد
             if (!isPlaying && currentActiveAirplane) {
                 camera.position.x = Math.sin(Date.now() * 0.0004) * 25;
                 camera.position.z = -32 + Math.cos(Date.now() * 0.0004) * 12;
@@ -449,7 +449,7 @@
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.05;
                 if (engineOsc) engineOsc.frequency.setTargetAtTime(keys.space ? 120 : 70, audioCtx.currentTime, 0.1);
 
-                // الطائرة تطير للأمام باتجاه عمق المحاكاة
+                // الطائرة تطير للأمام باتجاه عمق المحاكاة بشكل ممتاز
                 currentActiveAirplane.position.z -= currentSpeed;
 
                 document.getElementById('dash-speed').innerText = (currentSpeed * 22).toFixed(0);
@@ -464,10 +464,11 @@
                 if(currentActiveAirplane.position.y < -5) currentActiveAirplane.position.y = -5;
                 if(currentActiveAirplane.position.y > 200) currentActiveAirplane.position.y = 200;
 
-                currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, inputY * 0.3, 0.1);
+                // تم تعديل إشارة الدوران حول محور X (inputY * -0.3) لتتناسب مع الاتجاه الأمامي المعدل للطائرة
+                currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, inputY * -0.3, 0.1);
                 currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.6 * inputX, 0.1);
 
-                // ملاحقة وتتبع الكاميرا الخلفي أثناء الطيران
+                // ملاحقة وتتبع الكاميرا الخلفية أثناء الطيران
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.1);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 10, 0.1);
                 camera.position.z = currentActiveAirplane.position.z + 40; 
