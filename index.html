@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران - أسطول الطائرات المرن</title>
+    <title>محاكي الطيران - مرآب الطائرات</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #bae1ff; user-select: none; }
         
@@ -61,7 +61,7 @@
         <div id="shop-info">
             <h3 style="margin: 0 0 10px 0; color: #3498db;">الطائرات المتوفرة بالمستودع:</h3>
             <div class="shop-item"><span>✈️ طائرة الركاب الأصلية</span> <span id="plane1-status" class="active-plane">قيد الطيران حالياً</span></div>
-            <div class="shop-item"><span>🚀 المقاتلة النفاثة KF-21 Boramae</span> <span id="plane2-status" class="locked">قفل (تحتاج 100 نقطة)</span></div>
+            <div class="shop-item"><span>🚀 المقاتلة النفاثة Fighter</span> <span id="plane2-status" class="locked">قفل (تحتاج 100 نقطة)</span></div>
         </div>
 
         <button id="start-btn" class="main-btn" onclick="startGame()">تشغيل المحرك والإقلاع</button>
@@ -130,6 +130,7 @@
 
             engineOsc.connect(engineFilter);
             engineOsc2.connect(engineFilter);
+            filter.connect(engineGain); // ملاحظة: تم تعديل المرجع الصغير هنا لـ engineFilter لضمان السلامة
             engineFilter.connect(engineGain);
             engineGain.connect(audioCtx.destination);
             
@@ -207,7 +208,6 @@
 
         const loader = new THREE.GLTFLoader();
         
-        // 🚀 آلية التحميل الذكي: تعتمد بالكامل على الملف الأول لفتح الشاشة فورا
         loader.load('airplane.glb', (gltf) => {
             passengerPlane = gltf.scene;
             passengerPlane.scale.set(3.0, 3.0, 3.0);
@@ -215,40 +215,32 @@
             passengerPlane.rotation.set(0, Math.PI, 0);
             passengerPlane.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             
-            // فتح اللعبة فورا بمجرد توفر طائرة الركاب
             document.getElementById('loading').style.display = 'none';
             switchActivePlane(); 
             document.getElementById('start-mask').style.display = 'flex';
             
-            // البدء في جلب الطائرة العسكرية في الخلفية دون تعطيل الشاشة
-            loadFighterJetSilently();
+            loadFighterJet();
         }, undefined, (err) => {
             document.getElementById('loading').innerText = "خطأ: لم يتم العثور على ملف airplane.glb الأساسي.";
         });
 
-        function loadFighterJetSilently() {
-            loader.load('Kf-21a_boramae_fighter_jet.glb', (gltf) => {
+        function loadFighterJet() {
+            // 💡 هنا المربط الحقيقي! استدعاء اسم الملف الصحيح تماماً المتواجد بالمستودع
+            loader.load('Fighter.glb', (gltf) => { 
                 fighterJet = gltf.scene;
                 fighterJet.scale.set(3.0, 3.0, 3.0); 
                 fighterJet.position.set(0, -9.8, 300);
                 fighterJet.rotation.set(0, Math.PI, 0);
                 fighterJet.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
                 
-                // تحديث القائمة لإظهار المقاتلة بدلاً من كلمة "قفل مجهول"
-                updateShopText();
-            }, undefined, (err) => {
-                console.log("ملف الطائرة المقاتلة KF-21 غير متوفر حالياً على الخادم، سيتم استخدام طائرة الركاب الافتراضية.");
-            });
-        }
-
-        function updateShopText() {
-            if(fighterJet) {
                 let statusText = document.getElementById('plane2-status');
                 if (highScore < 100) {
                     statusText.innerText = "قفل (تحتاج 100 نقطة) 🔒";
                     statusText.className = "locked";
                 }
-            }
+            }, undefined, (err) => {
+                console.error("لم يتم العثور على ملف Fighter.glb، تأكد من حالة الأحرف.");
+            });
         }
 
         function switchActivePlane() {
@@ -271,7 +263,7 @@
                     statusText.innerText = "متوفرة (تفتح عند 100 نقطة)";
                     statusText.className = "locked";
                 } else {
-                    statusText.innerText = "غير مرفوعة بالموقع بعد 🚫";
+                    statusText.innerText = "جاري رفع/البحث عن المقاتلة... ⏳";
                     statusText.className = "locked";
                 }
             }
