@@ -12,10 +12,11 @@
         #btn-speed { background: rgba(46, 204, 113, 0.9); } 
         #btn-brake { background: rgba(231, 76, 60, 0.9); } 
         .btn:active { transform: scale(0.92); }
-        #joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 50%; z-index: 10; display: none; justify-content: center; align-items: center; pointer-events: none; }
-        #joystick-stick { width: 50px; height: 50px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        #joystick-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 50%; z-index: 10; display: flex; justify-content: center; align-items: center; }
+        #joystick-stick { width: 50px; height: 50px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3); position: absolute; pointer-events: none; }
         #touch-hint { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); color: white; font-size: 15px; z-index: 5; text-shadow: 1px 1px 3px #000; text-align: center; width: 90%; }
         #start-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 16px 40px; font-size: 22px; font-weight: bold; background: #2ecc71; color: white; border: 2px solid #fff; border-radius: 12px; z-index: 20; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
+        #loading { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 18px; z-index: 20; display: none; text-shadow: 1px 1px 3px #000; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -28,9 +29,12 @@
         <div id="score">النقاط: <span id="points">0</span></div>
     </div>
     
-    <div id="touch-hint">المس واسحب يسار الشاشة للتوجيه 🕹️</div>
+    <div id="touch-hint">قم بإمالة الهاتف أو استخدم عصا التحكم للتوجيه ✈️</div>
     <button id="start-btn" onclick="startGame()">إقلاع وبدء اللعب</button>
+    <div id="loading">جاري تحميل الطائرة...</div>
+    
     <div id="joystick-base"><div id="joystick-stick"></div></div>
+    
     <div id="speed-container">
         <button class="btn" id="btn-speed">تسريع</button>
         <button class="btn" id="btn-brake">كبح</button>
@@ -38,92 +42,229 @@
 
     <script>
         // ==========================================
-        // 1. إعدادات Pi Network (Authentication & Setup)
+        // 1. إعدادات Pi Network
         // ==========================================
         let currentUser = null;
-
         async function initPiNetwork() {
             try {
-                // تهيئة Pi SDK في وضع الـ Sandbox للتجربة
                 Pi.init({ version: "2.0", sandbox: true });
-
-                // تحديد الصلاحيات المطلوبة (اسم المستخدم والمدفوعات)
                 const scopes = ['username', 'payments'];
-
-                // معالجة المدفوعات المعلقة (مطلوبة من Pi)
-                function onIncompletePaymentFound(payment) {
-                    console.log("تم العثور على دفعة غير مكتملة:", payment);
-                    // هنا يتم إرسال معرف الدفعة إلى الخادم الخاص بك للتحقق منها
-                }
-
-                // تسجيل الدخول
+                function onIncompletePaymentFound(payment) { console.log("دفعة غير مكتملة:", payment); }
                 const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
                 currentUser = auth.user;
-                
-                // عرض اسم المستخدم في واجهة اللعبة
                 document.getElementById('player-name').innerText = `الطيار: ${currentUser.username}`;
-                console.log(`مرحباً بك في اللعبة يا ${currentUser.username}`);
-
             } catch (error) {
-                console.error("فشل الاتصال بشبكة Pi أو لم يتم الفتح عبر متصفح Pi:", error);
+                console.warn("تعذر الاتصال بـ Pi Network. اللعب كضيف.");
                 document.getElementById('player-name').innerText = "الطيار: ضيف";
             }
         }
-
-        // تشغيل تهيئة Pi فور تحميل الصفحة
         window.addEventListener('load', initPiNetwork);
 
         // ==========================================
-        // 2. إعدادات اللعبة (Three.js)
+        // 2. إعدادات المشهد والكاميرا
         // ==========================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb);
+        scene.fog = new THREE.Fog(0x87ceeb, 100, 800); // إضافة ضباب ليعطي عمق للرؤية
+
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(30, 60, 30);
+        dirLight.position.set(50, 100, 50);
         scene.add(dirLight);
 
+        // ==========================================
+        // 3. متغيرات اللعبة الأساسية
+        // ==========================================
         let airplane = null;
         let isPlaying = false;
-        const loader = new THREE.GLTFLoader();
-        
+        let score = 0;
+        let speed = 1.0;
+        let targetRotationX = 0;
+        let targetRotationZ = 0;
+        const rings = [];
+
         // تحميل الطائرة
+        document.getElementById('loading').style.display = 'block';
+        const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', 
             (gltf) => {
                 airplane = gltf.scene;
                 airplane.scale.set(0.6, 0.6, 0.6);
-                airplane.position.set(0, -48.9, 0);
+                airplane.position.set(0, 0, 0);
+                // تدوير الطائرة لتواجه الاتجاه الصحيح إذا لزم الأمر
+                airplane.rotation.y = Math.PI; 
                 scene.add(airplane);
+                document.getElementById('loading').style.display = 'none';
             }, 
-            undefined, // تجاهل تتبع تقدم التحميل هنا لتنظيف الكود
+            undefined, 
             (error) => {
                 console.error('خطأ في تحميل الطائرة:', error);
+                document.getElementById('loading').innerText = "خطأ: تأكد من وجود ملف airplane.glb";
             }
         );
 
-        // دالة بدء اللعبة
-        function startGame() {
-            document.getElementById('start-btn').style.display = 'none';
-            isPlaying = true;
-            // يمكنك إضافة كود إعادة تعيين النقاط وموقع الطائرة هنا
+        // ==========================================
+        // 4. توليد الحلقات (Rings)
+        // ==========================================
+        function createRing(zPos) {
+            const geometry = new THREE.TorusGeometry(8, 0.8, 16, 50);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(geometry, material);
+            
+            // مواقع عشوائية للحلقات
+            ring.position.set(
+                (Math.random() - 0.5) * 80, 
+                (Math.random() - 0.5) * 60, 
+                zPos
+            );
+            scene.add(ring);
+            rings.push(ring);
         }
 
-        // حلقة الرسم (Animation Loop)
+        // إنشاء الحلقات المبدئية
+        for (let i = 1; i <= 20; i++) {
+            createRing(-i * 100);
+        }
+
+        // ==========================================
+        // 5. التحكم باللعبة (الجيروسكوب والأزرار)
+        // ==========================================
+        // أزرار السرعة
+        const btnSpeed = document.getElementById('btn-speed');
+        const btnBrake = document.getElementById('btn-brake');
+        
+        btnSpeed.addEventListener('touchstart', () => speed = 2.5);
+        btnSpeed.addEventListener('touchend', () => speed = 1.0);
+        btnBrake.addEventListener('touchstart', () => speed = 0.3);
+        btnBrake.addEventListener('touchend', () => speed = 1.0);
+
+        // عصا التحكم (Joystick) كبديل
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickStick = document.getElementById('joystick-stick');
+        let isDragging = false;
+
+        joystickBase.addEventListener('touchstart', (e) => isDragging = true);
+        joystickBase.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            const maxRadius = rect.width / 2;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > maxRadius) {
+                deltaX = (deltaX / distance) * maxRadius;
+                deltaY = (deltaY / distance) * maxRadius;
+            }
+            
+            joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            // تحويل الحركة إلى دوران للطائرة
+            targetRotationZ = (deltaX / maxRadius) * 0.8;
+            targetRotationX = (deltaY / maxRadius) * 0.8;
+        });
+        joystickBase.addEventListener('touchend', () => {
+            isDragging = false;
+            joystickStick.style.transform = `translate(0px, 0px)`;
+            targetRotationX = 0;
+            targetRotationZ = 0;
+        });
+
+        // المستشعرات (Gyroscope) لتمييل الهاتف
+        function handleOrientation(event) {
+            if (!isPlaying || isDragging) return; // تعطيل الجيروسكوب إذا كان اللاعب يستخدم العصا
+            
+            let pitch = event.beta;  // الانحناء للأمام/الخلف
+            let roll = event.gamma;  // الميل لليمين/اليسار
+
+            // تحجيم القيم لتناسب حركة الطائرة
+            if (pitch !== null && roll !== null) {
+                targetRotationX = THREE.MathUtils.clamp((pitch - 45) * 0.02, -0.8, 0.8);
+                targetRotationZ = THREE.MathUtils.clamp(roll * 0.02, -0.8, 0.8);
+            }
+        }
+
+        function startGame() {
+            if (!airplane) return; // لا تبدأ إذا لم تحمل الطائرة
+            
+            document.getElementById('start-btn').style.display = 'none';
+            isPlaying = true;
+
+            // طلب صلاحية الجيروسكوب لأنظمة iOS 13+ إن وجدت
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().then(permissionState => {
+                    if (permissionState === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
+                }).catch(console.error);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        // ==========================================
+        // 6. حلقة الرسم والفيزياء (Animation Loop)
+        // ==========================================
         function animate() {
             requestAnimationFrame(animate);
+
             if (isPlaying && airplane) {
-                // ضع منطق حركة الطائرة والتحكم عبر الأزرار هنا
+                // 1. تحديث دوران الطائرة بنعومة
+                airplane.rotation.x += (targetRotationX - airplane.rotation.x) * 0.1;
+                airplane.rotation.z += (targetRotationZ - airplane.rotation.z) * 0.1;
+                
+                // إضافة ميلان الطائرة لليسار/اليمين للمحور Y للدوران الفعلي
+                airplane.rotation.y -= targetRotationZ * 0.05;
+
+                // 2. حركة الطائرة للأمام بناءً على اتجاهها
+                airplane.translateZ(speed); // تحرك في اتجاه المحور Z المحلي للطائرة
+
+                // 3. تحديث موقع الكاميرا لتتبع الطائرة بسلاسة
+                const cameraOffset = new THREE.Vector3(0, 10, -35); // الكاميرا خلف الطائرة
+                const cameraTarget = cameraOffset.applyMatrix4(airplane.matrixWorld);
+                camera.position.lerp(cameraTarget, 0.1);
+                camera.lookAt(airplane.position);
+
+                // 4. التحقق من الاصطدام بالحلقات
+                for (let i = rings.length - 1; i >= 0; i--) {
+                    const ring = rings[i];
+                    
+                    // حساب المسافة بين الطائرة والحلقة
+                    const distance = airplane.position.distanceTo(ring.position);
+
+                    // إذا مرت الطائرة من داخل الحلقة
+                    if (distance < 15 && Math.abs(airplane.position.z - ring.position.z) < 5) {
+                        scene.remove(ring);
+                        rings.splice(i, 1);
+                        score += 10;
+                        document.getElementById('points').innerText = score;
+                        
+                        // توليد حلقة جديدة في الأمام
+                        createRing(airplane.position.z + 2000); 
+                    } 
+                    // إذا تجاوزت الطائرة الحلقة دون أن تعبرها
+                    else if (airplane.position.z > ring.position.z + 50) {
+                        scene.remove(ring);
+                        rings.splice(i, 1);
+                        createRing(airplane.position.z + 2000);
+                    }
+                }
             }
+
             renderer.render(scene, camera);
         }
         animate();
 
-        // تحديث أبعاد الشاشة عند تدوير الهاتف
+        // تحديث الأبعاد عند تدوير الشاشة
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
