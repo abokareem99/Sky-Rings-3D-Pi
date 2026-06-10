@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران المتقدم - نظام الطيران الحقيقي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>محاكي الطيران</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #00d2ff;
             --secondary: #2ecc71;
-            --accent: #ff9f43;
             --danger: #ff4757;
-            --bg-glass: rgba(10, 15, 30, 0.8);
-            --border-glass: rgba(0, 210, 255, 0.25);
+            --bg-glass: rgba(6, 10, 25, 0.85);
+            --border-glass: rgba(0, 210, 255, 0.2);
         }
 
         body { 
             margin: 0; 
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #050814; 
+            background-color: #030611; 
             user-select: none;
             -webkit-user-select: none;
         }
@@ -27,9 +26,9 @@
         /* واجهة اللعب العليا (HUD) */
         #hud-container {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
             z-index: 10;
@@ -38,118 +37,117 @@
 
         .glass-panel {
             background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 210, 255, 0.15);
+            border-radius: 12px;
         }
 
         .hud-card {
             color: #ffffff; 
-            font-size: 18px; 
-            font-weight: 700; 
-            padding: 10px 20px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            padding: 6px 14px; 
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
         }
 
-        #time-card { color: #ff4757; border-color: rgba(255, 71, 87, 0.3); }
-        #score-card { color: #ffd32a; font-size: 22px; border-color: rgba(255, 211, 42, 0.3); }
+        #time-card { color: #ff4757; border-color: rgba(255, 71, 87, 0.25); }
+        #score-card { color: #ffd32a; font-size: 16px; border-color: rgba(255, 211, 42, 0.25); }
         #total-score-card { 
             color: #00d2ff; 
-            font-size: 14px; 
-            margin-top: 6px; 
-            padding: 6px 14px;
-            display: inline-block;
+            font-size: 11px; 
+            margin-top: 4px; 
+            padding: 4px 10px;
         }
 
-        /* شاشات الواجهة الأوفرلاي */
+        /* شاشات القوائم (الأوفرلاي) */
         .overlay-mask { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: radial-gradient(circle at center, rgba(5, 8, 20, 0.45) 0%, rgba(5, 8, 20, 0.9) 100%);
-            backdrop-filter: blur(6px);
+            background: radial-gradient(circle at center, rgba(4, 7, 18, 0.6) 0%, rgba(4, 7, 18, 0.95) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 15; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            color: white; text-align: center; 
+            color: white; 
         }
 
         .main-title {
-            font-size: 3rem;
-            font-weight: 900;
-            margin-bottom: 5px;
-            background: linear-gradient(45deg, #00d2ff 0%, #00e676 100%);
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            background: linear-gradient(45deg, #00d2ff, #2ecc71);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0px 4px 15px rgba(0, 210, 255, 0.3));
         }
 
-        .subtitle { font-size: 1.1rem; color: #a4b0be; margin-bottom: 25px; }
-
         .main-btn { 
-            padding: 14px 45px; 
-            font-size: 20px; 
+            padding: 10px 35px; 
+            font-size: 15px; 
             font-family: 'Cairo', sans-serif;
-            font-weight: 700; 
+            font-weight: 600; 
             background: linear-gradient(135deg, #00d2ff, #0056b3); 
             color: white; 
             border: none; 
-            border-radius: 50px; 
+            border-radius: 25px; 
             cursor: pointer; 
-            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4); 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); 
+            transition: all 0.2s ease; 
             margin-top: 20px; 
         }
-        .main-btn:hover { transform: scale(1.05); box-shadow: 0 12px 30px rgba(0, 210, 255, 0.6); }
-        .main-btn:disabled { background: #57606f; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.5; }
+        .main-btn:hover { transform: scale(1.03); }
+        .main-btn:disabled { background: #3d434e; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.4; }
         
-        /* معرض اختيار الطائرات */
-        #shop-carousel { 
-            display: flex; align-items: center; justify-content: center; gap: 20px; 
-            padding: 20px 30px; 
-            width: 380px;
-            max-width: 90vw;
-            border: 1px solid rgba(0, 210, 255, 0.3);
+        /* صندوق اختيار الطائرات المصغر والمحكم */
+        #shop-box { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px; 
+            padding: 10px 15px; 
+            width: 260px;
+            height: 70px;
+            box-sizing: border-box;
         }
         .carousel-btn { 
-            background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.3); 
-            width: 45px; height: 45px; border-radius: 50%; font-size: 18px; cursor: pointer; 
-            transition: 0.2s; display: flex; justify-content: center; align-items: center;
+            background: rgba(0, 210, 255, 0.08); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.2); 
+            width: 32px; height: 32px; border-radius: 50%; font-size: 12px; cursor: pointer; 
+            display: flex; justify-content: center; align-items: center; transition: 0.2s;
         }
-        .carousel-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
-        .plane-info { flex-grow: 1; }
-        .plane-name { font-size: 22px; color: #ffffff; margin: 0 0 5px 0; font-weight: 700; text-shadow: 0 2px 8px rgba(0,210,255,0.4); }
-        .plane-status { font-size: 15px; font-weight: 700; margin: 0; }
+        .carousel-btn:hover { background: var(--primary); color: #000; }
+        
+        .plane-info { flex-grow: 1; text-align: center; }
+        .plane-name { font-size: 13px; color: #ffffff; margin: 0 0 3px 0; font-weight: 600; }
+        .plane-status { font-size: 11px; font-weight: 600; margin: 0; display: flex; align-items: center; justify-content: center; gap: 4px; }
 
-        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00d2ff; font-size: 24px; font-weight: 700; z-index: 20; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
+        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #00d2ff; font-size: 16px; font-weight: 600; z-index: 20; }
 
-        /* عناصر التحكم باللمس */
-        #touch-controls { display: block; }
+        /* عناصر التحكم باللمس - مخفية تلقائياً في البداية */
+        #touch-controls { display: none; }
         #joystick-zone {
-            position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
-            background: rgba(0, 210, 255, 0.05); border: 2px solid rgba(0, 210, 255, 0.3);
+            position: absolute; bottom: 40px; left: 40px; width: 110px; height: 110px;
+            background: rgba(0, 210, 255, 0.03); border: 1.5px solid rgba(0, 210, 255, 0.25);
             border-radius: 50%; z-index: 100; backdrop-filter: blur(4px);
-            box-shadow: inset 0 0 20px rgba(0,210,255,0.15);
         }
         #joystick-knob {
-            position: absolute; top: 40px; left: 40px; width: 60px; height: 60px;
+            position: absolute; top: 35px; left: 35px; width: 40px; height: 40px;
             background: linear-gradient(135deg, #00d2ff, #0056b3); border-radius: 50%;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 10px rgba(0,210,255,0.5); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); 
             transform: translate(0px, 0px); pointer-events: none;
         }
         #speed-btn {
-            position: absolute; bottom: 50px; right: 40px; width: 90px; height: 90px;
-            background: linear-gradient(135deg, #ff9f43, #ff4757); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
-            color: white; font-weight: 900; font-family: 'Cairo', sans-serif; font-size: 18px;
-            z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 6px 20px rgba(255,71,87,0.4);
+            position: absolute; bottom: 45px; right: 40px; width: 70px; height: 70px;
+            background: linear-gradient(135deg, #ff9f43, #ff4757); border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-weight: 700; font-family: 'Cairo', sans-serif; font-size: 14px;
+            z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(255,71,87,0.3);
             display: flex; justify-content: center; align-items: center; cursor: pointer;
         }
 
         @media (max-width: 768px) {
-            #joystick-zone { width: 120px; height: 120px; bottom: 30px; left: 30px; }
-            #joystick-knob { width: 50px; height: 50px; top: 35px; left: 35px; }
-            #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 30px; font-size: 15px; }
+            #joystick-zone { width: 100px; height: 100px; bottom: 30px; left: 30px; }
+            #joystick-knob { width: 36px; height: 36px; top: 32px; left: 32px; }
+            #speed-btn { width: 65px; height: 65px; bottom: 40px; right: 30px; font-size: 13px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -159,8 +157,8 @@
 
     <div id="hud-container">
         <div>
-            <div id="time-card" class="glass-panel hud-card">⏱️ الوقت: <span id="time-left">30</span>ث</div>
-            <div id="total-score-card" class="glass-panel">الرصيد الإجمالي: <span id="total-points" style="font-weight: 700;">0</span></div>
+            <div id="time-card" class="glass-panel hud-card">⏱️ <span id="time-left">30</span>ث</div>
+            <div id="total-score-card" class="glass-panel">الإجمالي: <span id="total-points" style="font-weight: 700;">0</span></div>
         </div>
         <div id="score-card" class="glass-panel hud-card">🪙 <span id="points">0</span></div>
     </div>
@@ -172,37 +170,35 @@
         <div id="speed-btn">تيربو 🚀</div>
     </div>
 
-    <div id="loading">جاري فحص أنظمة الدفع النفاث...</div>
+    <div id="loading">جاري تهيئة الأنظمة...</div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        <h1 class="main-title">محاكي الطيران المتقدم ✈️</h1>
-        <p class="subtitle">نظام الملاحة الجوية الفعلي والتحكم الاحترافي</p>
+        <h1 class="main-title">محاكي الطيران ✈️</h1>
         
-        <div id="shop-carousel" class="glass-panel">
+        <div id="shop-box" class="glass-panel">
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">جاري الفحص...</h3>
+                <h3 id="cp-name" class="plane-name">-</h3>
                 <p id="cp-status" class="plane-status">-</p>
             </div>
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
         </div>
 
-        <button id="start-btn" class="main-btn" onclick="startGame()">انطلاق حر فوراً</button>
+        <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع</button>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
-        <h1 class="main-title" style="background: linear-gradient(45deg, #ff4757, #ff6b81); -webkit-background-clip: text;">انتهت الجولة! ⏱️</h1>
-        <p class="subtitle">لقد نفد وقود المحرك.</p>
-        <div class="glass-panel" style="padding: 15px 35px; margin-bottom: 20px; border-color: rgba(255,71,87,0.4)">
-            <h2 style="font-size: 22px; color: #ffd32a; margin: 0;">النقاط المكتسبة: <span id="final-score" style="font-size: 30px;">0</span></h2>
+        <h1 class="main-title" style="background: linear-gradient(45deg, #ff4757, #ff6b81); -webkit-background-clip: text;">انتهت الجولة</h1>
+        <div class="glass-panel" style="padding: 10px 25px; margin-bottom: 15px;">
+            <h2 style="font-size: 15px; color: #ffd32a; margin: 0;">النقاط: <span id="final-score" style="font-size: 20px;">0</span></h2>
         </div>
-        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #218c74); box-shadow: 0 8px 25px rgba(46,204,113,0.4);" onclick="restartGame()">العودة للمرآب 🔄</button>
+        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #218c74); box-shadow: 0 4px 15px rgba(46,204,113,0.3);" onclick="restartGame()">المرآب 🔄</button>
     </div>
 
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a1128);
-        const fog = new THREE.FogExp2(0x0a1128, 0.0005);
+        scene.background = new THREE.Color(0x050914);
+        const fog = new THREE.FogExp2(0x050914, 0.0006);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -210,13 +206,11 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.6));
         const sunLight = new THREE.DirectionalLight(0x00d2ff, 1.4);
         sunLight.position.set(200, 500, 200);
-        sunLight.castShadow = true;
         scene.add(sunLight);
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
@@ -240,20 +234,20 @@
         const joyState = { x: 0, y: 0, active: false };
 
         const fleet = [
-            { id: 0, type: 'passenger', name: '✈️ ركاب كلاسيك بيضاء', unlockCost: 0, colorHex: null },
-            { id: 1, type: 'passenger', name: '✈️ ركاب الجناح الأحمر', unlockCost: 30, colorHex: 0xff3333 },
-            { id: 2, type: 'passenger', name: '✈️ الصقر الأزرق النفاث', unlockCost: 60, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: '✈️ زمردة الأجواء الخضراء', unlockCost: 100, colorHex: 0x2ecc71 },
-            { id: 4, type: 'passenger', name: '✈️ الإمبراطور الذهبي الملكي', unlockCost: 150, colorHex: 0xf1c40f },
-            { id: 5, type: 'fighter', name: '🚀 مقاتلة الاعتراض العسكري', unlockCost: 200, colorHex: null },
-            { id: 6, type: 'fighter', name: '🚀 شبح التخفي السوداء Stealth', unlockCost: 280, colorHex: 0x111111 },
-            { id: 7, type: 'fighter', name: '🚀 مقاتلة العاصفة الرملية', unlockCost: 350, colorHex: 0xe67e22 },
-            { id: 8, type: 'fighter', name: '🚀 نسر المارينز البحري الأدكن', unlockCost: 450, colorHex: 0x130f40 },
-            { id: 9, type: 'fighter', name: '🚀 أوميجا الفضاء الهجومية Red', unlockCost: 600, colorHex: 0xd63031 }
+            { id: 0, type: 'passenger', name: 'ركاب كلاسيك بيضاء', unlockCost: 0, colorHex: null },
+            { id: 1, type: 'passenger', name: 'ركاب الجناح الأحمر', unlockCost: 30, colorHex: 0xff3333 },
+            { id: 2, type: 'passenger', name: 'الصقر الأزرق النفاث', unlockCost: 60, colorHex: 0x3366ff },
+            { id: 3, type: 'passenger', name: 'زمردة الأجواء الخضراء', unlockCost: 100, colorHex: 0x2ecc71 },
+            { id: 4, type: 'passenger', name: 'الإمبراطور الذهبي الملكي', unlockCost: 150, colorHex: 0xf1c40f },
+            { id: 5, type: 'fighter', name: 'مقاتلة الاعتراض العسكري', unlockCost: 200, colorHex: null },
+            { id: 6, type: 'fighter', name: 'شبح التخفي السوداء Stealth', unlockCost: 280, colorHex: 0x111111 },
+            { id: 7, type: 'fighter', name: 'مقاتلة العاصفة الرملية', unlockCost: 350, colorHex: 0xe67e22 },
+            { id: 8, type: 'fighter', name: 'نسر المارينز البحري', unlockCost: 450, colorHex: 0x130f40 },
+            { id: 9, type: 'fighter', name: 'أوميجا الفضاء الهجومية', unlockCost: 600, colorHex: 0xd63031 }
         ];
         let currentSelectionIndex = 0;
 
-        // إعداد الصوت
+        // إعداد الصوت المبسط
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (audioCtx) return;
@@ -274,94 +268,36 @@
             let isFighter = fleet[currentSelectionIndex].type === 'fighter';
             let baseFreq = isFighter ? 85 : 65;
             const targetFreq = speedUp ? (baseFreq + 60) : baseFreq;
-            const targetFilter = speedUp ? 800 : 300;
             engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
-            engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.15);
         }
 
         function stopEngineSound() { if(audioCtx) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-        // بناء الحظيرة ثلاثية الأبعاد
         function build3DHangar() {
             hangarGroup.clear();
             const hangarWidth = 160; const hangarHeight = 90; const hangarLength = 200;
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1c2429, roughness: 0.4, metalness: 0.7, side: THREE.BackSide });
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x242b35, roughness: 0.2, metalness: 0.7 });
-            
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x141a1e, roughness: 0.5, side: THREE.BackSide });
             const boxGeo = new THREE.BoxGeometry(hangarWidth, hangarHeight, hangarLength);
             const structure = new THREE.Mesh(boxGeo, wallMat);
             structure.position.set(0, hangarHeight/2 - 10, 300);
-            structure.receiveShadow = true;
             hangarGroup.add(structure);
-
-            const floorGeo = new THREE.PlaneGeometry(hangarWidth, hangarLength);
-            const floor = new THREE.Mesh(floorGeo, floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.set(0, -9.9, 300);
-            floor.receiveShadow = true;
-            hangarGroup.add(floor);
-
-            for(let i = -2; i <= 2; i++) {
-                const lineGeo = new THREE.BoxGeometry(2.5, 0.1, hangarLength);
-                const lineMat = new THREE.MeshBasicMaterial({ color: 0xffb300 });
-                const line = new THREE.Mesh(lineGeo, lineMat);
-                line.position.set(i * 35, -9.85, 300);
-                hangarGroup.add(line);
-
-                const lightGeo = new THREE.CylinderGeometry(0.6, 0.6, 50);
-                const lightMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
-                const neon = new THREE.Mesh(lightGeo, lightMat);
-                neon.rotation.z = Math.PI / 2;
-                neon.position.set(0, 50, 300 + (i * 40));
-                hangarGroup.add(neon);
-            }
         }
         build3DHangar();
 
-        // البيئة والتضاريس
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175, mountain: 0x3d4a5d, forest: 0x05c46b };
+        const envColors = { desert: 0xcc9966, mountain: 0x2c3e50, forest: 0x1e824c };
         let currentEnv = 'desert';
-
-        function addEnvironmentDecorations(zPos, envType) {
-            const count = 25;
-            for(let i=0; i<count; i++) {
-                let mesh; const side = Math.random() > 0.5 ? 1 : -1; const x = (Math.random() * 380 + 100) * side;
-                if (envType === 'desert') {
-                    mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(Math.random() * 16 + 6), new THREE.MeshStandardMaterial({ color: 0xcc7a29, roughness: 0.9, flatShading: true }));
-                    mesh.position.set(x, -8, zPos + (Math.random() * 1000 - 500)); mesh.scale.set(1, Math.random() * 3 + 1, 1);
-                } else if (envType === 'forest') {
-                    const tree = new THREE.Group();
-                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(2, 3, 18, 6), new THREE.MeshStandardMaterial({ color: 0x5c3d2e })); trunk.position.y = 9; tree.add(trunk);
-                    const leaves = new THREE.Mesh(new THREE.ConeGeometry(12, 28, 6), new THREE.MeshStandardMaterial({ color: 0x019031, flatShading:true })); leaves.position.y = 26; tree.add(leaves); 
-                    mesh = tree; mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
-                } else if (envType === 'mountain') {
-                    mesh = new THREE.Mesh(new THREE.ConeGeometry(Math.random() * 50 + 25, Math.random() * 110 + 50, 5), new THREE.MeshStandardMaterial({ color: 0x2c3e50, flatShading:true }));
-                    mesh.position.set(x * 1.6, Math.random() * 15 - 10, zPos + (Math.random() * 1000 - 500));
-                }
-                if(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); environmentObjects.push(mesh); }
-            }
-        }
 
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const width = 1500; const length = 1000;
-            const geometry = new THREE.PlaneGeometry(width, length, 20, 20);
-            const pos = geometry.attributes.position;
-            for (let i = 0; i < pos.count; i++) {
-                const x = pos.getX(i); const y = pos.getY(i);
-                if (Math.abs(x) > 140 && !isRunway) {
-                    let heightFactor = currentEnv === 'mountain' ? 170 : (currentEnv === 'forest' ? 75 : 35);
-                    pos.setZ(i, Math.abs(Math.sin(x * 0.015) * Math.cos(y * 0.015) * heightFactor));
-                }
-            }
-            geometry.computeVertexNormals();
+            const geometry = new THREE.PlaneGeometry(width, length, 10, 10);
             const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.9, flatShading: true }));
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
 
             if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 900), new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.5 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 50); runway.receiveShadow = true; scene.add(runway);
-            } else { addEnvironmentDecorations(zPos, currentEnv); }
+                const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 900), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 }));
+                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 50); scene.add(runway);
+            }
         }
 
         createTerrainSegment(0, envColors.desert, true);
@@ -372,20 +308,14 @@
             const group = new THREE.Group();
             const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 16, 8), new THREE.MeshStandardMaterial({color: 0xffffff}));
             body.rotation.x = Math.PI / 2; group.add(body);
-            const wings = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 3.5), new THREE.MeshStandardMaterial({color: 0xffffff}));
-            wings.position.set(0, 0, -1); group.add(wings);
-            const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.5, 2.5), new THREE.MeshStandardMaterial({color: 0x00d2ff}));
-            tail.position.set(0, 2, 6); group.add(tail);
             group.scale.set(3.5, 3.5, 3.5);
             return group;
         }
 
         function buildMockFighter() {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.ConeGeometry(2.2, 15, 4), new THREE.MeshStandardMaterial({color: 0x4f5d75, metalness: 0.8}));
+            const body = new THREE.Mesh(new THREE.ConeGeometry(2.2, 15, 4), new THREE.MeshStandardMaterial({color: 0x34495e, metalness: 0.8}));
             body.rotation.x = Math.PI / 2; group.add(body);
-            const wings = new THREE.Mesh(new THREE.BoxGeometry(13, 0.2, 4.5), new THREE.MeshStandardMaterial({color: 0x2d3748, metalness: 0.7}));
-            wings.position.set(0, -0.2, 1); group.add(wings);
             group.scale.set(3.5, 3.5, 3.5);
             return group;
         }
@@ -393,13 +323,11 @@
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.8, 3.8, 3.8);
-            basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkInit();
         }, undefined, (err) => { basePassengerModel = buildMockPassenger(); checkInit(); });
 
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = gltf.scene; baseFighterModel.scale.set(3.8, 3.8, 3.8); 
-            baseFighterModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkInit();
         }, undefined, (err) => { baseFighterModel = buildMockFighter(); checkInit(); });
 
@@ -416,6 +344,7 @@
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
+        // تحديث الصندوق المصغر بناء على طلبك (عرض القفل والسعر مباشرة بدون نصوص غير ضرورية)
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
@@ -423,16 +352,12 @@
             const startBtn = document.getElementById('start-btn');
 
             if (totalPoints >= planeData.unlockCost) {
-                statusEl.innerText = "جاهزة للانطلاق من داخل الحظيرة ✔️";
-                statusEl.style.color = "#2ecc71";
+                statusEl.innerHTML = `<span style="color: #2ecc71;">✔️ جاهزة</span>`;
                 startBtn.disabled = false;
-                startBtn.innerText = "تشغيل النفاث والتحليق الحر";
                 renderPlaneInMenu(planeData);
             } else {
-                statusEl.innerText = `مغلقة (تتطلب رصيد إجمالي ${planeData.unlockCost} نقطة) 🔒`;
-                statusEl.style.color = "#ff4757";
+                statusEl.innerHTML = `<span style="color: #ff4757;">🔒 ${planeData.unlockCost}</span>`;
                 startBtn.disabled = true;
-                startBtn.innerText = "الرصيد غير كافٍ";
                 if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             }
         }
@@ -448,7 +373,6 @@
                     if (c.isMesh && c.material) {
                         c.material = c.material.clone();
                         c.material.color.setHex(planeData.colorHex);
-                        c.material.metalness = 0.85;
                     }
                 });
             }
@@ -458,13 +382,14 @@
         }
 
         function createRing(zPos) {
-            const geometry = new THREE.TorusGeometry(15, 1.8, 16, 40);
-            const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xffb300, emissiveIntensity: 0.4 }));
-            ring.position.set((Math.random() - 0.5) * 220, Math.random() * 85 + 25, zPos);
+            const geometry = new THREE.TorusGeometry(14, 1.5, 12, 30);
+            const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffb300, emissiveIntensity: 0.3 }));
+            ring.position.set((Math.random() - 0.5) * 200, Math.random() * 80 + 20, zPos);
             scene.add(ring); rings.push(ring);
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 170); }
 
+        // عناصر التحكم
         window.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
             if(e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
@@ -483,7 +408,7 @@
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
-        const maxJoyRadius = 45; 
+        const maxJoyRadius = 35; 
 
         function handleTouchMove(e) {
             e.preventDefault();
@@ -512,7 +437,6 @@
         }, {passive: false});
 
         joyZone.addEventListener('touchmove', handleTouchMove, {passive: false});
-
         joyZone.addEventListener('touchend', (e) => {
             e.preventDefault();
             joyState.active = false; joyState.x = 0; joyState.y = 0;
@@ -525,6 +449,7 @@
 
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
+            document.getElementById('touch-controls').style.display = 'block'; // إظهار أزرار التحكم هنا فقط عند بدء اللعب
             initEngineSound();
             if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
             isPlaying = true;
@@ -543,6 +468,7 @@
 
         function endGame() {
             isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
+            document.getElementById('touch-controls').style.display = 'none'; // إخفاء أزرار اللمس فور الانتهاء للترتيب
             totalPoints += score;
             localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints;
@@ -566,7 +492,6 @@
 
             if (isPlaying && currentActiveAirplane) {
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
-                
                 let speedMultiplier = keys.space ? (isFighter ? 19.0 : 15.0) : (isFighter ? 11.5 : 9.0);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.15;
                 updateEngineSound(keys.space);
@@ -582,10 +507,10 @@
                 if (keys.a) inputX -= 1.0;
                 if (keys.d) inputX += 1.0;
 
-                // قراءة عصا التحكم باللمس التناظرية بنظام الطيران المحاكي الحقيقي
+                // نظام التحكم المحاكي المعكوس (سحب لأسفل يعطي قيمة موجبة لترتفع الطائرة)
                 if (joyState.active) {
                     inputX += joyState.x;
-                    inputY += joyState.y; // تم التعديل هنا: سحب العصا للخلف/الأسفل يعطي قيمة موجبة للارتفاع (ترتفع الطائرة)
+                    inputY += joyState.y; 
                 }
 
                 inputX = Math.max(-1, Math.min(1, inputX));
@@ -611,21 +536,15 @@
 
                 sunLight.position.set(currentActiveAirplane.position.x + 200, currentActiveAirplane.position.y + 400, currentActiveAirplane.position.z + 100);
 
-                if (distanceTraveled > 4000 && currentEnv === 'desert') {
-                    currentEnv = 'mountain'; scene.background.setHex(0x1e272e); fog.color.setHex(0x1e272e);
-                } else if (distanceTraveled > 8500 && currentEnv === 'mountain') {
-                    currentEnv = 'forest'; scene.background.setHex(0x05c46b); fog.color.setHex(0x05c46b);
-                }
-
                 if (currentActiveAirplane.position.z < lastTerrainZ + 1500) {
                     lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
                 }
 
                 for (let i = rings.length - 1; i >= 0; i--) {
-                    const ring = rings[i]; ring.rotation.y += 0.025;
+                    const ring = rings[i];
                     const dist = currentActiveAirplane.position.distanceTo(ring.position);
 
-                    if (dist < 25 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 12) { 
+                    if (dist < 24 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 12) { 
                         scene.remove(ring); rings.splice(i, 1);
                         score += 10; timeLeft += 3;
                         document.getElementById('points').innerText = score;
@@ -633,15 +552,6 @@
                         const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
                         createRing(lowestZ - 170);
                     } 
-                    else if (currentActiveAirplane.position.z < ring.position.z - 90) {
-                        scene.remove(ring); rings.splice(i, 1);
-                        const lowestZ = rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z);
-                        createRing(lowestZ - 170);
-                    }
-                }
-                for (let i = environmentObjects.length - 1; i >= 0; i--) {
-                    const obj = environmentObjects[i];
-                    if (obj.position.z > currentActiveAirplane.position.z + 150) { scene.remove(obj); environmentObjects.splice(i, 1); }
                 }
             }
             renderer.render(scene, camera);
