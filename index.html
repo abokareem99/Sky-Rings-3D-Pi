@@ -24,16 +24,19 @@
             -webkit-user-select: none;
         }
         
-        /* واجهة اللعب أثناء الطيران (HUD) */
+        /* واجهة اللعب أثناء الطيران (HUD) - تم حصرها في منطقة آمنة */
         #hud-container {
             position: absolute;
             top: 20px;
-            left: 20px;
-            right: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 1200px;
             display: flex;
             justify-content: space-between;
             z-index: 10;
             pointer-events: none;
+            box-sizing: border-box;
         }
 
         .glass-panel {
@@ -76,12 +79,24 @@
             color: white;
         }
 
-        /* واجهة القائمة الرئيسية الاحترافية بالخلفية المستجابة */
+        /* واجهة القائمة الرئيسية الاحترافية */
         #start-mask {
             background: url('game-bg.jpg') no-repeat center center;
             background-size: cover;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* الحاوية السحرية لمنع التمدد المفرط على الكمبيوتر */
+        .menu-content-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            padding: 30px;
             box-sizing: border-box;
         }
 
@@ -123,7 +138,7 @@
         }
 
         .game-title {
-            font-size: clamp(2.2rem, 6vw, 3.8rem); /* حجم خط ديناميكي يمنع التداخل */
+            font-size: clamp(2.2rem, 6vw, 3.8rem); 
             font-weight: 900;
             margin: 0;
             text-shadow: 0 4px 15px rgba(0,0,0,0.7);
@@ -137,7 +152,7 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.7);
         }
 
-        /* نظام شبكي ذكي للشريط السفلي يضمن السنترة الحقيقية في الكمبيوتر */
+        /* الشريط السفلي المتناسق تماماً */
         .menu-bottom-bar {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
@@ -181,7 +196,7 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* حاوية زر الإقلاع الدائري */
+        /* حاوية زر الإقلاع */
         .action-container {
             display: flex;
             justify-content: center;
@@ -209,10 +224,10 @@
         .main-btn:active:not(:disabled) { transform: scale(0.98); }
         .main-btn:disabled { background: #555 !important; border-color: #777; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
         
-        /* موازن فارغ للكمبيوتر للحفاظ على الأبعاد المتناظرة */
+        /* موازن التناظر الجانبي على الكمبيوتر لضمان بقاء زر الإقلاع في المنتصف الهندسي */
         .menu-bottom-spacer {
             display: block;
-            width: 340px; /* نفس عرض شاشه الكاروسيل للتوازن المطلق */
+            width: 340px; 
         }
 
         /* شاشة النهاية */
@@ -262,7 +277,7 @@
             display: flex; justify-content: center; align-items: center; cursor: pointer;
         }
 
-        /* الاستعلامات البرمجية الشاملة للهواتف والشاشات الصغيرة */
+        /* تهيئة العرض للشاشات الذكية والموبايل */
         @media (max-width: 768px) {
             #touch-controls { display: block; }
             
@@ -284,7 +299,6 @@
                 margin-top: 0;
             }
 
-            /* إعادة ترتيب الشريط السفلي ليكون عمودياً مرناً بالموبايل */
             .menu-bottom-bar { 
                 display: flex;
                 flex-direction: column; 
@@ -313,7 +327,7 @@
             }
 
             .menu-bottom-spacer {
-                display: none; /* إخفاء الموازن الفراغي في الهواتف */
+                display: none; 
             }
 
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
@@ -349,42 +363,45 @@
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        
-        <header class="menu-top-bar">
-            <div class="glass-panel hud-stats-box" style="padding: 12px 24px;">
-                <div>المستوى: <strong>15</strong></div>
-                <div>العملة: <span class="gold">125,000</span></div>
-            </div>
+        <div class="menu-content-wrapper">
             
-            <div class="menu-online-status">
-                <div class="glass-panel" style="padding: 8px 16px; font-weight: bold;">
-                    اللعب الجماعي: <span class="online-dot">متصل (12 لاعبًا)</span>
+            <header class="menu-top-bar">
+                <div class="glass-panel hud-stats-box" style="padding: 12px 24px;">
+                    <div>المستوى: <strong>15</strong></div>
+                    <div>العملة: <span class="gold">125,000</span></div>
                 </div>
-                <button class="settings-btn">⚙️ الإعدادات</button>
-            </div>
-        </header>
-
-        <main class="menu-center-content">
-            <h1 class="game-title">أسياد الأجواء</h1>
-            <p class="game-subtitle">جاهز للانطلاق</p>
-        </main>
-
-        <footer class="menu-bottom-bar">
-            <div id="shop-carousel" class="glass-panel">
-                <button class="carousel-btn" onclick="prevPlane()">◀</button>
-                <div class="plane-info">
-                    <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
-                    <p id="cp-status" class="plane-status">-</p>
+                
+                <div class="menu-online-status">
+                    <div class="glass-panel" style="padding: 8px 16px; font-weight: bold;">
+                        اللعب الجماعي: <span class="online-dot">متصل (12 لاعبًا)</span>
+                    </div>
+                    <button class="settings-btn">⚙️ الإعدادات</button>
                 </div>
-                <button class="carousel-btn" onclick="nextPlane()">▶</button>
-            </div>
+            </header>
 
-            <div class="action-container">
-                <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن</button>
-            </div>
+            <main class="menu-center-content">
+                <h1 class="game-title">أسياد الأجواء</h1>
+                <p class="game-subtitle">جاهز للانطلاق</p>
+            </main>
 
-            <div class="menu-bottom-spacer"></div>
-        </footer>
+            <footer class="menu-bottom-bar">
+                <div id="shop-carousel" class="glass-panel">
+                    <button class="carousel-btn" onclick="prevPlane()">◀</button>
+                    <div class="plane-info">
+                        <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
+                        <p id="cp-status" class="plane-status">-</p>
+                    </div>
+                    <button class="carousel-btn" onclick="nextPlane()">▶</button>
+                </div>
+
+                <div class="action-container">
+                    <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن</button>
+                </div>
+
+                <div class="menu-bottom-spacer"></div>
+            </footer>
+
+        </div>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
@@ -680,7 +697,7 @@
         speedBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; });
         speedBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); keys.space = false; });
 
-        // بدء الدورة ولعب جولة جديدة
+        // بدء الجولة للعب
         function startGame() {
             document.activeElement.blur(); 
             document.getElementById('start-mask').style.display = 'none';
