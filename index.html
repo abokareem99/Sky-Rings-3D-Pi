@@ -76,7 +76,7 @@
             color: white;
         }
 
-        /* واجهة القائمة الرئيسية الاحترافية */
+        /* واجهة القائمة الرئيسية الاحترافية بالخلفية المشهدية النظيفة */
         #start-mask {
             background: url('game-bg.jpg') no-repeat center center;
             background-size: cover;
@@ -136,7 +136,7 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
 
-        /* الشريط السفلي */
+        /* الشريط السفلي الاحترافي */
         .menu-bottom-bar {
             display: flex;
             justify-content: space-between;
@@ -144,7 +144,7 @@
             width: 100%;
         }
 
-        /* نافذة معرض الطائرات */
+        /* نافذة معرض الطائرات (أسفل شمال) */
         #shop-carousel { 
             display: flex;
             align-items: center; 
@@ -177,7 +177,7 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* زر الإقلاع المميز */
+        /* زر الإقلاع المدمج في شاشة القائمة */
         .action-container {
             flex-grow: 1;
             display: flex;
@@ -478,7 +478,7 @@
         
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene;
-            // تم تكبير حجم طائرة الركاب هنا من 1.0 إلى 3.5 لتتطابق تماماً مع حجم ومظهر المقاتلة الحربية
+            // تم تكبير طائرة الركاب هنا من 1.0 إلى 3.5 لتتطابق تماماً مع حجم ومظهر المقاتلة الحربية كما في الصور
             basePassengerModel.scale.set(3.5, 3.5, 3.5); 
             basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkAllLoaded();
