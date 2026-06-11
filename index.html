@@ -78,9 +78,12 @@
             overflow: hidden;
             box-sizing: border-box;
             z-index: 15;
-            /* التعديل هنا: تغيير مسار الصورة إلى Game -bg.jpg */
-            background: url('Game -bg.jpg') no-repeat center center;
+            background-color: #1a1a1a;
+            /* تم إصلاح المسار ليدعم المسافات في اسم الملف */
+            background-image: url("Game%20-bg.jpg"); 
             background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
             display: flex;
             flex-direction: column;
             justify-content: flex-end; 
@@ -286,6 +289,9 @@
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        // إخفاء المدرج والمشهد تماماً عند فتح اللعبة
+        renderer.domElement.style.visibility = 'hidden';
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -523,7 +529,9 @@
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
             
-            // توليد الطائرة الآن فوراً وبدء الحركة والتحكم بدون أي تعليق
+            // إظهار المدرج الآن فقط بعد ضغط الزر
+            renderer.domElement.style.visibility = 'visible';
+            
             spawnSelectedPlane(fleet[currentSelectionIndex]);
             
             initEngineSound();
@@ -555,6 +563,10 @@
             document.getElementById('gameover-mask').style.display = 'none';
             hasTakenOff = false; currentSpeed = 1.5;
             document.getElementById('shop-carousel').style.display = 'none';
+            
+            // إخفاء المدرج مرة أخرى عند العودة للمرآب
+            renderer.domElement.style.visibility = 'hidden';
+            
             if(currentActiveAirplane) { scene.remove(currentActiveAirplane); currentActiveAirplane = null; }
             
             updateShopUI();
@@ -565,7 +577,7 @@
 
         let distanceTraveled = 0; let lastTerrainZ = -2000;
 
-        // حلقة اللعبة الرئيسية - تم فك الارتباط لتعمل الكاميرا والمشهد بسلاسة تامة
+        // حلقة اللعبة الرئيسية
         function animate() {
             requestAnimationFrame(animate);
             
