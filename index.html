@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرآب الطائرات</title>
+    <title>أسياد الأجواء - مرآب الطائرات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,20 +11,20 @@
             --secondary: #2ecc71;
             --accent: #e67e22;
             --danger: #e74c3c;
-            --bg-glass: rgba(15, 23, 42, 0.8);
-            --border-glass: rgba(255, 255, 255, 0.15);
+            --bg-glass: rgba(255, 255, 255, 0.08);
+            --border-glass: rgba(255, 255, 255, 0.2);
         }
 
         body { 
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #0f172a; 
+            background-color: #000; 
             user-select: none;
             -webkit-user-select: none;
         }
         
-        /* واجهة اللعب (HUD) */
+        /* واجهة اللعب أثناء الطيران (HUD) */
         #hud-container {
             position: absolute;
             top: 20px;
@@ -41,12 +41,12 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            color: #ffffff;
         }
 
         .hud-card {
-            color: #ffffff;
             font-size: 20px; 
             font-weight: 700; 
             padding: 12px 24px; 
@@ -56,120 +56,178 @@
         }
 
         #time-card { color: #ff7675; }
-        #score-card { color: #ffeaa7; font-size: 24px; }
-        #total-score-card { 
-            color: #81ecec;
-            font-size: 16px; 
-            margin-top: 8px; 
-            padding: 8px 16px;
-            display: inline-block;
+        #score-card { color: #ffd700; font-size: 24px; }
+        
+        .hud-stats-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 1.1rem;
         }
+        .gold { color: #ffd700; font-weight: bold; }
 
         /* شاشات البداية والنهاية */
         .overlay-mask { 
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.8); 
-            backdrop-filter: blur(8px);
             z-index: 15; 
             display: flex;
-            flex-direction: column; justify-content: center; align-items: center; 
-            color: white; text-align: center;
+            flex-direction: column;
+            color: white;
         }
 
-        /* خلفية قائمة البداية المخصصة */
+        /* واجهة القائمة الرئيسية الاحترافية بالخلفية التي سترفعها */
         #start-mask {
-            background-image: url('1000096643.png');
+            background: url('game-bg.jpg') no-repeat center center;
             background-size: cover;
-            background-position: center;
-            background-color: rgba(0, 0, 0, 0.4); /* تعتيم خفيف لإبراز النصوص */
-            background-blend-mode: overlay;
+            justify-content: space-between;
+            padding: 30px;
+            box-sizing: border-box;
         }
 
-        /* الأزرار */
-        .main-btn { 
-            padding: 16px 40px;
-            font-size: 22px; 
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700; 
-            background: linear-gradient(135deg, var(--primary), #2980b9); 
-            color: white; 
-            border: none; 
-            border-radius: 50px; 
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3); 
-            transition: all 0.3s ease; 
-            margin-top: 25px;
+        /* الشريط العلوي للواجهة الرئيسية */
+        .menu-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
         }
-        .main-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(52, 152, 219, 0.5); }
-        .main-btn:active { transform: translateY(1px); }
-        .main-btn:disabled { background: #7f8c8d; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
-        
-        /* معرض الطائرات */
+
+        .menu-online-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .online-dot { color: #2ecc71; font-weight: bold; }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+        .settings-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* عناوين اللعبة في المنتصف */
+        .menu-center-content {
+            text-align: center;
+            align-self: center;
+            margin-top: -40px;
+        }
+
+        .game-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin: 0;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            letter-spacing: 1px;
+        }
+
+        .game-subtitle {
+            font-size: 1.5rem;
+            color: #cfd8dc;
+            margin: 5px 0 0 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        /* الشريط السفلي الاحترافي */
+        .menu-bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+        }
+
+        /* نافذة معرض الطائرات (أسفل شمال) */
         #shop-carousel { 
             display: flex;
-            align-items: center; justify-content: center; gap: 25px; 
-            padding: 25px 40px; 
-            width: 400px;
-            max-width: 90vw;
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 15px; 
+            padding: 15px 20px; 
+            width: 340px;
         }
+        
         .carousel-btn { 
             background: rgba(255,255,255,0.1);
-            color: white; border: 1px solid rgba(255,255,255,0.2); 
-            width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            font-size: 18px; 
+            cursor: pointer; 
             transition: 0.3s; 
             display: flex;
-            justify-content: center; align-items: center;
+            justify-content: center; 
+            align-items: center;
         }
         .carousel-btn:hover { background: var(--primary); border-color: var(--primary); }
-        .plane-info { flex-grow: 1; }
-        .plane-name { font-size: 24px; color: #00d2ff; margin: 0 0 8px 0; font-weight: 700; }
-        .plane-status { font-size: 16px; font-weight: 700; margin: 0; }
+        
+        .plane-info { 
+            flex-grow: 1; 
+            text-align: center;
+        }
+        .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
+        .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
+
+        /* زر الإقلاع الدائري والمميز في أسفل المنتصف */
+        .action-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 5px;
+            margin-right: -120px; /* لضمان توسط الزر تماماً بالنسبة للشاشة */
+        }
+
+        .main-btn { 
+            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white; 
+            padding: 12px 50px;
+            font-size: 1.5rem; 
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900; 
+            border-radius: 50px; 
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(3, 169, 244, 0.5), inset 0 0 10px rgba(255,255,255,0.2);
+            transition: all 0.2s ease; 
+        }
+        .main-btn:hover:not(:disabled) { 
+            transform: scale(1.05); 
+            box-shadow: 0 0 30px rgba(3, 169, 244, 0.8), inset 0 0 15px rgba(255,255,255,0.4); 
+        }
+        .main-btn:active:not(:disabled) { transform: scale(0.98); }
+        .main-btn:disabled { background: #555 !important; border-color: #777; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
+        
+        /* شاشة النهاية */
+        #gameover-mask {
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(8px);
+            justify-content: center; 
+            align-items: center; 
+            text-align: center;
+        }
 
         /* شاشة التحميل */
         #loading { 
             position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
+            top: 0; left: 0; width: 100%; height: 100%; 
             background-color: #0f172a;
             z-index: 9999; 
             display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
+            flex-direction: column; justify-content: center; align-items: center; 
         }
-
-        .loading-text {
-            color: #ffffff; 
-            font-size: 24px; 
-            font-weight: 900; 
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .loading-bar-container {
-            width: 70%;
-            max-width: 300px;
-            height: 14px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .loading-bar {
-            width: 0%;
-            height: 100%;
-            background: #00d2ff;
-            animation: fill-bar 2s ease-out forwards; 
-        }
-
-        @keyframes fill-bar {
-            0% { width: 0%; }
-            80% { width: 85%; }
-            100% { width: 100%; }
-        }
+        .loading-text { color: #ffffff; font-size: 24px; font-weight: 900; margin-bottom: 30px; }
+        .loading-bar-container { width: 70%; max-width: 300px; height: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; }
+        .loading-bar { width: 0%; height: 100%; background: #00d2ff; animation: fill-bar 2s ease-out forwards; }
+        @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
         /* ضوابط اللمس للهواتف */
         #touch-controls { display: none; }
@@ -184,25 +242,23 @@
             top: 35px; left: 35px; width: 70px; height: 70px;
             background: rgba(52, 152, 219, 0.7); border-radius: 50%;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            transform: translate(0px, 0px);
             pointer-events: none; transition: transform 0.05s linear;
         }
         #speed-btn {
             position: absolute;
             bottom: 55px; right: 40px; width: 90px; height: 90px;
             background: rgba(230, 126, 34, 0.7); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
-            color: white; font-weight: 900; font-family: 'Cairo', sans-serif; font-size: 20px;
+            color: white; font-weight: 900; font-size: 20px;
             z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center; align-items: center; cursor: pointer;
-            user-select: none; -webkit-user-select: none;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
         }
-        #speed-btn:active { background: rgba(211, 84, 0, 0.9); transform: scale(0.95); }
 
         @media (max-width: 768px) {
             #touch-controls { display: block; }
-            #shop-carousel { width: 300px; padding: 15px; }
-            .plane-name { font-size: 18px; }
+            .menu-bottom-bar { flex-direction: column; align-items: center; gap: 20px; }
+            .action-container { margin-right: 0; order: 1; }
+            #shop-carousel { width: 90vw; order: 2; }
+            .game-title { font-size: 2.5rem; }
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
             #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
             #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 20px; font-size: 16px; }
@@ -213,10 +269,10 @@
 </head>
 <body>
 
-    <div id="hud-container">
+    <div id="hud-container" style="display: none;">
         <div>
             <div id="time-card" class="glass-panel hud-card">⏱️ الوقت: <span id="time-left">30</span>ث</div>
-            <div id="total-score-card" class="glass-panel">الرصيد الإجمالي: <span id="total-points" style="font-weight: 700;">0</span></div>
+            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 8px 16px; font-size: 16px;">الرصيد الإجمالي: <span id="total-points" style="font-weight: 700;">0</span></div>
         </div>
         <div id="score-card" class="glass-panel hud-card">🪙 <span id="points">0</span></div>
     </div>
@@ -236,29 +292,53 @@
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        <div id="shop-carousel" class="glass-panel">
-            <button class="carousel-btn" onclick="prevPlane()">◀</button>
-            <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
-                <p id="cp-status" class="plane-status">-</p>
+        
+        <header class="menu-top-bar">
+            <div class="glass-panel hud-stats-box" style="padding: 12px 24px;">
+                <div>المستوى: <strong>15</strong></div>
+                <div>العملة: <span class="gold">125,000</span></div>
             </div>
-            <button class="carousel-btn" onclick="nextPlane()">▶</button>
-        </div>
+            
+            <div class="menu-online-status">
+                <div class="glass-panel" style="padding: 8px 16px; font-weight: bold;">
+                    اللعب الجماعي: <span class="online-dot">متصل (12 لاعبًا)</span>
+                </div>
+                <button class="settings-btn">⚙️ الإعدادات</button>
+            </div>
+        </header>
 
-        <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع</button>
+        <main class="menu-center-content">
+            <h1 class="game-title">أسياد الأجواء</h1>
+            <p class="game-subtitle">جاهز للانطلاق</p>
+        </main>
+
+        <footer class="menu-bottom-bar">
+            <div id="shop-carousel" class="glass-panel">
+                <button class="carousel-btn" onclick="prevPlane()">◀</button>
+                <div class="plane-info">
+                    <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
+                    <p id="cp-status" class="plane-status">-</p>
+                </div>
+                <button class="carousel-btn" onclick="nextPlane()">▶</button>
+            </div>
+
+            <div class="action-container">
+                <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن</button>
+            </div>
+        </footer>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
         <h1 style="font-size: 3.5rem; margin-bottom: 10px; background: linear-gradient(45deg, #ff416c, #ff4b2b); -webkit-background-clip: text; color: transparent;">انتهى الوقت! ⏱️</h1>
         <p style="font-size: 1.2rem; color: #bdc3c7; margin-bottom: 30px;">لقد نفد الوقود.</p>
-        <div class="glass-panel" style="padding: 20px 40px; margin-bottom: 20px;">
+        <div class="glass-panel" style="padding: 20px 40px; margin-bottom: 20px; background: rgba(255,255,255,0.05);">
             <h2 style="font-size: 24px; color: #f1c40f; margin: 0;">نقاط هذه الجولة: <span id="final-score" style="font-size: 32px;">0</span></h2>
         </div>
-        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60);" onclick="restartGame()">العودة للمرآب 🔄</button>
+        <button class="main-btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);" onclick="restartGame()">العودة للمرآب 🔄</button>
     </div>
 
     <script>
-        // إعداد المشهد
+        // إعداد المشهد الخاص بـ Three.js
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa3d2f7);
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
@@ -294,24 +374,23 @@
         const rings = [];
         const environmentObjects = [];
         
-        // المتغيرات الخاصة بالكيبورد وعصا التحكم
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         const fleet = [
-            { id: 0, type: 'passenger', name: '✈️ طائرة ركاب (بيضاء)', unlockCost: 0, colorHex: null },
-            { id: 1, type: 'passenger', name: '✈️ طائرة ركاب (حمراء)', unlockCost: 50, colorHex: 0xff3333 },
-            { id: 2, type: 'passenger', name: '✈️ طائرة ركاب (زرقاء)', unlockCost: 100, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: '✈️ طائرة ركاب (خضراء)', unlockCost: 150, colorHex: 0x33ff33 },
-            { id: 4, type: 'passenger', name: '✈️ طائرة ركاب (ذهبية)', unlockCost: 200, colorHex: 0xffd700 },
-            { id: 5, type: 'fighter', name: '🚀 مقاتلة (رمادية)', unlockCost: 300, colorHex: null },
-            { id: 6, type: 'fighter', name: '🚀 مقاتلة (شبح سوداء)', unlockCost: 400, colorHex: 0x222222 },
-            { id: 7, type: 'fighter', name: '🚀 مقاتلة (صحراوية)', unlockCost: 500, colorHex: 0xcc9955 },
-            { id: 8, type: 'fighter', name: '🚀 مقاتلة (بحرية)', unlockCost: 600, colorHex: 0x003366 },
-            { id: 9, type: 'fighter', name: '🚀 مقاتلة (أوميجا حمراء)', unlockCost: 750, colorHex: 0x8b0000 }
+            { id: 0, type: 'passenger', name: 'طائرة ركاب بـ 737', unlockCost: 0, colorHex: null },
+            { id: 1, type: 'passenger', name: 'طائرة ركاب (حمراء)', unlockCost: 50, colorHex: 0xff3333 },
+            { id: 2, type: 'passenger', name: 'طائرة ركاب (زرقاء)', unlockCost: 100, colorHex: 0x3366ff },
+            { id: 3, type: 'passenger', name: 'طائرة ركاب (خضراء)', unlockCost: 150, colorHex: 0x33ff33 },
+            { id: 4, type: 'passenger', name: 'طائرة ركاب (ذهبية)', unlockCost: 200, colorHex: 0xffd700 },
+            { id: 5, type: 'fighter', name: 'طائرة خاصة جـ 650', unlockCost: 300, colorHex: null },
+            { id: 6, type: 'fighter', name: 'مقاتلة (شبح سوداء)', unlockCost: 400, colorHex: 0x222222 },
+            { id: 7, type: 'fighter', name: 'مقاتلة (صحراوية)', unlockCost: 500, colorHex: 0xcc9955 },
+            { id: 8, type: 'fighter', name: 'مروحية ر 44', unlockCost: 600, colorHex: 0x003366 },
+            { id: 9, type: 'fighter', name: 'مقاتلة (أوميجا حمراء)', unlockCost: 750, colorHex: 0x8b0000 }
         ];
         let currentSelectionIndex = 0;
 
-        // إعداد الصوت
+        // إعداد الصوت الخاص بالمحرك
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (audioCtx) return;
@@ -340,7 +419,7 @@
 
         function stopEngineSound() { if(audioCtx) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-        // البيئة والتضاريس
+        // إنشاء البيئة والتضاريس والمراحل المتغيرة
         const terrainGroup = new THREE.Group();
         scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175, mountain: 0x7a8b99, forest: 0x1e5631 };
@@ -394,7 +473,7 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل النماذج
+        // تحميل نماذج الـ 3D
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene;
@@ -427,7 +506,7 @@
             }
         }
 
-        // المتجر والواجهة
+        // حركة معرض الطائرات والتحكم بالمتجر
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
@@ -469,6 +548,7 @@
             scene.add(currentActiveAirplane);
         }
 
+        // توليد الحلقات الذهبية
         function createRing(zPos) {
             const geometry = new THREE.TorusGeometry(13, 1.4, 16, 40);
             const ring = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, emissive: 0xd4af37, emissiveIntensity: 0.2 }));
@@ -477,14 +557,14 @@
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
-        // --- مستمعي أحداث لوحة المفاتيح ---
+        // مستمعي أحداث لوحة المفاتيح
         window.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
             if(e.code === 'KeyS' || e.code === 'ArrowDown' || e.key === 's' || e.key === 'ArrowDown') keys.s = true;
             if(e.code === 'KeyA' || e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
             if(e.code === 'KeyD' || e.code === 'ArrowRight' || e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
             if(e.code === 'Space' || e.key === ' ') {
-                if(isPlaying) e.preventDefault(); // منع نزول الصفحة أو تفعيل أزرار أخرى أثناء اللعب
+                if(isPlaying) e.preventDefault(); 
                 keys.space = true;
             }
         });
@@ -496,7 +576,7 @@
             if(e.code === 'Space' || e.key === ' ') keys.space = false;
         });
         
-        // --- مستمعي أحداث اللمس (عصا التحكم وزر السرعة) ---
+        // مستمعي أحداث شاشات اللمس (عصا التحكم الفيرتشوال)
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
@@ -536,17 +616,17 @@
             joyKnob.style.transform = `translate(0px, 0px)`;
         });
         
-        // زر السرعة (تيربو)
         const speedBtn = document.getElementById('speed-btn');
         speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, {passive: false});
         speedBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; });
         speedBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); keys.space = false; });
 
+        // بدء الدورة ولعب جولة جديدة
         function startGame() {
-            // إزالة التركيز عن الزر لتجنب إعادة تفعيله عند الضغط على Space
             document.activeElement.blur(); 
-            
             document.getElementById('start-mask').style.display = 'none';
+            document.getElementById('hud-container').style.display = 'flex'; // إظهار الـ HUD أثناء اللعب
+            
             initEngineSound();
             if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
             isPlaying = true;
@@ -567,6 +647,7 @@
         function endGame() {
             isPlaying = false;
             stopEngineSound(); clearInterval(timerInterval);
+            document.getElementById('hud-container').style.display = 'none'; // إخفاء الـ HUD
             totalPoints += score;
             localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints;
@@ -585,6 +666,8 @@
         }
 
         let distanceTraveled = 0; let lastTerrainZ = -2000;
+        
+        // حلقة التحديث المستمر للرسوميات (Animation Loop)
         function animate() {
             requestAnimationFrame(animate);
             if (isPlaying && currentActiveAirplane) {
@@ -596,17 +679,14 @@
                 currentActiveAirplane.position.z -= currentSpeed;
                 distanceTraveled = Math.abs(currentActiveAirplane.position.z);
                 
-                // دمج أوامر الكيبورد واللمس
                 let inputY = 0;
                 let inputX = 0;
 
-                // الكيبورد
                 if (keys.w) inputY += 1;
                 if (keys.s) inputY -= 1;
                 if (keys.a) inputX -= 1;
                 if (keys.d) inputX += 1;
                 
-                // عصا التحكم (اللمس)
                 if (joyState.active) {
                     inputX += joyState.x;
                     inputY -= joyState.y;
