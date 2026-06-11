@@ -76,7 +76,7 @@
             color: white;
         }
 
-        /* واجهة القائمة الرئيسية الاحترافية بالخلفية التي سترفعها */
+        /* واجهة القائمة الرئيسية الاحترافية بالخلفية المستجابة */
         #start-mask {
             background: url('game-bg.jpg') no-repeat center center;
             background-size: cover;
@@ -91,6 +91,7 @@
             justify-content: space-between;
             align-items: flex-start;
             width: 100%;
+            gap: 15px;
         }
 
         .menu-online-status {
@@ -118,33 +119,35 @@
         .menu-center-content {
             text-align: center;
             align-self: center;
-            margin-top: -40px;
+            margin-top: -20px;
         }
 
         .game-title {
-            font-size: 3.5rem;
+            font-size: clamp(2.2rem, 6vw, 3.8rem); /* حجم خط ديناميكي يمنع التداخل */
             font-weight: 900;
             margin: 0;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            text-shadow: 0 4px 15px rgba(0,0,0,0.7);
             letter-spacing: 1px;
         }
 
         .game-subtitle {
-            font-size: 1.5rem;
+            font-size: clamp(1.1rem, 3vw, 1.6rem);
             color: #cfd8dc;
-            margin: 5px 0 0 0;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            margin: 8px 0 0 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
         }
 
-        /* الشريط السفلي الاحترافي */
+        /* نظام شبكي ذكي للشريط السفلي يضمن السنترة الحقيقية في الكمبيوتر */
         .menu-bottom-bar {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: flex-end;
             width: 100%;
+            gap: 20px;
+            box-sizing: border-box;
         }
 
-        /* نافذة معرض الطائرات (أسفل شمال) */
+        /* نافذة معرض الطائرات */
         #shop-carousel { 
             display: flex;
             align-items: center; 
@@ -152,6 +155,7 @@
             gap: 15px; 
             padding: 15px 20px; 
             width: 340px;
+            box-sizing: border-box;
         }
         
         .carousel-btn { 
@@ -177,13 +181,11 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* زر الإقلاع الدائري والمميز في أسفل المنتصف */
+        /* حاوية زر الإقلاع الدائري */
         .action-container {
-            flex-grow: 1;
             display: flex;
             justify-content: center;
             padding-bottom: 5px;
-            margin-right: -120px; /* لضمان توسط الزر تماماً بالنسبة للشاشة */
         }
 
         .main-btn { 
@@ -198,6 +200,7 @@
             cursor: pointer;
             box-shadow: 0 0 20px rgba(3, 169, 244, 0.5), inset 0 0 10px rgba(255,255,255,0.2);
             transition: all 0.2s ease; 
+            white-space: nowrap;
         }
         .main-btn:hover:not(:disabled) { 
             transform: scale(1.05); 
@@ -206,6 +209,12 @@
         .main-btn:active:not(:disabled) { transform: scale(0.98); }
         .main-btn:disabled { background: #555 !important; border-color: #777; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
         
+        /* موازن فارغ للكمبيوتر للحفاظ على الأبعاد المتناظرة */
+        .menu-bottom-spacer {
+            display: block;
+            width: 340px; /* نفس عرض شاشه الكاروسيل للتوازن المطلق */
+        }
+
         /* شاشة النهاية */
         #gameover-mask {
             background: rgba(0, 0, 0, 0.85); 
@@ -253,12 +262,60 @@
             display: flex; justify-content: center; align-items: center; cursor: pointer;
         }
 
+        /* الاستعلامات البرمجية الشاملة للهواتف والشاشات الصغيرة */
         @media (max-width: 768px) {
             #touch-controls { display: block; }
-            .menu-bottom-bar { flex-direction: column; align-items: center; gap: 20px; }
-            .action-container { margin-right: 0; order: 1; }
-            #shop-carousel { width: 90vw; order: 2; }
-            .game-title { font-size: 2.5rem; }
+            
+            #start-mask {
+                padding: 15px;
+            }
+
+            .menu-top-bar {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .menu-online-status {
+                align-items: center;
+            }
+
+            .menu-center-content {
+                margin-top: 0;
+            }
+
+            /* إعادة ترتيب الشريط السفلي ليكون عمودياً مرناً بالموبايل */
+            .menu-bottom-bar { 
+                display: flex;
+                flex-direction: column; 
+                align-items: center; 
+                gap: 15px; 
+                width: 100%;
+            }
+
+            .action-container { 
+                order: 1; 
+                width: 100%; 
+            }
+
+            .main-btn {
+                width: 85%;
+                max-width: 280px;
+                padding: 10px 0;
+                font-size: 1.3rem;
+                text-align: center;
+            }
+
+            #shop-carousel { 
+                width: 90vw; 
+                max-width: 360px;
+                order: 2; 
+            }
+
+            .menu-bottom-spacer {
+                display: none; /* إخفاء الموازن الفراغي في الهواتف */
+            }
+
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
             #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
             #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 20px; font-size: 16px; }
@@ -325,6 +382,8 @@
             <div class="action-container">
                 <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن</button>
             </div>
+
+            <div class="menu-bottom-spacer"></div>
         </footer>
     </div>
 
@@ -625,7 +684,7 @@
         function startGame() {
             document.activeElement.blur(); 
             document.getElementById('start-mask').style.display = 'none';
-            document.getElementById('hud-container').style.display = 'flex'; // إظهار الـ HUD أثناء اللعب
+            document.getElementById('hud-container').style.display = 'flex'; 
             
             initEngineSound();
             if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
@@ -647,7 +706,7 @@
         function endGame() {
             isPlaying = false;
             stopEngineSound(); clearInterval(timerInterval);
-            document.getElementById('hud-container').style.display = 'none'; // إخفاء الـ HUD
+            document.getElementById('hud-container').style.display = 'none'; 
             totalPoints += score;
             localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints;
