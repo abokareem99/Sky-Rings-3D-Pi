@@ -478,7 +478,7 @@
         
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene;
-            basePassengerModel.scale.set(3.0, 3.0, 3.0);
+            basePassengerModel.scale.set(1.0, 1.0, 1.0); // تم تعديل الحجم هنا ليكون طبيعياً ومتناسقاً
             basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkAllLoaded();
         }, undefined, (err) => { 
@@ -490,7 +490,7 @@
 
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = gltf.scene;
-            baseFighterModel.scale.set(3.0, 3.0, 3.0); 
+            baseFighterModel.scale.set(1.0, 1.0, 1.0); // تم تعديل الحجم هنا ليكون طبيعياً ومتناسقاً
             baseFighterModel.traverse(c => { 
                 if(c.isMesh) { 
                     c.castShadow = true; 
@@ -502,7 +502,6 @@
             checkAllLoaded();
         }, undefined, (err) => { 
             console.error("لم يتم العثور على Fighter.glb.glb! تم استخدام نموذج احتياطي دائري بدلاً من المثلث لمعرفة المشكلة:", err);
-            // تم تحسين المجسم الاحتياطي ليصبح مخروطاً بـ 16 ضلعاً لتعرف إذا كان التحميل قد فشل بسبب المسار
             const geom = new THREE.ConeGeometry(4, 14, 16); 
             const mat = new THREE.MeshStandardMaterial({color: 0x555555, flatShading: true});
             baseFighterModel = new THREE.Mesh(geom, mat); baseFighterModel.rotation.x = Math.PI/2;
