@@ -68,7 +68,7 @@
             color: white;
         }
 
-        /* واجهة القائمة الرئيسية - صورة ثابتة تماماً ونظيفة */
+        /* واجهة القائمة الرئيسية */
         #start-mask {
             position: fixed;
             top: 0;
@@ -79,7 +79,7 @@
             box-sizing: border-box;
             z-index: 15;
             background-color: #1a1a1a;
-            /* تم إصلاح المسار ليدعم المسافات في اسم الملف */
+            /* تأكد من أن اسم الملف في GitHub يطابق هذا تماماً بالحرف والمسافة */
             background-image: url("Game%20-bg.jpg"); 
             background-size: cover;
             background-position: center center;
@@ -142,7 +142,7 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* الأزرار المحسنة والمقاومة للمشاكل */
+        /* الأزرار المحسنة */
         .main-btn { 
             background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
             border: 2px solid rgba(255, 255, 255, 0.4);
@@ -199,8 +199,9 @@
         .loading-bar { width: 0%; height: 100%; background: #00d2ff; animation: fill-bar 2s ease-out forwards; }
         @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
-        /* ضوابط اللمس للهواتف */
+        /* ضوابط اللمس للهواتف - مخفية افتراضياً للجميع */
         #touch-controls { display: none; }
+        
         #joystick-zone {
             position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
             background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15);
@@ -219,7 +220,7 @@
         }
 
         @media (max-width: 768px) {
-            #touch-controls { display: block; }
+            /* تم إزالة أمر الإظهار الإجباري لأزرار اللمس من هنا */
             #start-mask { padding: 20px; }
             .action-container-main { flex-direction: column; gap: 12px; width: 90vw; }
             .main-btn, .secondary-btn { width: 100%; padding: 10px 0; font-size: 1.2rem; }
@@ -458,7 +459,6 @@
             }
         }
 
-        // بناء الطائرة وحقنها في المدرج بنجاح عند الضغط على زر الإقلاع
         function spawnSelectedPlane(planeData) {
             if (currentActiveAirplane) scene.remove(currentActiveAirplane);
             let baseModel = planeData.type === 'passenger' ? basePassengerModel : baseFighterModel;
@@ -529,8 +529,13 @@
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
             
-            // إظهار المدرج الآن فقط بعد ضغط الزر
+            // إظهار المدرج
             renderer.domElement.style.visibility = 'visible';
+            
+            // إظهار أزرار التحكم (التيربو وعصا التحكم) فقط عند بدء اللعبة وفقط إذا كانت الشاشة صغيرة (هاتف)
+            if (window.innerWidth <= 768) {
+                document.getElementById('touch-controls').style.display = 'block';
+            }
             
             spawnSelectedPlane(fleet[currentSelectionIndex]);
             
@@ -553,6 +558,10 @@
         function endGame() {
             isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none';
+            
+            // إخفاء أزرار التحكم عند انتهاء اللعبة
+            document.getElementById('touch-controls').style.display = 'none';
+            
             totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints;
             document.getElementById('final-score').innerText = score;
@@ -564,8 +573,11 @@
             hasTakenOff = false; currentSpeed = 1.5;
             document.getElementById('shop-carousel').style.display = 'none';
             
-            // إخفاء المدرج مرة أخرى عند العودة للمرآب
+            // إخفاء المدرج مرة أخرى
             renderer.domElement.style.visibility = 'hidden';
+            
+            // التأكد من إخفاء أزرار التحكم عند العودة للمرآب
+            document.getElementById('touch-controls').style.display = 'none';
             
             if(currentActiveAirplane) { scene.remove(currentActiveAirplane); currentActiveAirplane = null; }
             
