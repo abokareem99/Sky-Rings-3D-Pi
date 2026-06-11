@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محاكي الطيران - مرآب الطائرات</title>
+    <title>مرآب الطائرات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,7 +11,7 @@
             --secondary: #2ecc71;
             --accent: #e67e22;
             --danger: #e74c3c;
-            --bg-glass: rgba(15, 23, 42, 0.65);
+            --bg-glass: rgba(15, 23, 42, 0.8);
             --border-glass: rgba(255, 255, 255, 0.15);
         }
 
@@ -77,17 +77,14 @@
             color: white; text-align: center;
         }
 
-        .main-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #00d2ff 0%, #3a7bd5 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0px 4px 20px rgba(58, 123, 213, 0.4);
+        /* خلفية قائمة البداية المخصصة */
+        #start-mask {
+            background-image: url('1000096643.png');
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(0, 0, 0, 0.4); /* تعتيم خفيف لإبراز النصوص */
+            background-blend-mode: overlay;
         }
-
-        .subtitle { font-size: 1.2rem; color: #bdc3c7; margin-bottom: 30px; }
 
         /* الأزرار */
         .main-btn { 
@@ -129,25 +126,19 @@
         .plane-name { font-size: 24px; color: #00d2ff; margin: 0 0 8px 0; font-weight: 700; }
         .plane-status { font-size: 16px; font-weight: 700; margin: 0; }
 
-        /* --- شاشة التحميل الاحترافية بخلفية الصورة --- */
+        /* شاشة التحميل */
         #loading { 
             position: fixed; 
             top: 0; 
             left: 0; 
             width: 100%; 
             height: 100%; 
-            /* خلفية صورة الطائرة */
-            background-image: url('1000096643.png'); 
-            background-size: cover; 
-            background-position: center; 
-            background-color: #5aa1bc;
+            background-color: #0f172a;
             z-index: 9999; 
             display: flex; 
             flex-direction: column; 
-            justify-content: flex-start; 
+            justify-content: center; 
             align-items: center; 
-            padding-top: 25vh; 
-            box-sizing: border-box;
         }
 
         .loading-text {
@@ -155,8 +146,6 @@
             font-size: 24px; 
             font-weight: 900; 
             text-align: center;
-            line-height: 1.4;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
             margin-bottom: 30px;
         }
 
@@ -164,18 +153,15 @@
             width: 70%;
             max-width: 300px;
             height: 14px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         .loading-bar {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #00d2ff, #00ff66);
-            box-shadow: 0 0 10px #00d2ff;
+            background: #00d2ff;
             animation: fill-bar 2s ease-out forwards; 
         }
 
@@ -215,7 +201,6 @@
 
         @media (max-width: 768px) {
             #touch-controls { display: block; }
-            .main-title { font-size: 2.2rem; }
             #shop-carousel { width: 300px; padding: 15px; }
             .plane-name { font-size: 18px; }
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
@@ -244,16 +229,13 @@
     </div>
 
     <div id="loading">
-        <div class="loading-text">جاري تحميل المدرج<br>والطائرات...</div>
+        <div class="loading-text">جاري التحميل...</div>
         <div class="loading-bar-container">
             <div class="loading-bar"></div>
         </div>
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        <h1 class="main-title">محاكي الطيران المتقدم ✈️</h1>
-        <p class="subtitle">اجمع الحلقات الذهبية لزيادة رصيدك وفتح طائرات جديدة!</p>
-        
         <div id="shop-carousel" class="glass-panel">
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
@@ -267,8 +249,8 @@
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
-        <h1 class="main-title" style="background: linear-gradient(45deg, #ff416c, #ff4b2b); -webkit-background-clip: text;">انتهى الوقت! ⏱️</h1>
-        <p class="subtitle">لقد نفد الوقود.</p>
+        <h1 style="font-size: 3.5rem; margin-bottom: 10px; background: linear-gradient(45deg, #ff416c, #ff4b2b); -webkit-background-clip: text; color: transparent;">انتهى الوقت! ⏱️</h1>
+        <p style="font-size: 1.2rem; color: #bdc3c7; margin-bottom: 30px;">لقد نفد الوقود.</p>
         <div class="glass-panel" style="padding: 20px 40px; margin-bottom: 20px;">
             <h2 style="font-size: 24px; color: #f1c40f; margin: 0;">نقاط هذه الجولة: <span id="final-score" style="font-size: 32px;">0</span></h2>
         </div>
@@ -497,25 +479,28 @@
 
         // --- مستمعي أحداث لوحة المفاتيح ---
         window.addEventListener('keydown', (e) => {
-            if(e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
-            if(e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
-            if(e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = true;
-            if(e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = true;
-            if(e.code === 'Space') keys.space = true;
+            if(e.code === 'KeyW' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+            if(e.code === 'KeyS' || e.code === 'ArrowDown' || e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+            if(e.code === 'KeyA' || e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+            if(e.code === 'KeyD' || e.code === 'ArrowRight' || e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+            if(e.code === 'Space' || e.key === ' ') {
+                if(isPlaying) e.preventDefault(); // منع نزول الصفحة أو تفعيل أزرار أخرى أثناء اللعب
+                keys.space = true;
+            }
         });
         window.addEventListener('keyup', (e) => {
-            if(e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = false;
-            if(e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = false;
-            if(e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = false;
-            if(e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
-            if(e.code === 'Space') keys.space = false;
+            if(e.code === 'KeyW' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+            if(e.code === 'KeyS' || e.code === 'ArrowDown' || e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+            if(e.code === 'KeyA' || e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+            if(e.code === 'KeyD' || e.code === 'ArrowRight' || e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+            if(e.code === 'Space' || e.key === ' ') keys.space = false;
         });
         
         // --- مستمعي أحداث اللمس (عصا التحكم وزر السرعة) ---
         const joyZone = document.getElementById('joystick-zone');
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
-        const maxJoyRadius = 35; // أقصى مسافة يتحركها الزر الداخلي
+        const maxJoyRadius = 35; 
 
         function handleTouchMove(e) {
             e.preventDefault();
@@ -558,6 +543,9 @@
         speedBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); keys.space = false; });
 
         function startGame() {
+            // إزالة التركيز عن الزر لتجنب إعادة تفعيله عند الضغط على Space
+            document.activeElement.blur(); 
+            
             document.getElementById('start-mask').style.display = 'none';
             initEngineSound();
             if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
@@ -587,6 +575,7 @@
         }
 
         function restartGame() {
+            document.activeElement.blur();
             document.getElementById('gameover-mask').style.display = 'none';
             hasTakenOff = false; currentSpeed = 1.5;
             updateShopUI(); 
@@ -620,10 +609,9 @@
                 // عصا التحكم (اللمس)
                 if (joyState.active) {
                     inputX += joyState.x;
-                    inputY -= joyState.y; // عكسنا Y لأن سحب العصا للأعلى (سالب) يعني الصعود
+                    inputY -= joyState.y;
                 }
 
-                // منع تجاوز الحد الأقصى للتوجيه
                 inputX = Math.max(-1, Math.min(1, inputX));
                 inputY = Math.max(-1, Math.min(1, inputY));
 
@@ -636,10 +624,9 @@
                 } else {
                     currentActiveAirplane.position.y += 0.65 * inputY;
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    if(currentActiveAirplane.position.y > 150) currentActiveAirplane.position.y = 150; // حد السقف
+                    if(currentActiveAirplane.position.y > 150) currentActiveAirplane.position.y = 150;
 
                     currentActiveAirplane.position.x += 1.2 * inputX;
-                    // دوران الطائرة للجانبين (Roll) حسب اتجاه الحركة
                     if (inputX !== 0) {
                         currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.45 * inputX, 0.08);
                     } else {
