@@ -473,12 +473,13 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل نماذج الـ 3D (تعديل نظام العرض وحل مشكلة الاختفاء)
+        // تحميل نماذج الـ 3D
         const loader = new THREE.GLTFLoader();
         
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene;
-            basePassengerModel.scale.set(1.0, 1.0, 1.0); // تم تعديل الحجم هنا ليكون طبيعياً ومتناسقاً
+            // تم تكبير حجم طائرة الركاب هنا من 1.0 إلى 3.5 لتتطابق تماماً مع حجم ومظهر المقاتلة الحربية
+            basePassengerModel.scale.set(3.5, 3.5, 3.5); 
             basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkAllLoaded();
         }, undefined, (err) => { 
@@ -490,18 +491,18 @@
 
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = gltf.scene;
-            baseFighterModel.scale.set(1.0, 1.0, 1.0); // تم تعديل الحجم هنا ليكون طبيعياً ومتناسقاً
+            baseFighterModel.scale.set(1.0, 1.0, 1.0); 
             baseFighterModel.traverse(c => { 
                 if(c.isMesh) { 
                     c.castShadow = true; 
                     c.receiveShadow = true; 
-                    c.frustumCulled = false; // تمنع اختفاء الأجزاء فجأة عند تحرك الكاميرا
-                    if(c.material) c.material.side = THREE.DoubleSide; // عرض الأسطح المزدوجة
+                    c.frustumCulled = false; 
+                    if(c.material) c.material.side = THREE.DoubleSide; 
                 } 
             });
             checkAllLoaded();
         }, undefined, (err) => { 
-            console.error("لم يتم العثور على Fighter.glb.glb! تم استخدام نموذج احتياطي دائري بدلاً من المثلث لمعرفة المشكلة:", err);
+            console.error("لم يتم العثور على Fighter.glb.glb! تم استخدام نموذج احتياطي:", err);
             const geom = new THREE.ConeGeometry(4, 14, 16); 
             const mat = new THREE.MeshStandardMaterial({color: 0x555555, flatShading: true});
             baseFighterModel = new THREE.Mesh(geom, mat); baseFighterModel.rotation.x = Math.PI/2;
@@ -542,7 +543,7 @@
             }
         }
 
-        // تحسين دالة العرض لتلوين الطائرات الحربية والمدنية بشكل احترافي وبدون مشاكل
+        // دالة عرض الطائرات الملونة
         function renderPlaneInMenu(planeData) {
             if (currentActiveAirplane) scene.remove(currentActiveAirplane);
             let baseModel = planeData.type === 'passenger' ? basePassengerModel : baseFighterModel;
@@ -556,7 +557,7 @@
                     c.receiveShadow = true;
                     c.frustumCulled = false;
                     if (c.material) {
-                        c.material = c.material.clone(); // استنساخ فريد لكل طائرة
+                        c.material = c.material.clone(); 
                         c.material.side = THREE.DoubleSide; 
                         if (planeData.colorHex !== null) {
                             c.material.color.setHex(planeData.colorHex);
