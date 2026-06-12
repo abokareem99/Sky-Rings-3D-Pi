@@ -13,6 +13,12 @@
             --danger: #e74c3c;
             --bg-glass: rgba(255, 255, 255, 0.08);
             --border-glass: rgba(255, 255, 255, 0.2);
+            
+            /* ألوان باي الفاخرة المضافة */
+            --pi-purple: #5c1d8c;
+            --pi-purple-bright: #8a2be2;
+            --pi-gold: #ffb703;
+            --pi-gold-glow: rgba(255, 183, 3, 0.5);
         }
 
         body { 
@@ -87,18 +93,72 @@
             flex-direction: column;
             justify-content: flex-end; 
             align-items: center;
-            padding: 40px;
+            padding: 60px 40px; /* تم تعديل الحشو ليناسب الإطارات الجديدة */
+        }
+
+        /* لمسات إطارات باي الذكية في المساحات الفارغة */
+        .pi-top-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 14px 20px;
+            box-sizing: border-box;
+            background: linear-gradient(180deg, rgba(35, 7, 58, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+            border-bottom: 2px solid var(--pi-gold);
+            box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4), inset 0 1px 10px var(--pi-gold-glow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace, sans-serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+            z-index: 25;
+            direction: ltr;
+        }
+
+        .pi-bottom-banner {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 14px 20px;
+            box-sizing: border-box;
+            background: linear-gradient(0deg, rgba(35, 7, 58, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+            border-top: 2px solid var(--pi-gold);
+            box-shadow: 0 -4px 20px rgba(138, 43, 226, 0.4), inset 0 -1px 10px var(--pi-gold-glow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace, sans-serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+            z-index: 25;
+            direction: ltr;
+        }
+
+        .tech-glow-purple {
+            color: #e0b0ff;
+            text-shadow: 0 0 8px var(--pi-purple-bright);
+            font-weight: 600;
+        }
+
+        .tech-glow-gold {
+            color: var(--pi-gold);
+            text-shadow: 0 0 8px var(--pi-gold);
+            font-weight: 700;
         }
 
         /* حاوية الأزرار الرئيسية أسفل الشاشة */
         .action-container-main {
             display: flex;
             gap: 20px;
-            justify-center: center;
+            justify-content: center;
             align-items: center;
             width: 100%;
             max-width: 600px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            z-index: 20;
         }
 
         /* نافذة معرض الطائرات */
@@ -111,6 +171,7 @@
             width: 340px;
             margin-bottom: 20px;
             animation: fadeIn 0.3s ease-in-out;
+            z-index: 20;
         }
         
         @keyframes fadeIn {
@@ -141,7 +202,7 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* الأزرار المحسنة */
+        /* الأزرار المحسنة بلمسات مضيئة */
         .main-btn { 
             background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
             border: 2px solid rgba(255, 255, 255, 0.4);
@@ -219,13 +280,14 @@
         }
 
         @media (max-width: 768px) {
-            #start-mask { padding: 20px; }
+            #start-mask { padding: 50px 20px; }
             .action-container-main { flex-direction: column; gap: 12px; width: 90vw; }
             .main-btn, .secondary-btn { width: 100%; padding: 10px 0; font-size: 1.2rem; }
             #shop-carousel { width: 90vw; }
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
             #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
             #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 20px; font-size: 16px; }
+            .pi-top-banner, .pi-bottom-banner { font-size: 9px; padding: 10px 15px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -252,6 +314,11 @@
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
+        <div class="pi-top-banner">
+            <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_NET_AUTH</span>
+            <span class="tech-glow-gold">π PI MAINNET ACTIVE</span>
+        </div>
+
         <div id="shop-carousel" class="glass-panel">
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
@@ -264,6 +331,11 @@
         <div class="action-container-main">
             <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن 🚀</button>
             <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">الحظيرة 🛠️</button>
+        </div>
+
+        <div class="pi-bottom-banner">
+            <span class="tech-glow-purple">🔒 STATUS: ACCOUNT_LINKED_SUCCESSFULLY</span>
+            <span class="tech-glow-gold">SECURE APP WALLET v1.2</span>
         </div>
     </div>
 
@@ -339,7 +411,6 @@
         let audioCtx, engineOsc, engineOsc2, noiseNode, noiseFilter, engineFilter, engineGain, noiseGain;
         
         function initEngineSound() {
-            // إنشاء سياق الصوت وضمان استئنافه عند تفاعل المستخدم الحقيقي
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
@@ -347,20 +418,16 @@
                 audioCtx.resume();
             }
             
-            // إذا كان الصوت يعمل بالفعل فلا تكرره
             if (engineOsc) return; 
 
-            // 1. التردد الأساسي الأول للمحرك (Humming النفاث الباص المكتوم)
             engineOsc = audioCtx.createOscillator();
             engineOsc.type = 'sawtooth';
             engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
             
-            // 2. التردد الثانوي متزحزح قليلاً (Detuned) لإعطاء تأثير Chorus واقعي وضخامة للصوت
             engineOsc2 = audioCtx.createOscillator();
             engineOsc2.type = 'sawtooth';
             engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
             
-            // فلتر لتنعيم حدة الموجة وجعلها تبدو كمحرك حقيقي خلف الهيكل
             engineFilter = audioCtx.createBiquadFilter();
             engineFilter.type = 'lowpass';
             engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
@@ -373,7 +440,6 @@
             engineFilter.connect(engineGain);
             engineGain.connect(audioCtx.destination);
             
-            // 3. 💨 محاكاة الرياح واندفاع الهواء النفاث (White Noise)
             let bufferSize = 2 * audioCtx.sampleRate;
             let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             let output = noiseBuffer.getChannelData(0);
@@ -385,7 +451,6 @@
             noiseNode.buffer = noiseBuffer;
             noiseNode.loop = true;
             
-            // فلتر تمرير النطاق (Bandpass) ليعطي صوت صفير الهواء واحتكاكه الديناميكي
             noiseFilter = audioCtx.createBiquadFilter();
             noiseFilter.type = 'bandpass';
             noiseFilter.frequency.setValueAtTime(380, audioCtx.currentTime);
@@ -398,7 +463,6 @@
             noiseFilter.connect(noiseGain);
             noiseGain.connect(audioCtx.destination);
             
-            // بدء التشغيل الفعلي للموجات
             engineOsc.start();
             engineOsc2.start();
             noiseNode.start();
@@ -411,7 +475,6 @@
             let isFighter = fleet[currentSelectionIndex].type === 'fighter';
             let baseFreq = isFighter ? 70 : 55;
             
-            // تعديل ديناميكي للترددات والفلتر اعتماداً على تفعيل التيربو ليعطي إحساساً رائعاً بالسرعة
             const targetFreq = speedUp ? (baseFreq * 1.6) : baseFreq;
             const targetFilter = speedUp ? 550 : 280;
             const targetNoiseFilter = speedUp ? 750 : 380;
@@ -430,7 +493,6 @@
         function stopEngineSound() { 
             if(engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15); 
             if(noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15);
-            // تصفير المتغيرات ليتم إعادتها بشكل سليم في الجولة التالية
             setTimeout(() => {
                 engineOsc = null; engineOsc2 = null; noiseNode = null;
             }, 200);
@@ -589,7 +651,7 @@
         joyZone.addEventListener('touchstart', (e) => {
             e.preventDefault(); joyState.active = true; const rect = joyZone.getBoundingClientRect();
             joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e);
-            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); // تفعيل إضافي عند لمس عصا التحكم
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         }, {passive: false});
         joyZone.addEventListener('touchmove', handleTouchMove, {passive: false});
         joyZone.addEventListener('touchend', () => { joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; });
@@ -598,7 +660,6 @@
         speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, {passive: false});
         speedBtn.addEventListener('touchend', () => { keys.space = false; });
 
-        // زر الانطلاق والتحول للعب
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
@@ -610,8 +671,6 @@
             }
             
             spawnSelectedPlane(fleet[currentSelectionIndex]);
-            
-            // تشغيل واستئناف محرك الصوت الواقعي فوراً بناء على الضغطة الفردية
             initEngineSound();
             
             isPlaying = true;
@@ -656,7 +715,6 @@
 
         let distanceTraveled = 0; let lastTerrainZ = -2000;
 
-        // حلقة اللعبة الرئيسية
         function animate() {
             requestAnimationFrame(animate);
             
@@ -665,7 +723,6 @@
                 let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                 
-                // تحديث تأثير الصوت باستمرار مع حركة اللاعب وحالة التيربو
                 updateEngineSound(keys.space);
 
                 currentActiveAirplane.position.z -= currentSpeed;
