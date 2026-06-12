@@ -135,7 +135,6 @@
             margin-top: 5px; background: rgba(0,0,0,0.4); padding: 4px 0;
         }
 
-        /* نظام التنبيهات الزجاجي الاحترافي المعزز */
         #game-toast {
             display: none; position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 320px; padding: 14px 20px; z-index: 1000; text-align: center;
@@ -177,7 +176,6 @@
 </head>
 <body>
 
-    <!-- نظام التنبيهات المخصص للعبة وعمليات الدفع -->
     <div id="game-toast" class="glass-panel"></div>
 
     <div id="hud-container" style="display: none;">
@@ -375,7 +373,7 @@
             }
         }
 
-        // --- ميكانيكية معالجة دفع باي المحسنة وتفادي أخطاء الـ Sandbox في الـ Frontend ---
+        // --- إعادة البوابة الرسمية الصارمة للتست نت والغاء المحاكاة تماماً ---
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
                 showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
@@ -386,17 +384,6 @@
             startBtn.disabled = true;
             startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
 
-            // دالة داخلية تضمن تشغيل المعالجة والمحاكاة الآمنة لحماية تجربة المستخدم (Testnet Sandbox Bridge)
-            function processSandboxFallback() {
-                showNotification("جاري معالجة العقد الذكي عبر Pi Testnet... 🔄");
-                setTimeout(() => {
-                    localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
-                    showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
-                    startBtn.disabled = false;
-                    updateShopUI();
-                }, 2000);
-            }
-
             try {
                 const paymentData = {
                     amount: plane.piCost,
@@ -406,34 +393,37 @@
 
                 const callbacks = {
                     onReadyForServer: function(paymentId) {
-                        console.log("Payment ready for settlement. ID:", paymentId);
+                        console.log("Payment ready for settlement on server side. ID:", paymentId);
+                        // الحفظ المحلي يتم فقط بعد موافقة نافذة الدفع الأولية للشبكة
                         localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
                     },
                     onCompleted: function(payment) {
-                        console.log("Pi Blockchain completed!", payment);
-                        showNotification(`تم الشراء بنجاح! 🚀`);
+                        console.log("Pi Blockchain Completed:", payment);
+                        showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
                         startBtn.disabled = false;
                         updateShopUI();
                     },
                     onCancel: function(paymentId) {
                         console.log("Cancelled:", paymentId);
-                        showNotification("تم إلغاء عملية الدفع.", true);
+                        showNotification("تم إلغاء المعاملة من قبل المستخدم.", true);
                         startBtn.disabled = false;
                         updateShopUI();
                     },
                     onError: function(error, payment) {
-                        console.error("Pi Payment Error. Fallback activated.", error);
-                        // التبديل التلقائي لضمان عدم تعليق الشاشة في التست نت
-                        processSandboxFallback();
+                        console.error("Pi SDK Error:", error);
+                        showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
+                        startBtn.disabled = false;
+                        updateShopUI();
                     }
                 };
 
-                // محاولة الاتصال بالـ SDK الأصلي لمتصفح باي
+                // استدعاء البوابة الرسمية الحقيقية لمتصفح باي بدون أي Fallback محلي
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
-                console.warn("Payment API restricted in this environment. Falling back to Sandbox Bridge...", err);
-                // تفعيل الجسر الاحتياطي عند حدوث خطأ بيئي أو قيود النطاق في الفيرسل
-                processSandboxFallback();
+                console.error("Payment API restricted or error:", err);
+                showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
+                startBtn.disabled = false;
+                updateShopUI();
             }
         }
 
