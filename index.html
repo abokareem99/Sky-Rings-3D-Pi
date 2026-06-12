@@ -80,7 +80,7 @@
             z-index: 15;
             background-color: #1a1a1a;
             background-image: url("game-bg.jpg"); 
-            background-size: contain; /* 💡 التعديل هنا: يضمن احتواء صورة الواجهة بشكل متوازن ودون تمدد */
+            background-size: contain; 
             background-position: center center;
             background-repeat: no-repeat;
             display: flex;
@@ -94,7 +94,7 @@
         .action-container-main {
             display: flex;
             gap: 20px;
-            justify-center: center;
+            justify-content: center;
             align-items: center;
             width: 100%;
             max-width: 600px;
@@ -289,7 +289,6 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         
-        // إخفاء المدرج والمشهد تماماً عند فتح اللعبة
         renderer.domElement.style.visibility = 'hidden';
         document.body.appendChild(renderer.domElement);
 
@@ -445,6 +444,7 @@
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
+        // تحديث متجر الطائرات والرصيد الافتراضي الحالي
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
@@ -527,10 +527,8 @@
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
             
-            // إظهار المدرج
             renderer.domElement.style.visibility = 'visible';
             
-            // إظهار أزرار التحكم (التيربو وعصا التحكم) فقط عند بدء اللعبة وفقط إذا كانت الشاشة صغيرة (هاتف)
             if (window.innerWidth <= 768) {
                 document.getElementById('touch-controls').style.display = 'block';
             }
@@ -556,8 +554,6 @@
         function endGame() {
             isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none';
-            
-            // إخفاء أزرار التحكم عند انتهاء اللعبة
             document.getElementById('touch-controls').style.display = 'none';
             
             totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
@@ -571,10 +567,7 @@
             hasTakenOff = false; currentSpeed = 1.5;
             document.getElementById('shop-carousel').style.display = 'none';
             
-            // إخفاء المدرج مرة أخرى
             renderer.domElement.style.visibility = 'hidden';
-            
-            // التأكد من إخفاء أزرار التحكم عند العودة للمرآب
             document.getElementById('touch-controls').style.display = 'none';
             
             if(currentActiveAirplane) { scene.remove(currentActiveAirplane); currentActiveAirplane = null; }
@@ -603,7 +596,12 @@
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY += 1; if (keys.s) inputY -= 1;
                 if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                if (joyState.active) { inputX += joyState.x; inputY -= joyState.y; }
+                
+                // 💡 التعديل هنا لتصحيح اتجاه عصا التحكم (السحب لأسفل يرفع الطائرة واليمين يوجه يميناً)
+                if (joyState.active) { 
+                    inputX += joyState.x; 
+                    inputY += joyState.y; 
+                }
 
                 inputX = Math.max(-1, Math.min(1, inputX)); inputY = Math.max(-1, Math.min(1, inputY));
 
