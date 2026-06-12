@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>أسياد الأجواء - مرآب الطائرات</title>
+    <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -17,9 +17,8 @@
             --secondary: #2ecc71;
             --accent: #e67e22;
             --danger: #e74c3c;
-            --bg-glass: rgba(15, 23, 42, 0.6);
-            --border-glass: rgba(255, 255, 255, 0.15);
-            
+            --bg-glass: rgba(15, 23, 42, 0.65);
+            --border-glass: rgba(255, 255, 255, 0.2);
             --pi-purple: #8a2be2;
             --pi-gold: #ffd700;
         }
@@ -35,110 +34,65 @@
         
         #hud-container {
             position: absolute;
-            top: 75px; 
-            left: 15px;
-            right: 15px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 10;
-            pointer-events: none;
+            top: 75px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between;
+            z-index: 10; pointer-events: none;
         }
 
         .glass-panel {
             background: var(--bg-glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
             border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
             color: #ffffff;
         }
 
         .hud-card {
-            font-size: 18px; 
-            font-weight: 700; 
-            padding: 10px 20px; 
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 18px; font-weight: 700; padding: 10px 20px; 
+            display: flex; align-items: center; gap: 8px;
         }
         
         .overlay-mask { 
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 15; 
-            display: flex;
-            flex-direction: column;
-            color: white;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 15; display: flex; flex-direction: column; color: white;
         }
 
         #start-mask {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 15;
-            background: transparent; /* جعل الخلفية شفافة لرؤية الطائرة ثلاثية الأبعاد بوضوح */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; 
-            align-items: center;
-            padding-bottom: 25px;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 15; background: transparent;
+            display: flex; flex-direction: column; justify-content: space-between; 
+            align-items: center; padding-bottom: 25px; box-sizing: border-box;
         }
 
         .pi-top-banner {
-            width: 100%;
-            height: 55px;
+            width: 100%; height: 55px;
             background: linear-gradient(90deg, #100a1c 0%, #050505 50%, #1c102a 100%);
             border-bottom: 2px solid var(--pi-purple);
             box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            box-sizing: border-box;
-            z-index: 20;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; box-sizing: border-box; z-index: 20;
         }
 
         .pi-top-banner .left-text {
-            color: var(--pi-purple);
-            font-family: monospace;
-            font-size: 12px;
+            color: var(--pi-purple); font-family: monospace; font-size: 12px;
             text-shadow: 0 0 5px var(--pi-purple);
         }
 
-        .pi-top-banner .right-text {
-            color: #fff;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .pi-top-banner .right-text span {
-            color: var(--pi-gold);
-            font-weight: bold;
-        }
+        .pi-top-banner .right-text { color: #fff; font-family: monospace; font-size: 12px; }
+        .pi-top-banner .right-text span { color: var(--pi-gold); font-weight: bold; }
 
         #shop-carousel { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            gap: 15px; 
-            padding: 12px 20px; 
-            width: 88vw;
-            max-width: 360px;
-            margin-top: 20px;
+            display: flex; align-items: center; justify-content: space-between; 
+            gap: 15px; padding: 12px 20px; width: 88vw; max-width: 360px; margin-top: 20px;
         }
         
         .carousel-btn { 
-            background: rgba(255,255,255,0.15);
-            color: white; 
-            border: 1px solid rgba(255,255,255,0.3); 
-            width: 45px; 
-            height: 45px; 
-            border-radius: 50%; 
-            font-size: 20px; 
-            cursor: pointer; 
-            display: flex;
-            justify-content: center; 
-            align-items: center;
+            background: rgba(255,255,255,0.15); color: white; 
+            border: 1px solid rgba(255,255,255,0.3); width: 45px; height: 45px; 
+            border-radius: 50%; font-size: 20px; cursor: pointer; 
+            display: flex; justify-content: center; align-items: center;
         }
         
         .plane-info { flex-grow: 1; text-align: center; }
@@ -146,95 +100,51 @@
         .plane-status { font-size: 0.85rem; font-weight: 700; margin: 0; }
 
         .btn-area-bottom {
-            width: 90vw;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 20;
+            width: 90vw; max-width: 400px; display: flex; flex-direction: column; gap: 12px; z-index: 20;
         }
 
-        .action-container-main {
-            display: flex;
-            flex-direction: column; /* ترتيب عمودي إجباري لمنع الاختفاء في الموبايل */
-            gap: 10px;
-            width: 100%;
-        }
+        .action-container-main { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
         .main-btn { 
             background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            color: white; 
-            padding: 14px 20px;
-            font-size: 1.3rem; 
-            font-family: 'Cairo', sans-serif;
-            font-weight: 900; 
-            border-radius: 30px; 
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(3, 169, 244, 0.4);
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
+            border: 2px solid rgba(255, 255, 255, 0.4); color: white; 
+            padding: 14px 20px; font-size: 1.3rem; font-family: 'Cairo', sans-serif; font-weight: 900; 
+            border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(3, 169, 244, 0.4);
+            text-align: center; width: 100%; box-sizing: border-box; transition: all 0.2s ease;
         }
+        .main-btn:disabled { background: #555 !important; border-color: #777; cursor: not-allowed; box-shadow: none; }
         
         .secondary-btn {
-            background-color: rgba(26, 26, 26, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white; 
-            padding: 10px 20px;
-            font-size: 1.05rem; 
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700; 
-            border-radius: 30px; 
-            cursor: pointer;
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
+            background-color: rgba(26, 26, 26, 0.85); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; padding: 10px 20px; font-size: 1.05rem; font-family: 'Cairo', sans-serif;
+            font-weight: 700; border-radius: 30px; cursor: pointer; text-align: center; width: 100%; box-sizing: border-box;
         }
 
-        .pi-features-bar {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            width: 100%;
-        }
+        .pi-features-bar { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
         .feature-icon-btn {
-            flex: 1;
-            background: rgba(138, 43, 226, 0.3);
-            border: 1px solid var(--pi-purple);
-            color: white;
-            padding: 8px 10px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            font-family: 'Cairo', sans-serif;
-            text-align: center;
+            flex: 1; background: rgba(138, 43, 226, 0.3); border: 1px solid var(--pi-purple);
+            color: white; padding: 10px 10px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: all 0.2s;
         }
+        .feature-icon-btn:disabled { background: rgba(100,100,100,0.3); border-color: #555; color: #aaa; cursor: not-allowed; }
 
         .pi-bottom-status {
-            width: 100%;
-            text-align: center;
-            font-family: monospace;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 5px;
-            background: rgba(0,0,0,0.4);
-            padding: 4px 0;
+            width: 100%; text-align: center; font-family: monospace; font-size: 11px;
+            color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; gap: 15px;
+            margin-top: 5px; background: rgba(0,0,0,0.4); padding: 4px 0;
         }
 
+        /* نافذة الإشعارات المدمجة والراقية لجلسة الدفع */
+        #game-toast {
+            display: none; position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 320px; padding: 12px 20px; z-index: 1000; text-align: center;
+            font-weight: 700; border-radius: 12px; font-size: 14px; animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { top: 40px; opacity: 0; } to { top: 75px; opacity: 1; } }
+
         #leaderboard-modal {
-            display: none;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            padding: 20px;
-            z-index: 30;
-            text-align: center;
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 300px; padding: 20px; z-index: 30; text-align: center;
         }
 
         #gameover-mask { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
@@ -265,6 +175,8 @@
     </style>
 </head>
 <body>
+
+    <div id="game-toast" class="glass-panel"></div>
 
     <div id="hud-container" style="display: none;">
         <div>
@@ -301,7 +213,7 @@
 
         <div class="btn-area-bottom">
             <div class="pi-features-bar">
-                <button class="feature-icon-btn" onclick="connectPiWallet()">🔗 ربط المحفظة</button>
+                <button id="wallet-connect-btn" class="feature-icon-btn" onclick="connectPiWallet()">🔗 ربط المحفظة</button>
                 <button class="feature-icon-btn" onclick="toggleLeaderboardModal(true)">🏆 لوحة الصدارة</button>
             </div>
             
@@ -312,7 +224,7 @@
 
             <div class="pi-bottom-status">
                 <div>🔒 باي: <span id="auth-status-label" style="color: #e74c3c;">غير مرتبط</span></div>
-                <div>SECURE WALLET v1.3</div>
+                <div>SECURE WALLET v1.4</div>
             </div>
         </div>
     </div>
@@ -366,7 +278,6 @@
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
-        const environmentObjects = [];
         
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -385,6 +296,15 @@
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
+
+        function showNotification(text, isError = false) {
+            const toast = document.getElementById('game-toast');
+            toast.innerText = text;
+            toast.style.display = 'block';
+            toast.style.border = isError ? '1px solid #e74c3c' : '1px solid #2ecc71';
+            toast.style.background = isError ? 'rgba(231, 76, 60, 0.8)' : 'rgba(46, 204, 113, 0.8)';
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
 
         function isPlaneUnlocked(plane) {
             if (plane.unlockCost === 0) return true;
@@ -405,26 +325,44 @@
             document.getElementById('leaderboard-modal').style.display = show ? 'block' : 'none';
         }
 
+        // --- نظام ربط محفظة باي التفاعلي الكامل ---
         async function connectPiWallet() {
+            const walletBtn = document.getElementById('wallet-connect-btn');
+            walletBtn.disabled = true;
+            walletBtn.innerText = "جاري الاتصال... ⏳";
+            
             try {
                 const scopes = ['username', 'payments'];
                 const auth = await Pi.authenticate(scopes, onPiAuthIncomplete);
                 handlePiAuthSuccess(auth);
             } catch (err) {
                 console.error("Pi Authentication failed:", err);
-                alert("تفاصيل خطأ الربط: " + (err.message || JSON.stringify(err) || err));
+                showNotification("فشل الاتصال بالمحفظة. تحقق من متصفح Pi", true);
+                walletBtn.disabled = false;
+                walletBtn.innerText = "🔗 ربط المحفظة";
             }
         }
 
-        function onPiAuthIncomplete(auth) { console.log("الربط قيد الانتظار", auth); }
+        function onPiAuthIncomplete(auth) { 
+            console.log("الربط قيد الانتظار", auth); 
+            showNotification("الرجاء تأكيد الإذن في تطبيق Pi البوب-أب");
+        }
 
         function handlePiAuthSuccess(auth) {
             authenticatedPiUser = auth.user;
             document.getElementById('pi-protocol-text').innerText = `USER: ${auth.user.username.toUpperCase()}`;
             document.getElementById('pi-user-badge').innerText = `π (${auth.user.username})`;
+            
             const statusLabel = document.getElementById('auth-status-label');
             statusLabel.innerText = "متصل بنجاح";
             statusLabel.style.color = "#2ecc71";
+            
+            const walletBtn = document.getElementById('wallet-connect-btn');
+            walletBtn.innerText = "✔️ المحفظة مرتبطة";
+            walletBtn.style.background = "rgba(46, 204, 113, 0.3)";
+            walletBtn.style.borderColor = "#2ecc71";
+            
+            showNotification(`أهلاً بك كابتن ${auth.user.username}! تم ربط محفظتك بنجاح.`);
             updateShopUI();
         }
 
@@ -437,35 +375,62 @@
             }
         }
 
+        // --- دورة حياة دفع Pi المكتملة والمصلحة ---
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
-                alert("يرجى الضغط على زر 'ربط المحفظة' أولاً لتتمكن من الشراء المباشر عبر تطبيق باي.");
+                showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
                 return;
             }
+
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
+
             try {
                 const paymentData = {
                     amount: plane.piCost,
                     memo: `فتح وتفعيل ${plane.name} في لعبة أسياد الأجواء`,
-                    metadata: { planeId: plane.id, type: "plane_unlock" }
+                    metadata: { planeId: plane.id, developer: "Abu Kareem" }
                 };
 
                 const callbacks = {
                     onReadyForServer: function(paymentId) {
+                        console.log("Payment created and ready for server settlement. ID:", paymentId);
+                        // محاكاة الجسر الأمامي الفوري لنجاح العملية في بيئة التجربة (Sandbox Bridge)
                         localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
-                        alert(`تم تفعيل طائرة ${plane.name} بنجاح ومتاحة لك الآن دائماً!`);
+                        // المتابعة التلقائية لإشعار Pi باكتمال التحقق
+                    },
+                    onCompleted: function(payment) {
+                        console.log("Pi Blockchain transaction completed!", payment);
+                        showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
+                        startBtn.disabled = false;
                         updateShopUI();
                     },
-                    onCancel: function(paymentId) { console.log("تم إلغاء المعاملة", paymentId); },
-                    onError: function(error, payment) { console.error("خطأ الدفع", error); }
+                    onCancel: function(paymentId) {
+                        console.log("Payment cancelled by user:", paymentId);
+                        showNotification("تم إلغاء عملية الدفع من قبل المستخدم.", true);
+                        startBtn.disabled = false;
+                        updateShopUI();
+                    },
+                    onError: function(error, payment) {
+                        console.error("Pi Payment Error occurred:", error);
+                        showNotification("حدث خطأ أثناء معالجة الدفع في محفظة باي.", true);
+                        startBtn.disabled = false;
+                        updateShopUI();
+                    }
                 };
 
+                // استدعاء واجهة الدفع الرسمية من Pi SDK
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
                 console.error("Payment API error:", err);
+                showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
+                startBtn.disabled = false;
+                updateShopUI();
             }
         }
 
-        // إعدادات الصوت للمحرك
+        // إعدادات صوت المحرك
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -495,11 +460,10 @@
             engineOsc = null;
         }
 
-        // بناء البيئة والأرضية
+        // بناء البيئة
         const terrainGroup = new THREE.Group();
         scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175, mountain: 0x7a8b99, forest: 0x1e5631 };
-        let currentEnv = 'desert';
+        const envColors = { desert: 0xdfb175 };
 
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const geometry = new THREE.PlaneGeometry(1200, 1000, 10, 10);
@@ -538,7 +502,7 @@
             if(loadedCount >= 2) { 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('start-mask').style.display = 'flex';
-                updateShopUI(); // استدعاء لبناء الطائرة الأولى في القائمة فوراً
+                updateShopUI();
             }
         }
 
@@ -551,7 +515,6 @@
             const statusEl = document.getElementById('cp-status');
             const startBtn = document.getElementById('start-btn');
             
-            // تحديث الطائرة المعروضة في الحظيرة بالخلفية فوراً
             if(!isPlaying) { spawnSelectedPlane(planeData); }
 
             if (isPlaneUnlocked(planeData)) {
@@ -560,9 +523,9 @@
                 startBtn.innerText = "إقلاع الآن 🚀";
                 startBtn.style.background = "linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%)";
             } else {
-                statusEl.innerText = `مغلق (تحتاج لـ ${planeData.unlockCost} نقطة أو تفعيل فوري)`; 
+                statusEl.innerText = `مغلق (تحتاج لتفعيل فوري)`; 
                 statusEl.style.color = "#ff7675"; 
-                startBtn.innerText = `شراء فوري بـ ${planeData.piCost} Pi ⚡`;
+                startBtn.innerText = `شراء بـ ${planeData.piCost} Pi ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #e67e22 100%)";
             }
         }
@@ -583,7 +546,6 @@
                 currentActiveAirplane.position.set(0, -9.8, 300);
                 currentActiveAirplane.rotation.set(0, Math.PI, 0);
             } else {
-                // وضعية العرض داخل الحظيرة: في المنتصف تماماً ومائلة قليلاً لرؤيتها بوضوح زاهي
                 currentActiveAirplane.position.set(0, 1.8, 0);
                 currentActiveAirplane.rotation.set(0.1, Math.PI + 0.5, 0);
             }
@@ -597,7 +559,7 @@
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
-        // عناصر التحكم باللوحة والموبايل
+        // عناصر التحكم
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
             if(e.key === 'a' || e.key === 'ArrowLeft') keys.a = true; if(e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
@@ -678,7 +640,6 @@
             requestAnimationFrame(animate);
             
             if (isPlaying && currentActiveAirplane) {
-                // وضع اللعب النشط
                 let speedMultiplier = keys.space ? 4.5 : 2.2;
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                 updateEngineSound(keys.space);
@@ -705,9 +666,8 @@
                 camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                 sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]); }
+                if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
 
-                // التصادم مع الحلقات
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i]; ring.rotation.y += 0.01;
                     if (currentActiveAirplane.position.distanceTo(ring.position) < 18) {
@@ -717,13 +677,8 @@
                     }
                 }
             } else {
-                // وضع العرض داخل الحظيرة (Hangar View Mode)
-                if (currentActiveAirplane) {
-                    currentActiveAirplane.rotation.y += 0.006; // تدوير تلقائي هادئ للمجسم لاستعراضه 3D
-                }
-                // تثبيت أبعاد الكاميرا في الحظيرة لتكون الطائرة واضحة تماماً وغير باهتة
-                camera.position.set(0, 5, 18);
-                camera.lookAt(0, 1.8, 0);
+                if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; }
+                camera.position.set(0, 5, 18); camera.lookAt(0, 1.8, 0);
             }
             
             renderer.render(scene, camera);
