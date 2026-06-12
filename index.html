@@ -1,40 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sky Lords - Pi Hangar</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <title>أسياد الأجواء - مرآب الطائرات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>Pi.init({ version: "2.0", sandbox: true });</script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap');
-
         :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --accent: #e67e22;
+            --danger: #e74c3c;
+            --bg-glass: rgba(10, 5, 20, 0.7);
+            --border-glass: rgba(138, 43, 226, 0.3);
+            
+            /* ألوان باي الرسمية */
             --pi-purple: #8a2be2;
             --pi-gold: #ffd700;
-            --pi-dark: rgba(10, 5, 20, 0.85);
-            --pi-blue-btn-start: #4fc3f7;
-            --pi-blue-btn-end: #0288d1;
-            --bg-glass: rgba(10, 5, 20, 0.6);
-            --border-glass: rgba(138, 43, 226, 0.4);
         }
 
         body { 
             margin: 0;
             overflow: hidden; 
-            font-family: 'Fira Code', monospace; 
+            font-family: 'Tajawal', 'Cairo', sans-serif; 
             background-color: #000; 
             user-select: none;
             -webkit-user-select: none;
         }
         
-        /* واجهة المستخدم أثناء اللعب */
         #hud-container {
             position: absolute;
-            top: 60px;
+            top: 70px; 
             left: 20px;
             right: 20px;
             display: flex;
@@ -45,154 +44,146 @@
 
         .glass-panel {
             background: var(--bg-glass);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.15);
             color: #ffffff;
         }
 
         .hud-card {
-            font-size: 12px; 
-            font-weight: 600; 
+            font-size: 16px; 
+            font-weight: 700; 
             padding: 8px 16px; 
             display: flex;
             align-items: center;
-            gap: 8px;
-            letter-spacing: 1px;
+            gap: 10px;
         }
 
         #time-card { color: #ff7675; }
-        #score-card { color: var(--pi-gold); font-size: 14px; text-shadow: 0 0 5px var(--pi-gold); }
+        #score-card { color: var(--pi-gold); font-size: 20px; text-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
         
         /* تأثير النبض عند جمع النقاط */
-        .point-popup {
-            animation: pulse 0.4s ease-out;
-        }
+        .point-popup { animation: pulse 0.4s ease-out; }
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.3); color: #fff; text-shadow: 0 0 15px var(--pi-gold); }
+            50% { transform: scale(1.3); text-shadow: 0 0 15px var(--pi-gold); }
             100% { transform: scale(1); }
         }
 
         .overlay-mask { 
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 15; 
-            display: flex;
-            flex-direction: column;
-            color: white;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 15; display: flex; flex-direction: column; color: white;
         }
 
         #start-mask {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #05020a;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            overflow: hidden; box-sizing: border-box; z-index: 15;
+            background-color: #05020a; 
+            /* إعادة ضبط الخلفية لتكون الطائرة داخل الإطار تماماً كما طلبت */
             background-image: url("game-bg.jpg"); 
             background-size: auto 60%; 
             background-position: center 45%; 
             background-repeat: no-repeat;
-            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 0;
         }
 
-        /* الأشرطة العلوية والسفلية */
+        /* الأشرطة العلوية والسفلية الاحترافية */
         .pi-top-banner {
-            width: 100%; height: 40px;
+            width: 100%; height: 50px;
             background: linear-gradient(90deg, #100a1c 0%, #050505 50%, #1c102a 100%);
             border-bottom: 1px solid var(--pi-purple);
-            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px; box-sizing: border-box; z-index: 20;
         }
 
-        .pi-top-banner .left-text, .pi-top-banner .right-text {
-            font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+        .pi-top-banner .left-text {
+            color: var(--pi-purple); font-family: monospace; font-size: 11px;
+            text-transform: uppercase; text-shadow: 0 0 5px rgba(138, 43, 226, 0.5); letter-spacing: 1px;
         }
-        .pi-top-banner .left-text { color: var(--pi-purple); text-shadow: 0 0 5px var(--pi-purple); }
-        .pi-top-banner .right-text { color: #fff; }
-        .pi-top-banner .right-text span { color: var(--pi-gold); text-shadow: 0 0 5px var(--pi-gold); font-weight: bold; }
+
+        .pi-top-banner .right-text { color: #fff; font-size: 12px; font-weight: 700; }
+        .pi-top-banner .right-text span { color: var(--pi-gold); text-shadow: 0 0 5px var(--pi-gold); font-family: monospace; font-size: 16px;}
 
         .pi-bottom-status {
-            width: 100%; padding: 10px 0; text-align: center; font-size: 9px;
-            color: rgba(255, 255, 255, 0.5); z-index: 20;
+            width: 100%; padding: 10px 0; text-align: center; font-size: 11px; font-family: monospace;
+            color: rgba(255, 255, 255, 0.6); z-index: 20;
             display: flex; justify-content: center; gap: 20px; margin-bottom: 5px;
-            letter-spacing: 1px;
         }
-        .pi-bottom-status .status-linked { color: var(--pi-purple); text-shadow: 0 0 5px var(--pi-purple); }
+        .pi-bottom-status .status-linked { color: var(--pi-purple); text-shadow: 0 0 5px rgba(138, 43, 226, 0.6); font-weight: bold;}
 
-        /* منطقة المتجر (Hangar) */
+        /* نافذة الحظيرة (المتجر) */
         #shop-carousel { 
             display: none; align-items: center; justify-content: space-between; gap: 15px; 
-            padding: 15px 20px; width: 300px; margin-bottom: 20px;
+            padding: 12px 20px; width: 320px; margin-top: 60px; /* تم التعديل لتجنب التداخل */
+            background: var(--bg-glass); border: 1px solid var(--pi-purple); border-radius: 8px;
             animation: fadeIn 0.3s ease-in-out;
-            background: var(--pi-dark); border: 1px solid var(--pi-purple); border-radius: 8px;
         }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .carousel-btn { 
             background: transparent; color: var(--pi-purple); border: 1px solid var(--pi-purple); 
-            width: 30px; height: 30px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.3s; 
+            width: 35px; height: 35px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; 
         }
         .carousel-btn:hover { background: var(--pi-purple); color: #fff; box-shadow: 0 0 10px var(--pi-purple); }
         
         .plane-info { flex-grow: 1; text-align: center; }
-        .plane-name { font-size: 12px; color: #fff; margin: 0 0 4px 0; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
-        .plane-status { font-size: 10px; margin: 0; }
+        .plane-name { font-size: 14px; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
+        .plane-status { font-size: 12px; font-weight: 700; margin: 0; }
 
-        /* الأزرار الاحترافية */
-        .btn-area-bottom { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; margin-bottom: 30px; z-index: 20; }
-        
+        /* الأزرار */
+        .btn-area-bottom {
+            width: 100%; display: flex; flex-direction: column; align-items: center; 
+            margin-top: auto; margin-bottom: 25px; z-index: 20;
+        }
+
         .main-btn, .secondary-btn {
-            padding: 10px 30px; font-size: 12px; font-family: 'Fira Code', monospace;
-            font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; 
-            text-transform: uppercase; letter-spacing: 2px; flex: 1; text-align: center;
+            padding: 10px 30px; font-size: 14px; font-family: 'Tajawal', sans-serif; font-weight: 700; 
+            border-radius: 6px; cursor: pointer; transition: all 0.2s ease; flex: 1; text-align: center;
         }
 
         .main-btn { 
-            background: rgba(138, 43, 226, 0.2); border: 1px solid var(--pi-purple); color: #fff; 
-            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+            background: rgba(138, 43, 226, 0.15); border: 1px solid var(--pi-purple); color: #fff; 
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.3); letter-spacing: 1px;
         }
         .main-btn:hover:not(:disabled) { background: var(--pi-purple); transform: translateY(-2px); box-shadow: 0 5px 20px rgba(138, 43, 226, 0.6); }
         .main-btn:active:not(:disabled) { transform: translateY(0); }
-        .main-btn:disabled { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1); color: #555; cursor: not-allowed; box-shadow: none; }
+        .main-btn:disabled { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1); color: #777; cursor: not-allowed; box-shadow: none; }
         
-        .secondary-btn { background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: rgba(255,255,255,0.7); }
-        .secondary-btn:hover { border-color: #fff; color: #fff; }
+        .secondary-btn { background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: rgba(255,255,255,0.8); }
+        .secondary-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
 
-        /* شاشة النهاية الاحترافية */
+        /* شاشة النهاية */
+        #gameover-mask { background: rgba(5, 2, 10, 0.9); justify-content: center; align-items: center; }
         .pi-card {
-            background: var(--pi-dark); border: 1px solid var(--pi-purple); border-radius: 8px;
+            background: var(--bg-glass); border: 1px solid var(--pi-purple); border-radius: 12px;
             padding: 30px; box-shadow: 0 0 30px rgba(138, 43, 226, 0.2); text-align: center;
             backdrop-filter: blur(15px); min-width: 280px;
         }
-
-        #gameover-mask { background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; }
 
         /* شاشة التحميل */
         #loading { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: #05020a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; 
         }
-        .loading-text { color: var(--pi-purple); font-size: 14px; font-weight: 600; margin-bottom: 20px; letter-spacing: 3px; }
-        .loading-bar-container { width: 200px; height: 4px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+        .loading-text { color: var(--pi-purple); font-size: 16px; font-weight: 700; margin-bottom: 20px; font-family: monospace; letter-spacing: 2px;}
+        .loading-bar-container { width: 220px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
         .loading-bar { width: 0%; height: 100%; background: var(--pi-purple); box-shadow: 0 0 10px var(--pi-purple); animation: fill-bar 2s ease-out forwards; }
         @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
         /* عناصر التحكم للموبايل */
         #touch-controls { display: none; }
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(138, 43, 226, 0.05); border: 1px solid rgba(138, 43, 226, 0.3); border-radius: 50%; z-index: 100; backdrop-filter: blur(4px); }
-        #joystick-knob { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(138, 43, 226, 0.5); border: 1px solid var(--pi-purple); border-radius: 50%; box-shadow: 0 0 15px rgba(138,43,226,0.5); pointer-events: none; transition: transform 0.05s linear; }
-        #speed-btn { position: absolute; bottom: 55px; right: 40px; width: 70px; height: 70px; background: rgba(255, 215, 0, 0.1); border-radius: 50%; border: 1px solid var(--pi-gold); color: var(--pi-gold); font-weight: 700; font-size: 12px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(255,215,0,0.2); display: flex; justify-content: center; align-items: center; cursor: pointer; letter-spacing: 1px; }
+        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 110px; height: 110px; background: rgba(138, 43, 226, 0.05); border: 1px solid rgba(138, 43, 226, 0.2); border-radius: 50%; z-index: 100; backdrop-filter: blur(4px); }
+        #joystick-knob { position: absolute; top: 30px; left: 30px; width: 50px; height: 50px; background: rgba(138, 43, 226, 0.6); border: 1px solid var(--pi-purple); border-radius: 50%; box-shadow: 0 0 15px rgba(138,43,226,0.4); pointer-events: none; transition: transform 0.05s linear; }
+        #speed-btn { position: absolute; bottom: 45px; right: 30px; width: 70px; height: 70px; background: rgba(255, 215, 0, 0.1); border-radius: 50%; border: 1px solid var(--pi-gold); color: var(--pi-gold); font-weight: 900; font-size: 14px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 0 15px rgba(255,215,0,0.2); display: flex; justify-content: center; align-items: center; cursor: pointer; }
 
         @media (max-width: 768px) {
-            .btn-area-bottom { flex-direction: column; gap: 10px; width: 85vw; }
-            .action-container-main { flex-direction: column; }
-            .main-btn, .secondary-btn { width: 100%; }
-            #joystick-zone { width: 100px; height: 100px; bottom: 20px; left: 20px; }
-            #joystick-knob { width: 40px; height: 40px; top: 30px; left: 30px; }
-            #speed-btn { width: 60px; height: 60px; bottom: 40px; right: 20px; font-size: 10px; }
+            .btn-area-bottom { margin-bottom: 20px; }
+            .action-container-main { flex-direction: column; gap: 10px !important; width: 85vw; }
+            .main-btn, .secondary-btn { width: 100%; padding: 12px 0; }
         }
     </style>
 </head>
@@ -200,34 +191,34 @@
 
     <div id="hud-container" style="display: none;">
         <div>
-            <div id="time-card" class="glass-panel hud-card">T-MINUS: <span id="time-left">30</span>s</div>
-            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 10px; color: rgba(255,255,255,0.7);">
-                WALLET BAL: <span id="total-points" style="color: #fff; font-weight: 700;">0</span> π
+            <div id="time-card" class="glass-panel hud-card">⏱️ الوقت: <span id="time-left">30</span>ث</div>
+            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; color: rgba(255,255,255,0.8);">
+                محفظة الرصيد: <span id="total-points" style="color: #fff; font-weight: 700;">0</span> π
             </div>
         </div>
-        <div id="score-card" class="glass-panel hud-card">◈ <span id="points">0</span></div>
+        <div id="score-card" class="glass-panel hud-card">🪙 <span id="points">0</span></div>
     </div>
     
     <div id="touch-controls">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
-        <div id="speed-btn">BOOST</div>
+        <div id="speed-btn">تيربو 🚀</div>
     </div>
 
     <div id="loading">
-        <div class="loading-text">INITIALIZING...</div>
+        <div class="loading-text">جاري تهيئة النظام...</div>
         <div class="loading-bar-container"><div class="loading-bar"></div></div>
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <div class="pi-top-banner">
-            <div class="left-text">PROTOCOL: SECURE // AUTHENTICATED</div>
-            <div class="right-text"><span>π</span> MAINNET ACTIVE</div>
+            <div class="left-text">SECURE_LINK // PI_NET</div>
+            <div class="right-text"><span>π</span> شبكة باي نشطة</div>
         </div>
 
-        <div id="shop-carousel" style="display:none; margin-top: 80px;"> 
+        <div id="shop-carousel"> 
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">LOADING...</h3>
+                <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
                 <p id="cp-status" class="plane-status">-</p>
             </div>
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
@@ -235,34 +226,37 @@
 
         <div class="btn-area-bottom">
             <div class="action-container-main" style="display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; max-width: 500px; margin-bottom: 10px;">
-                <button id="start-btn" class="main-btn" onclick="initiateStartSequence()">LAUNCH SEQUENCE</button>
-                <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">OPEN HANGAR</button>
+                <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن 🚀</button>
+                <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">مرآب الطائرات 🛠️</button>
             </div>
         </div>
 
         <div class="pi-bottom-status">
-            <div>🔒 STATUS: <span class="status-linked">MAINNET_LINKED</span></div>
-            <div>SECURE WALLET | ASSETS STAKED TILL JUL 2027</div>
+            <div>🔒 الحالة: <span class="status-linked">تم الربط بحساب باي بنجاح</span></div>
+            <div style="opacity: 0.7;">محفظة مؤمنة | الأصول مقفلة حتى يوليو 2027</div>
         </div>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
         <div class="pi-card">
-            <h1 style="font-size: 1.2rem; margin: 0 0 5px 0; color: #ff4b2b; letter-spacing: 2px;">// SESSION_TERMINATED</h1>
-            <p style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 20px;">FLIGHT DATA LOGGED TO LEDGER</p>
+            <h1 style="font-size: 2rem; margin: 0 0 10px 0; color: #ff4b2b;">انتهى الوقت! ⏱️</h1>
+            <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">تم تسجيل بيانات الرحلة بنجاح</p>
             
-            <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <p style="font-size: 10px; margin: 0; color: var(--pi-gold);">YIELD GENERATED</p>
-                <h2 style="font-size: 2rem; margin: 5px 0; color: #fff;">+<span id="final-score">0</span> <span style="font-size: 1rem; color: var(--pi-purple);">PTS</span></h2>
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                <p style="font-size: 12px; margin: 0; color: var(--pi-gold);">النقاط المكتسبة</p>
+                <h2 style="font-size: 2.5rem; margin: 5px 0; color: #fff;">+<span id="final-score">0</span> <span style="font-size: 1.2rem; color: var(--pi-purple);">نقطة</span></h2>
             </div>
             
-            <button class="main-btn" style="width: 100%;" onclick="restartGame()">RETURN TO BASE</button>
+            <button class="main-btn" style="width: 100%;" onclick="restartGame()">العودة للمرآب 🔄</button>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0514); // خلفية أغمق لتناسب الثيم
+        scene.background = new THREE.Color(0x0a0514);
         const fog = new THREE.FogExp2(0x0a0514, 0.0008);
         scene.fog = fog;
 
@@ -300,16 +294,16 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         const fleet = [
-            { id: 0, type: 'passenger', name: 'CRUISER B-737', unlockCost: 0, colorHex: null },
-            { id: 1, type: 'passenger', name: 'CRUISER (CRIMSON)', unlockCost: 50, colorHex: 0xff3333 },
-            { id: 2, type: 'passenger', name: 'CRUISER (COBALT)', unlockCost: 100, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: 'CRUISER (EMERALD)', unlockCost: 150, colorHex: 0x33ff33 },
-            { id: 4, type: 'passenger', name: 'CRUISER (AUREUM)', unlockCost: 200, colorHex: 0xffd700 },
-            { id: 5, type: 'fighter', name: 'INTERCEPTOR G-650', unlockCost: 300, colorHex: null },
-            { id: 6, type: 'fighter', name: 'STEALTH (VOID)', unlockCost: 400, colorHex: 0x111111 },
-            { id: 7, type: 'fighter', name: 'STRIKER (DUNE)', unlockCost: 500, colorHex: 0xcc9955 },
-            { id: 8, type: 'fighter', name: 'CHOPPER R-44', unlockCost: 600, colorHex: 0x003366 },
-            { id: 9, type: 'fighter', name: 'OMEGA (BLOOD)', unlockCost: 750, colorHex: 0x8b0000 }
+            { id: 0, type: 'passenger', name: 'طائرة ركاب بـ 737', unlockCost: 0, colorHex: null },
+            { id: 1, type: 'passenger', name: 'طائرة ركاب (حمراء)', unlockCost: 50, colorHex: 0xff3333 },
+            { id: 2, type: 'passenger', name: 'طائرة ركاب (زرقاء)', unlockCost: 100, colorHex: 0x3366ff },
+            { id: 3, type: 'passenger', name: 'طائرة ركاب (خضراء)', unlockCost: 150, colorHex: 0x33ff33 },
+            { id: 4, type: 'passenger', name: 'طائرة ركاب (ذهبية)', unlockCost: 200, colorHex: 0xffd700 },
+            { id: 5, type: 'fighter', name: 'طائرة خاصة جـ 650', unlockCost: 300, colorHex: null },
+            { id: 6, type: 'fighter', name: 'مقاتلة (شبح سوداء)', unlockCost: 400, colorHex: 0x111111 },
+            { id: 7, type: 'fighter', name: 'مقاتلة (صحراوية)', unlockCost: 500, colorHex: 0xcc9955 },
+            { id: 8, type: 'fighter', name: 'مروحية ر 44', unlockCost: 600, colorHex: 0x003366 },
+            { id: 9, type: 'fighter', name: 'مقاتلة (أوميجا حمراء)', unlockCost: 750, colorHex: 0x8b0000 }
         ];
         let currentSelectionIndex = 0;
 
@@ -318,9 +312,8 @@
             carousel.style.display = (carousel.style.display === 'none' || carousel.style.display === '') ? 'flex' : 'none';
         }
 
-        // محرك الصوت المطور والواقعي
+        // إعدادات الصوت
         let audioCtx, engineOsc, engineOsc2, noiseNode, noiseFilter, engineFilter, engineGain, noiseGain;
-        
         function initEngineSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -375,7 +368,7 @@
         }
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0x2b1e3a, mountain: 0x1f1930, forest: 0x140d24 }; // ألوان بيئة تتناسب مع الثيم الداكن
+        const envColors = { desert: 0x2b1e3a, mountain: 0x1f1930, forest: 0x140d24 }; 
         let currentEnv = 'desert';
 
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
@@ -390,12 +383,12 @@
                 }
             }
             geometry.computeVertexNormals();
-            const material = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.9, flatShading: true, wireframe: false });
+            const material = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.9, flatShading: true });
             const terrain = new THREE.Mesh(geometry, material);
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
 
             if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x05020a, emissive: 0x1a0b2e }));
+                const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x05020a }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             }
         }
@@ -441,10 +434,17 @@
             document.getElementById('cp-name').innerText = planeData.name;
             const statusEl = document.getElementById('cp-status');
             const startBtn = document.getElementById('start-btn');
+            
             if (totalPoints >= planeData.unlockCost) {
-                statusEl.innerText = "READY FOR DISPATCH ✔️"; statusEl.style.color = "#2ecc71"; startBtn.disabled = false; startBtn.innerText = "LAUNCH SEQUENCE";
+                statusEl.innerText = "متاح للإقلاع ✔️"; 
+                statusEl.style.color = "#2ecc71"; 
+                startBtn.disabled = false; 
+                startBtn.innerText = "إقلاع الآن 🚀";
             } else {
-                statusEl.innerText = `LOCKED (REQ: ${planeData.unlockCost} π) 🔒`; statusEl.style.color = "#e74c3c"; startBtn.disabled = true; startBtn.innerText = "INSUFFICIENT FUNDS";
+                statusEl.innerText = `مغلق (تحتاج ${planeData.unlockCost} نقطة) 🔒`; 
+                statusEl.style.color = "#e74c3c"; 
+                startBtn.disabled = true; 
+                startBtn.innerText = "رصيد النقاط غير كافٍ";
             }
         }
 
@@ -470,7 +470,6 @@
 
         function createRing(zPos) {
             const geometry = new THREE.TorusGeometry(13, 1.4, 16, 40);
-            // تعديل الخواتم لتكون معدنية ذهبية 
             const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.2, emissive: 0x443300 });
             const ring = new THREE.Mesh(geometry, material);
             ring.position.set((Math.random() - 0.5) * 180, Math.random() * 65 + 25, zPos);
@@ -513,17 +512,6 @@
         const speedBtn = document.getElementById('speed-btn');
         speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, {passive: false});
         speedBtn.addEventListener('touchend', () => { keys.space = false; });
-
-        // إضافة محاكاة التحقق قبل اللعب
-        function initiateStartSequence() {
-            const btn = document.getElementById('start-btn');
-            btn.innerText = "AUTHENTICATING...";
-            btn.disabled = true;
-            setTimeout(() => {
-                startGame();
-                btn.disabled = false;
-            }, 800);
-        }
 
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
@@ -630,17 +618,16 @@
 
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i]; 
-                    ring.rotation.y += 0.02; // زيادة سرعة الدوران لتبدو كعملة
+                    ring.rotation.y += 0.02; 
                     
                     const dist = currentActiveAirplane.position.distanceTo(ring.position);
 
                     if (dist < 20 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 8) {
                         scene.remove(ring); rings.splice(i, 1); score += 10; timeLeft += 3;
                         
-                        // تحديث واجهة النقاط مع تفعيل تأثير النبض البصري
                         const scoreCard = document.getElementById('score-card');
                         scoreCard.classList.remove('point-popup');
-                        void scoreCard.offsetWidth; // إعادة تهيئة الـ DOM لإعادة تشغيل الـ Animation
+                        void scoreCard.offsetWidth; 
                         scoreCard.classList.add('point-popup');
                         
                         document.getElementById('points').innerText = score; 
