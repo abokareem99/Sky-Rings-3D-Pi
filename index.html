@@ -79,9 +79,8 @@
             box-sizing: border-box;
             z-index: 15;
             background-color: #1a1a1a;
-            /* تم التعديل ليتطابق مع github */
             background-image: url("game-bg.jpg"); 
-            background-size: cover;
+            background-size: contain; /* 💡 التعديل هنا: يضمن احتواء صورة الواجهة بشكل متوازن ودون تمدد */
             background-position: center center;
             background-repeat: no-repeat;
             display: flex;
@@ -95,7 +94,7 @@
         .action-container-main {
             display: flex;
             gap: 20px;
-            justify-content: center;
+            justify-center: center;
             align-items: center;
             width: 100%;
             max-width: 600px;
@@ -220,7 +219,6 @@
         }
 
         @media (max-width: 768px) {
-            /* تم إزالة أمر الإظهار الإجباري لأزرار اللمس من هنا */
             #start-mask { padding: 20px; }
             .action-container-main { flex-direction: column; gap: 12px; width: 90vw; }
             .main-btn, .secondary-btn { width: 100%; padding: 10px 0; font-size: 1.2rem; }
