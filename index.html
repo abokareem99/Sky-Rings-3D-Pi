@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <!-- تم إرجاع تهيئة الـ SDK الرسمية التلقائية التي تتوافق مع السيرفر دون إجبار الـ Sandbox -->
     <script>Pi.init({ version: "2.0" });</script>
     
     <style>
@@ -284,16 +283,16 @@
         const joyState = { x: 0, y: 0, active: false };
         
         const fleet = [
-            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737 (افتراضية)', colorHex: null },
-            { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت حمراء)', colorHex: 0xff3333 },
-            { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (المحيط الزرقاء)', colorHex: 0x3366ff },
-            { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (الزمرد الخضراء)', colorHex: 0x33ff33 },
-            { id: 4, piCost: 0.5, type: 'passenger', name: 'طائرة ركاب (الملكية الذهبية)', colorHex: 0xffd700 },
-            { id: 5, piCost: 1.0, type: 'fighter', name: 'طائرة خاصة G-650 فخمة', colorHex: null },
-            { id: 6, piCost: 1.5, type: 'fighter', name: 'مقاتلة (الشبح السوداء)', colorHex: 0x222222 },
-            { id: 7, piCost: 2.0, type: 'fighter', name: 'مقاتلة (العاصفة الصحراوية)', colorHex: 0xcc9955 },
-            { id: 8, piCost: 3.0, type: 'fighter', name: 'مروحية هجومية R-44', colorHex: 0x003366 },
-            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء (أوميجا)', colorHex: 0x8b0000 }
+            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
+            { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
+            { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
+            { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
+            { id: 4, piCost: 0.5, type: 'passenger', name: 'طائرة ركاب (ملكية)', colorHex: 0xffd700 },
+            { id: 5, piCost: 1.0, type: 'fighter', name: 'طائرة خاصة G-650', colorHex: null },
+            { id: 6, piCost: 1.5, type: 'fighter', name: 'مقاتلة (شبح)', colorHex: 0x222222 },
+            { id: 7, piCost: 2.0, type: 'fighter', name: 'مقاتلة (عاصفة)', colorHex: 0xcc9955 },
+            { id: 8, piCost: 3.0, type: 'fighter', name: 'مروحية R-44', colorHex: 0x003366 },
+            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء', colorHex: 0x8b0000 }
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
@@ -385,28 +384,27 @@
             startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
 
             try {
+                // التصحيح الأول: تحويل المعرف إلى نصوص فقط (Strings) لتتطابق مع شروط منصة باي
                 const paymentData = {
                     amount: plane.piCost,
-                    memo: `فتح وتفعيل ${plane.name} في لعبة أسياد الأجواء`,
-                    metadata: { planeId: plane.id, developer: "Abu Kareem" }
+                    memo: "شراء " + plane.name, // تبسيط الوصف
+                    metadata: { 
+                        planeId: String(plane.id), // هنا كان الخطأ القاتل: باي ترفض الأرقام!
+                        developer: "AbuKareem"
+                    }
                 };
 
                 const callbacks = {
                     onReadyForServer: function(paymentId) {
-                        console.log("تم إنشاء المعاملة، جاري إرسالها للسيرفر للموافقة (Approve):", paymentId);
-                        
-                        // التعديل: إرسال بيانات الطائرة وسعرها للسيرفر لمطابقتها مع Pi
+                        // التصحيح الثاني: إرسال PaymentId فقط للسيرفر
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                paymentId: paymentId,
-                                planeId: plane.id,
-                                amount: plane.piCost
-                            })
+                            body: JSON.stringify({ paymentId: paymentId })
                         })
                         .then(response => response.json())
                         .then(data => {
+                            if(data.error) throw new Error(data.error);
                             console.log("تمت الموافقة من السيرفر:", data);
                         })
                         .catch(err => {
@@ -417,7 +415,7 @@
                         console.log("جاهز لدفع السيرفر للمستخدم:", paymentId);
                     },
                     onCompleted: function(payment) {
-                        console.log("اكتملت المعاملة على البلوكشين، جاري تأكيدها للسيرفر (Complete):", payment);
+                        console.log("اكتملت المعاملة على البلوكشين، جاري تأكيدها للسيرفر:", payment);
                         
                         fetch('/api/complete-payment', {
                             method: 'POST',
@@ -440,13 +438,14 @@
                         });
                     },
                     onCancel: function(paymentId) {
-                        console.log("تم إلغاء الدفع من قبل المستخدم:", paymentId);
                         showNotification("تم إلغاء المعاملة من قبل المستخدم.", true);
                         startBtn.disabled = false;
                         updateShopUI();
                     },
                     onError: function(error, payment) {
                         console.error("خطأ أثناء معالجة الدفع:", error);
+                        // إضافة تنبيه يظهر الخطأ بدقة لمعرفة السبب إذا تكرر
+                        alert("تم إرجاع خطأ من منصة باي: " + (error.message || JSON.stringify(error)));
                         showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                         startBtn.disabled = false;
                         updateShopUI();
@@ -456,6 +455,7 @@
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
                 console.error("فشل استدعاء Pi Payment API:", err);
+                alert("تفاصيل الخطأ: " + err.message);
                 showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                 startBtn.disabled = false;
                 updateShopUI();
