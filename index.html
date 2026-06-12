@@ -6,7 +6,6 @@
     <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
-    <!-- مكتبات المحرك والشبكة -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -384,19 +383,18 @@
             startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
 
             try {
-                // التصحيح الأول: تحويل المعرف إلى نصوص فقط (Strings) لتتطابق مع شروط منصة باي
                 const paymentData = {
                     amount: plane.piCost,
-                    memo: "شراء " + plane.name, // تبسيط الوصف
+                    memo: "شراء " + plane.name,
                     metadata: { 
-                        planeId: String(plane.id), // هنا كان الخطأ القاتل: باي ترفض الأرقام!
+                        planeId: String(plane.id), 
                         developer: "AbuKareem"
                     }
                 };
 
                 const callbacks = {
-                    onReadyForServer: function(paymentId) {
-                        // التصحيح الثاني: إرسال PaymentId فقط للسيرفر
+                    onReadyForServerApproval: function(paymentId) {
+                        console.log("طلب موافقة السيرفر:", paymentId);
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -411,16 +409,12 @@
                             console.error("خطأ في الموافقة:", err);
                         });
                     },
-                    onReadyForServerToPay: function(paymentId) {
-                        console.log("جاهز لدفع السيرفر للمستخدم:", paymentId);
-                    },
-                    onCompleted: function(payment) {
-                        console.log("اكتملت المعاملة على البلوكشين، جاري تأكيدها للسيرفر:", payment);
-                        
+                    onReadyForServerCompletion: function(paymentId, txid) {
+                        console.log("جاهز لاكتمال الدفع على السيرفر:", paymentId, txid);
                         fetch('/api/complete-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                            body: JSON.stringify({ paymentId: paymentId, txid: txid })
                         })
                         .then(response => response.json())
                         .then(data => {
@@ -444,8 +438,7 @@
                     },
                     onError: function(error, payment) {
                         console.error("خطأ أثناء معالجة الدفع:", error);
-                        // إضافة تنبيه يظهر الخطأ بدقة لمعرفة السبب إذا تكرر
-                        alert("تم إرجاع خطأ من منصة باي: " + (error.message || JSON.stringify(error)));
+                        alert("خطأ من منصة باي: " + (error.message || JSON.stringify(error)));
                         showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                         startBtn.disabled = false;
                         updateShopUI();
@@ -573,10 +566,12 @@
 
             if (isPlaying) {
                 currentActiveAirplane.position.set(0, -9.8, 300);
-                currentActiveAirplane.rotation.set(0, Math.PI, 0);
+                // تم التعديل هنا لضمان تحليق الطائرة للأمام بشكل صحيح وعدم دورانها للخلف
+                currentActiveAirplane.rotation.set(0, 0, 0);
             } else {
                 currentActiveAirplane.position.set(0, 1.8, 0);
-                currentActiveAirplane.rotation.set(0.1, Math.PI + 0.5, 0);
+                // تعديل زاوية العرض في المرآب
+                currentActiveAirplane.rotation.set(0.1, 0.5, 0);
             }
             scene.add(currentActiveAirplane);
         }
