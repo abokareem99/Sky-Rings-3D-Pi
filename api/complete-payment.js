@@ -1,16 +1,29 @@
 // api/complete-payment.js
-import axios from 'axios';
+const axios = require('axios');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
+    // إعدادات الأمان والسماح بالاتصال (CORS)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { paymentId, txid } = req.body;
-    const PI_API_KEY = process.env.PI_API_KEY; // المفتاح السري المحفوظ في Vercel
+    const PI_API_KEY = process.env.PI_API_KEY;
+
+    if (!paymentId || !txid) {
+        return res.status(400).json({ error: 'Missing paymentId or txid' });
+    }
 
     try {
-        // 1. إرسال معرف المعاملة (txid) إلى خوادم باي لإكمال الدفع وتأكيده من طرف الخادم
+        // إرسال أمر الإغلاق النهائي للمعاملة بعد توقيع المستخدم
         const response = await axios.post(
             `https://api.minepi.com/v2/payments/${paymentId}/complete`,
             { txid: txid },
@@ -22,14 +35,13 @@ export default async function handler(req, res) {
             }
         );
 
-        // 2. إذا تمت العملية بنجاح، نرجع استجابة للعبة لتحديث الرصيد أو فتح الطائرة
-        return res.status(200).json({ success: true, payment: response.data });
+        return res.status(200).json({ success: true, data: response.data });
 
     } catch (error) {
-        console.error("Payment Completion Error:", error.response?.data || error.message);
+        console.error("خطأ الكومبليت:", error.response?.data || error.message);
         return res.status(500).json({ 
             error: 'Failed to complete payment', 
             details: error.response?.data || error.message 
         });
     }
-}
+};
