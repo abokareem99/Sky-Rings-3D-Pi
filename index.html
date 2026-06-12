@@ -395,10 +395,15 @@
                     onReadyForServer: function(paymentId) {
                         console.log("تم إنشاء المعاملة، جاري إرسالها للسيرفر للموافقة (Approve):", paymentId);
                         
+                        // التعديل: إرسال بيانات الطائرة وسعرها للسيرفر لمطابقتها مع Pi
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ paymentId: paymentId })
+                            body: JSON.stringify({ 
+                                paymentId: paymentId,
+                                planeId: plane.id,
+                                amount: plane.piCost
+                            })
                         })
                         .then(response => response.json())
                         .then(data => {
