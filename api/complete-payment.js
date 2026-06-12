@@ -2,7 +2,6 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    // إعدادات الأمان والسماح بالاتصال (CORS)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -23,7 +22,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // إرسال أمر الإغلاق النهائي للمعاملة بعد توقيع المستخدم
+        // إرسال أمر الإغلاق النهائي للمعاملة
         const response = await axios.post(
             `https://api.minepi.com/v2/payments/${paymentId}/complete`,
             { txid: txid },
