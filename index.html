@@ -180,7 +180,8 @@
     <div id="hud-container" style="display: none;">
         <div>
             <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ الوقت: <span id="time-left">30</span>ث</div>
-            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 14px;">الرصيد: <span id="total-points">0</span></div>
+            <!-- تغيير كلمة 'الرصيد' إلى 'إجمالي النقاط' لمنع التشتت مع رصيد Pi -->
+            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 14px;">إجمالي النقاط: <span id="total-points">0</span></div>
         </div>
         <div id="score-card" class="glass-panel hud-card" style="color: #ffd700; font-size: 22px;">🪙 <span id="points">0</span></div>
     </div>
@@ -301,12 +302,13 @@
             toast.innerText = text;
             toast.style.display = 'block';
             toast.style.border = isError ? '1px solid #e74c3c' : '1px solid #2ecc71';
-            toast.style.background = isError ? 'rgba(231, 76, 60, 0.8)' : 'rgba(46, 204, 113, 0.8)';
+            toast.style.background = isError ? 'rgba(231, 76, 60, 0.9)' : 'rgba(46, 204, 113, 0.9)';
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
+        // تم التعديل هنا: إغلاق كل الطائرات وترك الأولى فقط مفتوحة للاعب
         function isPlaneUnlocked(plane) {
-            if (plane.piCost === 0) return true;
+            if (plane.id === 0) return true; // الطائرة الأولى فقط هي المفتوحة بشكل افتراضي
             return localStorage.getItem(`plane_unlocked_${plane.id}`) === 'true';
         }
 
@@ -363,21 +365,21 @@
             updateShopUI();
         }
 
+        // تم التعديل هنا: التأكد من إتمام الشراء عبر محفظة Pi فقط وليس بالنقاط
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
             if (isPlaneUnlocked(planeData)) {
                 startGame();
             } else {
+                if (!authenticatedPiUser) {
+                    showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true);
+                    return;
+                }
                 executePiPayment(planeData);
             }
         }
 
         async function executePiPayment(plane) {
-            if (!authenticatedPiUser) {
-                showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
-                return;
-            }
-
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true;
             startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
@@ -420,7 +422,7 @@
                         .then(data => {
                             console.log("تم تأكيد الدفع من السيرفر بنجاح:", data);
                             localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
-                            showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
+                            showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`);
                             startBtn.disabled = false;
                             updateShopUI();
                         })
@@ -531,6 +533,7 @@
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
+        // تم التعديل هنا: إظهار أن الشراء حصري عبر Pi Wallet وتمييز الألوان
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
@@ -545,10 +548,11 @@
                 startBtn.innerText = "إقلاع الآن 🚀";
                 startBtn.style.background = "linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%)";
             } else {
-                statusEl.innerText = `مغلقة (تتطلب تفعيل فوري بـ Pi)`; 
+                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`; 
                 statusEl.style.color = "#ff7675"; 
-                startBtn.innerText = `شراء بـ ${planeData.piCost} Pi ⚡`;
-                startBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #e67e22 100%)";
+                // تغيير تصميم الزر ليكون واضحاً أنه مخصص لمحفظة Pi وليس لـ نقاط اللعبة
+                startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
+                startBtn.style.background = "linear-gradient(135deg, #8a2be2 0%, #4a148c 100%)"; 
             }
         }
 
@@ -566,11 +570,9 @@
 
             if (isPlaying) {
                 currentActiveAirplane.position.set(0, -9.8, 300);
-                // تم التعديل هنا لضمان تحليق الطائرة للأمام بشكل صحيح وعدم دورانها للخلف
                 currentActiveAirplane.rotation.set(0, 0, 0);
             } else {
                 currentActiveAirplane.position.set(0, 1.8, 0);
-                // تعديل زاوية العرض في المرآب
                 currentActiveAirplane.rotation.set(0.1, 0.5, 0);
             }
             scene.add(currentActiveAirplane);
