@@ -373,7 +373,7 @@
             }
         }
 
-        // --- إعادة البوابة الرسمية الصارمة للتست نت والغاء المحاكاة تماماً ---
+        // --- نظام الدفع المتكامل الجديد باستخدام مسارات المجلد api ---
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
                 showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
@@ -393,34 +393,67 @@
 
                 const callbacks = {
                     onReadyForServer: function(paymentId) {
-                        console.log("Payment ready for settlement on server side. ID:", paymentId);
-                        // الحفظ المحلي يتم فقط بعد موافقة نافذة الدفع الأولية للشبكة
-                        localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
+                        console.log("تم إنشاء المعاملة، جاري إرسالها للسيرفر للموافقة (Approve):", paymentId);
+                        
+                        // استدعاء ملف الموافقة الأول
+                        fetch('/api/approve-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId: paymentId })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("تمت الموافقة من السيرفر:", data);
+                        })
+                        .catch(err => {
+                            console.error("خطأ في الموافقة:", err);
+                        });
+                    },
+                    onReadyForServerToPay: function(paymentId) {
+                        console.log("جاهز لدفع السيرفر للمستخدم (لا تنطبق هنا):", paymentId);
                     },
                     onCompleted: function(payment) {
-                        console.log("Pi Blockchain Completed:", payment);
-                        showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
-                        startBtn.disabled = false;
-                        updateShopUI();
+                        console.log("اكتملت المعاملة على البلوكشين، جاري تأكيدها للسيرفر (Complete):", payment);
+                        
+                        // استدعاء ملف الإكمال لتسجيل الدفع نهائياً
+                        fetch('/api/complete-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("تم تأكيد الدفع من السيرفر بنجاح:", data);
+                            // هنا فقط نفتح الطائرة بعد إتمام دورة الدفع كاملة مع السيرفر
+                            localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
+                            showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
+                            startBtn.disabled = false;
+                            updateShopUI();
+                        })
+                        .catch(err => {
+                            console.error("خطأ في إكمال الدفع:", err);
+                            showNotification("حدث خطأ أثناء تأكيد الدفع مع السيرفر. تواصل مع الدعم.", true);
+                            startBtn.disabled = false;
+                            updateShopUI();
+                        });
                     },
                     onCancel: function(paymentId) {
-                        console.log("Cancelled:", paymentId);
+                        console.log("تم إلغاء الدفع من قبل المستخدم:", paymentId);
                         showNotification("تم إلغاء المعاملة من قبل المستخدم.", true);
                         startBtn.disabled = false;
                         updateShopUI();
                     },
                     onError: function(error, payment) {
-                        console.error("Pi SDK Error:", error);
+                        console.error("خطأ أثناء معالجة الدفع:", error);
                         showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                         startBtn.disabled = false;
                         updateShopUI();
                     }
                 };
 
-                // استدعاء البوابة الرسمية الحقيقية لمتصفح باي بدون أي Fallback محلي
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
-                console.error("Payment API restricted or error:", err);
+                console.error("فشل استدعاء Pi Payment API:", err);
                 showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                 startBtn.disabled = false;
                 updateShopUI();
