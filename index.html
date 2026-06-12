@@ -505,15 +505,22 @@
         createTerrainSegment(-2000, envColors.desert);
 
         const loader = new THREE.GLTFLoader();
+        
+        // الطائرة المدنية (تمت إضافة حاوية لتدويرها للامام وزيادة الحجم 30%)
         loader.load('airplane.glb', (gltf) => {
-            basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.5, 3.5, 3.5);
+            basePassengerModel = new THREE.Group(); 
+            gltf.scene.rotation.y = Math.PI; 
+            basePassengerModel.add(gltf.scene);
+            basePassengerModel.scale.set(4.55, 4.55, 4.55); 
             checkAllLoaded();
         }, undefined, (err) => {
             basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
         });
 
+        // الطائرة الحربية (لم يتم إجراء أي تعديل عليها بناءً على طلبك)
         loader.load('Fighter.glb.glb', (gltf) => { 
-            baseFighterModel = gltf.scene; baseFighterModel.scale.set(1.2, 1.2, 1.2);
+            baseFighterModel = gltf.scene; 
+            baseFighterModel.scale.set(1.2, 1.2, 1.2);
             checkAllLoaded();
         }, undefined, (err) => {
             baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
