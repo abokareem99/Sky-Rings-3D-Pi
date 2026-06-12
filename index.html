@@ -6,6 +6,7 @@
     <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
+    <!-- مكتبات المحرك والشبكة -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -176,6 +177,7 @@
 </head>
 <body>
 
+    <!-- نظام التنبيهات المخصص للعبة وعمليات الدفع -->
     <div id="game-toast" class="glass-panel"></div>
 
     <div id="hud-container" style="display: none;">
@@ -199,7 +201,7 @@
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <div class="pi-top-banner">
             <div class="left-text" id="pi-protocol-text">PROTOCOL: SECURE_LINK // PI_NET_AUTH</div>
-            <div class="right-text"><span id="pi-user-badge">π</span> MAINNET ACTIVE</div>
+            <div class="right-text"><span id="pi-user-badge">π</span> TESTNET ACTIVE</div>
         </div>
 
         <div id="shop-carousel" class="glass-panel"> 
@@ -224,7 +226,7 @@
 
             <div class="pi-bottom-status">
                 <div>🔒 باي: <span id="auth-status-label" style="color: #e74c3c;">غير مرتبط</span></div>
-                <div>SECURE WALLET v1.4</div>
+                <div>SECURE WALLET v2.0-TEST</div>
             </div>
         </div>
     </div>
@@ -282,17 +284,18 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         
+        // تعديل الهيكل: التكلفة تعتمد حصرياً وفقط على Pi لعملية الشراء (باستثناء الطائرة الافتراضية الأولى 0)
         const fleet = [
-            { id: 0, type: 'passenger', name: 'طائرة ركاب B-737', unlockCost: 0, piCost: 0, colorHex: null },
-            { id: 1, type: 'passenger', name: 'طائرة ركاب (ياقوت حمراء)', unlockCost: 50, piCost: 0.1, colorHex: 0xff3333 },
-            { id: 2, type: 'passenger', name: 'طائرة ركاب (المحيط الزرقاء)', unlockCost: 100, piCost: 0.2, colorHex: 0x3366ff },
-            { id: 3, type: 'passenger', name: 'طائرة ركاب (الزمرد الخضراء)', unlockCost: 150, piCost: 0.3, colorHex: 0x33ff33 },
-            { id: 4, type: 'passenger', name: 'طائرة ركاب (الملكية الذهبية)', unlockCost: 200, piCost: 0.5, colorHex: 0xffd700 },
-            { id: 5, type: 'fighter', name: 'طائرة خاصة G-650', unlockCost: 300, piCost: 1.0, colorHex: null },
-            { id: 6, type: 'fighter', name: 'مقاتلة (الشبح السوداء)', unlockCost: 400, piCost: 1.5, colorHex: 0x222222 },
-            { id: 7, type: 'fighter', name: 'مقاتلة (العاصفة الصحراوية)', unlockCost: 500, piCost: 2.0, colorHex: 0xcc9955 },
-            { id: 8, type: 'fighter', name: 'مروحية هجومية R-44', unlockCost: 600, piCost: 3.0, colorHex: 0x003366 },
-            { id: 9, type: 'fighter', name: 'مقاتلة الفضاء (أوميجا)', unlockCost: 750, piCost: 5.0, colorHex: 0x8b0000 }
+            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737 (افتراضية)', colorHex: null },
+            { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت حمراء)', colorHex: 0xff3333 },
+            { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (المحيط الزرقاء)', colorHex: 0x3366ff },
+            { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (الزمرد الخضراء)', colorHex: 0x33ff33 },
+            { id: 4, piCost: 0.5, type: 'passenger', name: 'طائرة ركاب (الملكية الذهبية)', colorHex: 0xffd700 },
+            { id: 5, piCost: 1.0, type: 'fighter', name: 'طائرة خاصة G-650 فخمة', colorHex: null },
+            { id: 6, piCost: 1.5, type: 'fighter', name: 'مقاتلة (الشبح السوداء)', colorHex: 0x222222 },
+            { id: 7, piCost: 2.0, type: 'fighter', name: 'مقاتلة (العاصفة الصحراوية)', colorHex: 0xcc9955 },
+            { id: 8, piCost: 3.0, type: 'fighter', name: 'مروحية هجومية R-44', colorHex: 0x003366 },
+            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء (أوميجا)', colorHex: 0x8b0000 }
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
@@ -306,9 +309,9 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
+        // منطق الفحص الحصري لـ Pi: إذا لم تكن الطائرة الافتراضية، يجب فحص الشراء في الـ localStorage لضمان التست نت
         function isPlaneUnlocked(plane) {
-            if (plane.unlockCost === 0) return true;
-            if (totalPoints >= plane.unlockCost) return true;
+            if (plane.piCost === 0) return true;
             return localStorage.getItem(`plane_unlocked_${plane.id}`) === 'true';
         }
 
@@ -375,7 +378,7 @@
             }
         }
 
-        // --- دورة حياة دفع Pi المكتملة والمصلحة ---
+        // --- دورة حياة دفع Pi المكتملة والمصلحة لتست نت ---
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
                 showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
@@ -398,7 +401,6 @@
                         console.log("Payment created and ready for server settlement. ID:", paymentId);
                         // محاكاة الجسر الأمامي الفوري لنجاح العملية في بيئة التجربة (Sandbox Bridge)
                         localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
-                        // المتابعة التلقائية لإشعار Pi باكتمال التحقق
                     },
                     onCompleted: function(payment) {
                         console.log("Pi Blockchain transaction completed!", payment);
@@ -523,7 +525,7 @@
                 startBtn.innerText = "إقلاع الآن 🚀";
                 startBtn.style.background = "linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%)";
             } else {
-                statusEl.innerText = `مغلق (تحتاج لتفعيل فوري)`; 
+                statusEl.innerText = `مغلقة (تتطلب تفعيل فوري بـ Pi)`; 
                 statusEl.style.color = "#ff7675"; 
                 startBtn.innerText = `شراء بـ ${planeData.piCost} Pi ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #e67e22 100%)";
