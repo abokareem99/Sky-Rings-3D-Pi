@@ -6,11 +6,8 @@
     <title>أسياد الأجواء - مرآب الطائرات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
-    <!-- 1. تضمين مكتبة Pi SDK الرسمية للاتصال بالمحفظة -->
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-        // تهيئة البيئة التجريبية (Sandbox). 
-        // ملاحظة: غير sandbox إلى false عندما تقرر الانتقال للشبكة الرئيسية المغلقة لاحقاً.
         Pi.init({ version: "2.0", sandbox: true });
     </script>
 
@@ -23,7 +20,6 @@
             --bg-glass: rgba(255, 255, 255, 0.08);
             --border-glass: rgba(255, 255, 255, 0.2);
             
-            /* ألوان باي التكنولوجية */
             --pi-purple: #5c1d8c;
             --pi-purple-bright: #8a2be2;
             --pi-gold: #ffb703;
@@ -39,158 +35,98 @@
             -webkit-user-select: none;
         }
         
-        /* واجهة اللعب أثناء الطيران (HUD) */
         #hud-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 10;
-            pointer-events: none;
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; z-index: 10; pointer-events: none;
         }
 
         .glass-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            color: #ffffff;
+            background: var(--bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass); border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); color: #ffffff;
         }
 
-        .hud-card {
-            font-size: 20px; 
-            font-weight: 700; 
-            padding: 12px 24px; 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .hud-card { font-size: 20px; font-weight: 700; padding: 12px 24px; display: flex; align-items: center; gap: 10px; }
         #time-card { color: #ff7675; }
         #score-card { color: #ffd700; font-size: 24px; }
         
         .overlay-mask { 
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 15; 
-            display: flex;
-            flex-direction: column;
-            color: white;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 15; display: flex; flex-direction: column; color: white;
         }
 
-        /* واجهة القائمة الرئيسية */
         #start-mask {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            overflow: hidden;
-            box-sizing: border-box;
-            z-index: 15;
-            background-color: #1a1a1a;
-            background-image: url("game-bg.jpg"); 
-            background-size: contain; 
-            background-position: center center;
-            background-repeat: no-repeat;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; 
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            overflow: hidden; box-sizing: border-box; z-index: 15;
+            background-color: #1a1a1a; background-image: url("game-bg.jpg"); 
+            background-size: contain; background-position: center center; background-repeat: no-repeat;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
         }
 
-        /* الإطار العلوي الأسود */
-        .pi-top-banner {
+        /* --- الحاوية العلوية الجديدة --- */
+        .top-container {
             width: 100%;
-            padding: 14px 20px;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            z-index: 25;
+        }
+
+        .pi-top-banner {
+            width: 100%; padding: 10px 20px; box-sizing: border-box;
             background: linear-gradient(180deg, rgba(35, 7, 58, 0.95) 0%, rgba(15, 3, 25, 0.9) 100%);
             border-bottom: 2px solid var(--pi-gold);
             box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4), inset 0 1px 10px var(--pi-gold-glow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: monospace, sans-serif;
-            font-size: 11px;
-            letter-spacing: 1px;
-            z-index: 25;
-            direction: ltr;
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: monospace, sans-serif; font-size: 11px; letter-spacing: 1px; direction: ltr;
         }
 
-        /* الإطار السفلي الأسود - يحتوي الآن على كل الأزرار والتحكم */
+        /* أزرار المنطقة السوداء العلوية */
+        .top-actions-bar {
+            width: 100%; padding: 15px 20px; box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex; justify-content: center; gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-action-btn {
+            background: rgba(138, 43, 226, 0.2);
+            border: 1px solid var(--pi-purple-bright);
+            color: #fff; padding: 10px 15px; font-size: 1rem;
+            font-family: 'Cairo', sans-serif; font-weight: 700;
+            border-radius: 8px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+            flex: 1; max-width: 200px;
+        }
+        .top-action-btn:hover { background: rgba(138, 43, 226, 0.4); transform: translateY(-2px); }
+        .top-action-btn.linked { background: rgba(46, 204, 113, 0.3); border-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.4); }
+
         .pi-bottom-banner {
-            width: 100%;
-            padding: 20px 20px 35px 20px;
-            box-sizing: border-box;
+            width: 100%; padding: 20px 20px 35px 20px; box-sizing: border-box;
             background: linear-gradient(0deg, rgba(35, 7, 58, 0.95) 0%, rgba(15, 3, 25, 0.9) 100%);
             border-top: 2px solid var(--pi-gold);
             box-shadow: 0 -4px 20px rgba(138, 43, 226, 0.4), inset 0 -1px 10px var(--pi-gold-glow);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-            z-index: 25;
+            display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 25;
         }
 
         .pi-bottom-tech-info {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: monospace, sans-serif;
-            font-size: 11px;
-            letter-spacing: 1px;
-            direction: ltr;
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            font-family: monospace, sans-serif; font-size: 11px; letter-spacing: 1px; direction: ltr;
         }
 
-        .tech-glow-purple {
-            color: #e0b0ff;
-            text-shadow: 0 0 8px var(--pi-purple-bright);
-            font-weight: 600;
-        }
+        .tech-glow-purple { color: #e0b0ff; text-shadow: 0 0 8px var(--pi-purple-bright); font-weight: 600; }
+        .tech-glow-gold { color: var(--pi-gold); text-shadow: 0 0 8px var(--pi-gold); font-weight: 700; }
 
-        .tech-glow-gold {
-            color: var(--pi-gold);
-            text-shadow: 0 0 8px var(--pi-gold);
-            font-weight: 700;
-        }
+        .action-container-main { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; z-index: 20; }
+        .buttons-row { display: flex; gap: 12px; width: 100%; }
 
-        /* حاوية الأزرار داخل المنطقة السوداء السفليّة */
-        .action-container-main {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-            max-width: 500px;
-            z-index: 20;
-        }
-
-        .buttons-row {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-        }
-
-        /* نافذة معرض الطائرات */
         #shop-carousel { 
-            display: none; 
-            align-items: center; 
-            justify-content: space-between; 
-            gap: 15px; 
-            padding: 12px 20px; 
-            width: 320px;
-            margin-bottom: auto;
-            margin-top: 20px;
-            z-index: 20;
+            display: none; align-items: center; justify-content: space-between; gap: 15px; 
+            padding: 12px 20px; width: 320px; margin-bottom: auto; margin-top: 20px; z-index: 20;
         }
         
         .carousel-btn { 
-            background: rgba(255,255,255,0.1);
-            color: white; 
-            border: 1px solid rgba(255,255,255,0.2); 
-            width: 40px; height: 40px; border-radius: 50%; 
-            font-size: 18px; cursor: pointer; transition: 0.3s; 
+            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); 
+            width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: 0.3s; 
             display: flex; justify-content: center; align-items: center;
         }
         .carousel-btn:hover { background: var(--primary); border-color: var(--primary); }
@@ -199,14 +135,10 @@
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* الأزرار الاحترافية */
         .main-btn { 
-            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            color: white; padding: 12px 20px; font-size: 1.2rem; 
-            font-family: 'Cairo', sans-serif; font-weight: 900; 
-            border-radius: 50px; cursor: pointer;
-            box-shadow: 0 0 15px rgba(3, 169, 244, 0.4);
+            background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%); border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white; padding: 12px 20px; font-size: 1.2rem; font-family: 'Cairo', sans-serif; font-weight: 900; 
+            border-radius: 50px; cursor: pointer; box-shadow: 0 0 15px rgba(3, 169, 244, 0.4);
             transition: all 0.2s ease; flex: 1; text-align: center;
         }
         .main-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 25px rgba(3, 169, 244, 0.7); }
@@ -214,56 +146,29 @@
         
         .secondary-btn {
             background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            color: white; padding: 12px 20px; font-size: 1.1rem; 
-            font-family: 'Cairo', sans-serif; font-weight: 700; 
-            border-radius: 50px; cursor: pointer; transition: all 0.2s ease; 
-            flex: 1; text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            color: white; padding: 12px 20px; font-size: 1.1rem; font-family: 'Cairo', sans-serif; font-weight: 700; 
+            border-radius: 50px; cursor: pointer; transition: all 0.2s ease; flex: 1; text-align: center;
         }
-        .secondary-btn:hover { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.5); transform: scale(1.02); }
-
-        /* زر الشحن المميز وبراق */
-        .buy-pi-btn {
-            background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%);
-            border: 2px solid #fff;
-            color: #1a052e; font-weight: 900;
-            box-shadow: 0 0 15px var(--pi-gold);
-        }
-        .buy-pi-btn:hover { box-shadow: 0 0 25px #ffb703; transform: scale(1.02); }
+        
+        .buy-pi-btn { background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%); border: 2px solid #fff; color: #1a052e; font-weight: 900; box-shadow: 0 0 15px var(--pi-gold); }
+        .buy-pi-btn:hover:not(:disabled) { box-shadow: 0 0 25px #ffb703; transform: scale(1.02); }
 
         #gameover-mask { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
 
-        #loading { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: #0f172a; z-index: 9999; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .loading-text { color: #ffffff; font-size: 24px; font-weight: 900; margin-bottom: 30px; }
         .loading-bar-container { width: 70%; max-width: 300px; height: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; }
         .loading-bar { width: 0%; height: 100%; background: #00d2ff; animation: fill-bar 2s ease-out forwards; }
         @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
         #touch-controls { display: none; }
-        #joystick-zone {
-            position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
-            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 50%; z-index: 100; backdrop-filter: blur(4px);
-        }
-        #joystick-knob {
-            position: absolute; top: 35px; left: 35px; width: 70px; height: 70px;
-            background: rgba(52, 152, 219, 0.7); border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            pointer-events: none; transition: transform 0.05s linear;
-        }
-        #speed-btn {
-            position: absolute; bottom: 55px; right: 40px; width: 90px; height: 90px;
-            background: rgba(230, 126, 34, 0.7); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
-            color: white; font-weight: 900; font-size: 20px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: flex; justify-content: center; align-items: center; cursor: pointer;
-        }
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; z-index: 100; backdrop-filter: blur(4px); }
+        #joystick-knob { position: absolute; top: 35px; left: 35px; width: 70px; height: 70px; background: rgba(52, 152, 219, 0.7); border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none; transition: transform 0.05s linear; }
+        #speed-btn { position: absolute; bottom: 55px; right: 40px; width: 90px; height: 90px; background: rgba(230, 126, 34, 0.7); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); color: white; font-weight: 900; font-size: 20px; z-index: 100; backdrop-filter: blur(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; cursor: pointer; }
 
         @media (max-width: 768px) {
-            .main-btn, .secondary-btn { padding: 10px 0; font-size: 1rem; }
+            .main-btn, .secondary-btn, .top-action-btn { padding: 10px 0; font-size: 0.95rem; }
             #shop-carousel { width: 85vw; }
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
             #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
@@ -279,7 +184,7 @@
     <div id="hud-container" style="display: none;">
         <div>
             <div id="time-card" class="glass-panel hud-card">⏱️ الوقت: <span id="time-left">30</span>ث</div>
-            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 8px 16px; font-size: 16px;">الرصيد الإجمالي: <span id="total-points" style="font-weight: 700;">0</span></div>
+            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 8px 16px; font-size: 16px;">الرصيد: <span id="total-points" style="font-weight: 700;">0</span></div>
         </div>
         <div id="score-card" class="glass-panel hud-card">🪙 <span id="points">0</span></div>
     </div>
@@ -295,9 +200,16 @@
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
-        <div class="pi-top-banner">
-            <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_TESTNET_AUTH</span>
-            <span class="tech-glow-gold">π PI TESTNET ACTIVE</span>
+        
+        <div class="top-container">
+            <div class="pi-top-banner">
+                <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_TESTNET</span>
+                <span class="tech-glow-gold">π ACTIVE</span>
+            </div>
+            <div class="top-actions-bar">
+                <button id="link-pi-btn" class="top-action-btn" onclick="authenticatePi()">🔗 ربط المحفظة</button>
+                <button id="leaderboard-btn" class="top-action-btn" onclick="showLeaderboard()">🏆 لوحة المشاركين</button>
+            </div>
         </div>
 
         <div id="shop-carousel" class="glass-panel">
@@ -309,21 +221,19 @@
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
         </div>
 
-        <!-- الأزرار مستقرة كلياً في المساحة السوداء الفارغة السفليّة -->
         <div class="pi-bottom-banner">
             <div class="action-container-main">
                 <div class="buttons-row">
                     <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن 🚀</button>
                     <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">الحظيرة 🛠️</button>
                 </div>
-                <!-- زر ربط المحفظة والشراء الفعلي من التست نت -->
-                <button id="buy-points-btn" class="main-btn buy-pi-btn" onclick="launchPiPayment(1, 'شحن 1000 نقطة طيران تجريبية')">
-                    ⚡ شحن 1000 نقطة بـ 1 Pi Testnet
+                <button id="buy-points-btn" class="main-btn buy-pi-btn" disabled onclick="launchPiPayment(1, 'شحن 1000 نقطة طيران')">
+                    ⚡ شحن 1000 نقطة (يتطلب ربط المحفظة)
                 </button>
             </div>
             <div class="pi-bottom-tech-info">
-                <span class="tech-glow-purple">🔒 STATUS: TESTNET_ACCOUNT_LINKED</span>
-                <span class="tech-glow-gold">SECURE TEST WALLET v1.2</span>
+                <span id="account-status" class="tech-glow-purple">🔒 STATUS: WAITING_AUTH</span>
+                <span class="tech-glow-gold">SECURE WALLET v1.2</span>
             </div>
         </div>
     </div>
@@ -337,25 +247,74 @@
     </div>
 
     <script>
-        // 2. دالة التعامل مع الـ SDK والمحفظة لإتمام الدفع الفعلي والتحقق بالخلفية
+        let piUser = null;
+
+        // دالة معالجة الدفعات المعلقة (إجبارية في Pi SDK)
+        function onIncompletePaymentFound(payment) {
+            console.log("تم العثور على دفعة معلقة، جاري معالجتها...", payment);
+            fetch('/api/complete-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+            }).catch(err => console.error("خطأ في معالجة الدفعة المعلقة", err));
+        }
+
+        // 1. دالة مصادقة الحساب (يتم استدعاؤها من الزر العلوي)
+        async function authenticatePi() {
+            const linkBtn = document.getElementById('link-pi-btn');
+            try {
+                linkBtn.innerText = "جاري الاتصال... ⏳";
+                linkBtn.disabled = true;
+
+                // طلب صلاحيات الدفع واسم المستخدم
+                const scopes = ['payments', 'username'];
+                const authResults = await Pi.authenticate(scopes, onIncompletePaymentFound);
+                
+                piUser = authResults.user;
+                
+                // تحديث واجهة المستخدم بعد النجاح
+                linkBtn.innerText = `متصل: ${piUser.username} ✔️`;
+                linkBtn.classList.add('linked');
+                
+                document.getElementById('account-status').innerText = "🔓 STATUS: AUTHENTICATED";
+                
+                // تفعيل زر الشراء
+                const buyBtn = document.getElementById('buy-points-btn');
+                buyBtn.disabled = false;
+                buyBtn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+
+            } catch (err) {
+                console.error("فشلت المصادقة:", err);
+                alert("لم يتم ربط الحساب. تأكد أنك تفتح اللعبة من متصفح Pi Browser.");
+                linkBtn.innerText = "🔗 ربط المحفظة";
+                linkBtn.disabled = false;
+            }
+        }
+
+        // دالة عرض لوحة المشاركين (وهمية حالياً لحين ربطها بقاعدة بياناتك)
+        function showLeaderboard() {
+            alert("سيتم إظهار ترتيب اللاعبين هنا قريباً!");
+        }
+
+        // 2. دالة الدفع
         async function launchPiPayment(amountInPi, descriptionText) {
+            if (!piUser) {
+                alert("الرجاء ربط المحفظة أولاً من الأعلى.");
+                return;
+            }
+
             try {
                 const btn = document.getElementById('buy-points-btn');
                 btn.disabled = true;
-                btn.innerText = "جاري الاتصال بالمحفظة... ⏳";
+                btn.innerText = "جاري فتح المحفظة... ⏳";
 
                 const payment = await Pi.createPayment({
                     amount: amountInPi,
                     memo: descriptionText,
                     metadata: { flightAppCustomId: "points_pack_" + Date.now() },
                 }, {
-                    onReadyForServerApproval: function(paymentId) {
-                        console.log("الموافقة المبدئية للمعاملة:", paymentId);
-                    },
+                    onReadyForServerApproval: function(paymentId) { console.log("الموافقة المبدئية:", paymentId); },
                     onReadyForServerCompletion: async function(paymentId, txid) {
-                        console.log("تم توقيع المعاملة. جاري التأكيد من السيرفر السري...");
-                        
-                        // إرسال التوقيع إلى خادم Vercel الخلفي الذي قمت بإنشائه لتوك
                         const response = await fetch('/api/complete-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -363,38 +322,31 @@
                         });
 
                         const result = await response.json();
-                        
                         if (result.success) {
-                            alert("🥳 رائع! تمت عملية الدفع بنجاح عبر الـ Testnet، وتمت إضافة 1000 نقطة لحسابك!");
+                            alert("🥳 تمت عملية الشراء بنجاح! تمت إضافة 1000 نقطة.");
                             totalPoints += 1000;
                             localStorage.setItem('flight_totalPoints', totalPoints);
                             document.getElementById('total-points').innerText = totalPoints;
                             updateShopUI();
-                        } else {
-                            alert("فشل السيرفر في التحقق من المعاملة.");
-                        }
+                        } else { alert("فشل التحقق من السيرفر."); }
                         
-                        btn.disabled = false;
-                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
                     },
                     onCancel: function(paymentId) {
-                        alert("تم إلغاء عملية الدفع.");
-                        btn.disabled = false;
-                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
                     },
                     onError: function(error, payment) {
-                        alert("حدث خطأ أثناء الدفع: " + error.message);
-                        btn.disabled = false;
-                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        alert("خطأ أثناء الدفع: " + error.message);
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
                     }
                 });
             } catch (err) {
-                console.error("خطأ غير متوقع:", err);
+                console.error("خطأ:", err);
                 document.getElementById('buy-points-btn').disabled = false;
             }
         }
 
-        // إعداد المحرك الرسومي وتفاصيل اللعبة المخفية
+        // --- إعدادات المحرك الرسومي ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa3d2f7);
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
@@ -423,14 +375,8 @@
         let baseFighterModel = null;     
         let currentActiveAirplane = null; 
         
-        let isPlaying = false;
-        let hasTakenOff = false;
-        let score = 0;
-        let timeLeft = 30;
-        let currentSpeed = 1.5;
-        let timerInterval = null;
-        const rings = [];
-        const environmentObjects = [];
+        let isPlaying = false; let hasTakenOff = false; let score = 0; let timeLeft = 30; let currentSpeed = 1.5; let timerInterval = null;
+        const rings = []; const environmentObjects = [];
         
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
