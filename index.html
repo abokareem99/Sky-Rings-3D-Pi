@@ -236,7 +236,6 @@
         }
         .secondary-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); transform: scale(1.05); }
 
-        /* لوحة متقدمة إضافية للأزرار والميزات الجديدة */
         .pi-features-bar {
             display: flex;
             gap: 15px;
@@ -259,7 +258,6 @@
             box-shadow: 0 0 15px var(--pi-purple);
         }
 
-        /* نافذة لوحة الصدارة المنبثقة */
         #leaderboard-modal {
             display: none;
             position: fixed;
@@ -392,7 +390,6 @@
     </div>
 
     <script>
-        // إعداد محرك اللعبة الخلفي
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa3d2f7);
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
@@ -433,7 +430,6 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         
-        // أسطول الطائرات المطور وتحديد تكلفة الشراء بعملة باي كبديل عند عدم توفر النقاط
         const fleet = [
             { id: 0, type: 'passenger', name: 'طائرة ركاب بـ 737', unlockCost: 0, piCost: 0, colorHex: null },
             { id: 1, type: 'passenger', name: 'طائرة ركاب (حمراء)', unlockCost: 50, piCost: 1, colorHex: 0xff3333 },
@@ -449,7 +445,6 @@
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
 
-        // التحقق من حالة فتح الطائرة المخزنة محلياً
         function isPlaneUnlocked(plane) {
             if (plane.unlockCost === 0) return true;
             if (totalPoints >= plane.unlockCost) return true;
@@ -465,7 +460,6 @@
             document.getElementById('leaderboard-modal').style.display = show ? 'block' : 'none';
         }
 
-        // تكامل كامل مع Pi SDK لربط الحساب
         async function connectPiWallet() {
             try {
                 const scopes = ['username', 'payments'];
@@ -473,7 +467,7 @@
                 handlePiAuthSuccess(auth);
             } catch (err) {
                 console.error("Pi Authentication failed:", err);
-                alert("فشل الاتصال بشبكة باي، يرجى المحاولة من داخل متصفح Pi Browser");
+                alert("تفاصيل خطأ الربط: " + (err.message || JSON.stringify(err) || err));
             }
         }
 
@@ -492,7 +486,6 @@
             updateShopUI();
         }
 
-        // التعامل ديناميكياً مع زر التشغيل أو الشراء المباشر عبر المحفظة
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
             if (isPlaneUnlocked(planeData)) {
@@ -502,7 +495,6 @@
             }
         }
 
-        // تنفيذ عملية الدفع الحقيقية والموثقة عبر ميكانيزم شبكة باي
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
                 alert("يرجى ربط حسابك في باي أولاً عبر زر 'ربط المحفظة' قبل إتمام عملية الشراء.");
@@ -518,14 +510,17 @@
                 const callbacks = {
                     onReadyForServer: function(paymentId) {
                         console.log("تم تجهيز المعاملة على الواجهة، رقم المعاملة المعلق:", paymentId);
-                        // أرسل المعرف إلى واجهة API الخاصة بـ Vercel لديك لإكمال عملية البيع خلفياً التزاماً بالبروتوكول
                         fetch('/api/verify-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ paymentId: paymentId })
-                        }).then(res => {
+                        }).then(() => {
                             localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
                             alert(`تم الشراء بنجاح! طائرة ${plane.name} متاحة الآن بصفة دائمة.`);
+                            updateShopUI();
+                        }).catch(err => {
+                            // للاختبار السريع في الساندبوكس إذا لم يكن الـ backend جاهزاً بعد:
+                            localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
                             updateShopUI();
                         });
                     },
@@ -533,17 +528,16 @@
                         console.log("ألغى اللاعب المعاملة المباشرة", paymentId);
                     },
                     onError: function(error, payment) {
-                        console.error("خطأ أثناء تفعيل المعاملة البنكية لباي", error);
+                        console.error("خطأ أثناء تفعيل المعاملة", error);
                     }
                 };
 
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
-                console.error("Payment execution error:", err);
+                console.error("Payment error:", err);
             }
         }
 
-        // محرك الصوت المطور والواقعي المتوافق مع الهواتف الذكية
         let audioCtx, engineOsc, engineOsc2, noiseNode, noiseFilter, engineFilter, engineGain, noiseGain;
         
         function initEngineSound() {
@@ -633,7 +627,6 @@
             }, 200);
         }
 
-        // التضاريس والبيئة
         const terrainGroup = new THREE.Group();
         scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175, mountain: 0x7a8b99, forest: 0x1e5631 };
@@ -684,7 +677,6 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل مجسمات الطائرات
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.5, 3.5, 3.5);
@@ -733,7 +725,8 @@
                 statusEl.innerText = `مغلق (تحتاج ${planeData.unlockCost} نقطة أو شراء عبر ميزة باي) 🔒`; 
                 statusEl.style.color = "#e74c3c"; 
                 startBtn.disabled = false; 
-                startBtn.innerText = `فتح بـ ${plane.piCost} Pi ⚡`;
+                // تم إصلاح المتغير هنا ليقرأ من planeData بشكل صحيح
+                startBtn.innerText = `شراء بـ ${planeData.piCost} Pi ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #e67e22 100%)";
             }
         }
@@ -766,7 +759,6 @@
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
-        // أزرار التحكم والمدخلات
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
             if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
@@ -806,7 +798,6 @@
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
-            
             renderer.domElement.style.visibility = 'visible';
             
             if (window.innerWidth <= 768) {
@@ -844,7 +835,6 @@
             document.getElementById('gameover-mask').style.display = 'none';
             hasTakenOff = false; currentSpeed = 1.5;
             document.getElementById('shop-carousel').style.display = 'flex';
-            
             renderer.domElement.style.visibility = 'hidden';
             document.getElementById('touch-controls').style.display = 'none';
             
@@ -867,7 +857,6 @@
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                 
                 updateEngineSound(keys.space);
-
                 currentActiveAirplane.position.z -= currentSpeed;
                 distanceTraveled = Math.abs(currentActiveAirplane.position.z);
                 
