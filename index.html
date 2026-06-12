@@ -63,7 +63,7 @@
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
         }
 
-        /* --- الحاوية العلوية الجديدة --- */
+        /* --- الحاوية العلوية الجديدة المضافة فوق الطائرة --- */
         .top-container {
             width: 100%;
             display: flex;
@@ -80,10 +80,9 @@
             font-family: monospace, sans-serif; font-size: 11px; letter-spacing: 1px; direction: ltr;
         }
 
-        /* أزرار المنطقة السوداء العلوية */
         .top-actions-bar {
             width: 100%; padding: 15px 20px; box-sizing: border-box;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex; justify-content: center; gap: 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -203,7 +202,7 @@
         
         <div class="top-container">
             <div class="pi-top-banner">
-                <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_TESTNET</span>
+                <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_MAINNET</span>
                 <span class="tech-glow-gold">π ACTIVE</span>
             </div>
             <div class="top-actions-bar">
@@ -249,54 +248,55 @@
     <script>
         let piUser = null;
 
-        // دالة معالجة الدفعات المعلقة (إجبارية في Pi SDK)
-        function onIncompletePaymentFound(payment) {
-            console.log("تم العثور على دفعة معلقة، جاري معالجتها...", payment);
-            fetch('/api/complete-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
-            }).catch(err => console.error("خطأ في معالجة الدفعة المعلقة", err));
+        // دالة معالجة الدفعات المعلقة والمتأخرة تلقائياً عند الاتصال
+        async function onIncompletePaymentFound(payment) {
+            console.log("تم العثور على دفعة معلقة، جاري تأكيدها وإغلاقها...", payment);
+            try {
+                await fetch('/api/complete-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                });
+                alert("تم معالجة وتأكيد دفعتك المتأخرة بنجاح! تم تحديث نقاطك.");
+            } catch(err) {
+                console.error("خطأ في معالجة الدفعة المعلقة:", err);
+            }
         }
 
-        // 1. دالة مصادقة الحساب (يتم استدعاؤها من الزر العلوي)
+        // دالة مصادقة الحساب
         async function authenticatePi() {
             const linkBtn = document.getElementById('link-pi-btn');
             try {
                 linkBtn.innerText = "جاري الاتصال... ⏳";
                 linkBtn.disabled = true;
 
-                // طلب صلاحيات الدفع واسم المستخدم
                 const scopes = ['payments', 'username'];
                 const authResults = await Pi.authenticate(scopes, onIncompletePaymentFound);
                 
                 piUser = authResults.user;
                 
-                // تحديث واجهة المستخدم بعد النجاح
                 linkBtn.innerText = `متصل: ${piUser.username} ✔️`;
                 linkBtn.classList.add('linked');
                 
                 document.getElementById('account-status').innerText = "🔓 STATUS: AUTHENTICATED";
                 
-                // تفعيل زر الشراء
                 const buyBtn = document.getElementById('buy-points-btn');
                 buyBtn.disabled = false;
-                buyBtn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                buyBtn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi";
 
             } catch (err) {
                 console.error("فشلت المصادقة:", err);
-                alert("لم يتم ربط الحساب. تأكد أنك تفتح اللعبة من متصفح Pi Browser.");
+                alert("لم يتم ربط الحساب. تأكد من فتح اللعبة من داخل Pi Browser.");
                 linkBtn.innerText = "🔗 ربط المحفظة";
                 linkBtn.disabled = false;
             }
         }
 
-        // دالة عرض لوحة المشاركين (وهمية حالياً لحين ربطها بقاعدة بياناتك)
         function showLeaderboard() {
-            alert("سيتم إظهار ترتيب اللاعبين هنا قريباً!");
+            alert("لوحة المشاركين ستكون جاهزة فور ربطها بـ Supabase!");
         }
 
-        // 2. دالة الدفع
+        // دالة الدفع الثنائية المتكاملة مع الـ API الجديد والقديم
         async function launchPiPayment(amountInPi, descriptionText) {
             if (!piUser) {
                 alert("الرجاء ربط المحفظة أولاً من الأعلى.");
@@ -313,7 +313,16 @@
                     memo: descriptionText,
                     metadata: { flightAppCustomId: "points_pack_" + Date.now() },
                 }, {
-                    onReadyForServerApproval: function(paymentId) { console.log("الموافقة المبدئية:", paymentId); },
+                    // الخطوة الأولى: استدعاء ملف الأبروفال الجديد للموافقة المبدئية
+                    onReadyForServerApproval: async function(paymentId) {
+                        console.log("الموافقة المبدئية من السيرفر...", paymentId);
+                        await fetch('/api/approve-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId })
+                        });
+                    },
+                    // الخطوة الثانية: استدعاء ملف الكومبليت لتأكيد الدفعة النهائية
                     onReadyForServerCompletion: async function(paymentId, txid) {
                         const response = await fetch('/api/complete-payment', {
                             method: 'POST',
@@ -328,25 +337,26 @@
                             localStorage.setItem('flight_totalPoints', totalPoints);
                             document.getElementById('total-points').innerText = totalPoints;
                             updateShopUI();
-                        } else { alert("فشل التحقق من السيرفر."); }
-                        
-                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        } else { 
+                            alert("فشل التحقق النهائي من المعاملة."); 
+                        }
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi";
                     },
                     onCancel: function(paymentId) {
-                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi";
                     },
                     onError: function(error, payment) {
                         alert("خطأ أثناء الدفع: " + error.message);
-                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                        btn.disabled = false; btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi";
                     }
                 });
             } catch (err) {
-                console.error("خطأ:", err);
+                console.error("خطأ عام:", err);
                 document.getElementById('buy-points-btn').disabled = false;
             }
         }
 
-        // --- إعدادات المحرك الرسومي ---
+        // --- إعدادات المحرك الرسومي واللعبة ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa3d2f7);
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
