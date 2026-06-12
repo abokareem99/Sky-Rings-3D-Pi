@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أسياد الأجواء - مرآب الطائرات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- 1. تضمين مكتبة Pi SDK الرسمية للاتصال بالمحفظة -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+        // تهيئة البيئة التجريبية (Sandbox). 
+        // ملاحظة: غير sandbox إلى false عندما تقرر الانتقال للشبكة الرئيسية المغلقة لاحقاً.
+        Pi.init({ version: "2.0", sandbox: true });
+    </script>
+
     <style>
         :root {
             --primary: #3498db;
@@ -14,7 +23,7 @@
             --bg-glass: rgba(255, 255, 255, 0.08);
             --border-glass: rgba(255, 255, 255, 0.2);
             
-            /* ألوان باي الفاخرة المضافة */
+            /* ألوان باي التكنولوجية */
             --pi-purple: #5c1d8c;
             --pi-purple-bright: #8a2be2;
             --pi-gold: #ffb703;
@@ -64,7 +73,6 @@
         #time-card { color: #ff7675; }
         #score-card { color: #ffd700; font-size: 24px; }
         
-        /* شاشات البداية والنهاية */
         .overlay-mask { 
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%; 
@@ -77,10 +85,7 @@
         /* واجهة القائمة الرئيسية */
         #start-mask {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             overflow: hidden;
             box-sizing: border-box;
             z-index: 15;
@@ -91,20 +96,16 @@
             background-repeat: no-repeat;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; 
+            justify-content: space-between; 
             align-items: center;
-            padding: 60px 40px; /* تم تعديل الحشو ليناسب الإطارات الجديدة */
         }
 
-        /* لمسات إطارات باي الذكية في المساحات الفارغة */
+        /* الإطار العلوي الأسود */
         .pi-top-banner {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             padding: 14px 20px;
             box-sizing: border-box;
-            background: linear-gradient(180deg, rgba(35, 7, 58, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+            background: linear-gradient(180deg, rgba(35, 7, 58, 0.95) 0%, rgba(15, 3, 25, 0.9) 100%);
             border-bottom: 2px solid var(--pi-gold);
             box-shadow: 0 4px 20px rgba(138, 43, 226, 0.4), inset 0 1px 10px var(--pi-gold-glow);
             display: flex;
@@ -117,23 +118,29 @@
             direction: ltr;
         }
 
+        /* الإطار السفلي الأسود - يحتوي الآن على كل الأزرار والتحكم */
         .pi-bottom-banner {
-            position: absolute;
-            bottom: 0;
-            left: 0;
             width: 100%;
-            padding: 14px 20px;
+            padding: 20px 20px 35px 20px;
             box-sizing: border-box;
-            background: linear-gradient(0deg, rgba(35, 7, 58, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+            background: linear-gradient(0deg, rgba(35, 7, 58, 0.95) 0%, rgba(15, 3, 25, 0.9) 100%);
             border-top: 2px solid var(--pi-gold);
             box-shadow: 0 -4px 20px rgba(138, 43, 226, 0.4), inset 0 -1px 10px var(--pi-gold-glow);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            z-index: 25;
+        }
+
+        .pi-bottom-tech-info {
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-family: monospace, sans-serif;
             font-size: 11px;
             letter-spacing: 1px;
-            z-index: 25;
             direction: ltr;
         }
 
@@ -149,16 +156,20 @@
             font-weight: 700;
         }
 
-        /* حاوية الأزرار الرئيسية أسفل الشاشة */
+        /* حاوية الأزرار داخل المنطقة السوداء السفليّة */
         .action-container-main {
             display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
             width: 100%;
-            max-width: 600px;
-            margin-bottom: 15px;
+            max-width: 500px;
             z-index: 20;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
         }
 
         /* نافذة معرض الطائرات */
@@ -167,88 +178,62 @@
             align-items: center; 
             justify-content: space-between; 
             gap: 15px; 
-            padding: 15px 20px; 
-            width: 340px;
-            margin-bottom: 20px;
-            animation: fadeIn 0.3s ease-in-out;
+            padding: 12px 20px; 
+            width: 320px;
+            margin-bottom: auto;
+            margin-top: 20px;
             z-index: 20;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         
         .carousel-btn { 
             background: rgba(255,255,255,0.1);
             color: white; 
             border: 1px solid rgba(255,255,255,0.2); 
-            width: 40px; 
-            height: 40px; 
-            border-radius: 50%; 
-            font-size: 18px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            display: flex;
-            justify-content: center; 
-            align-items: center;
+            width: 40px; height: 40px; border-radius: 50%; 
+            font-size: 18px; cursor: pointer; transition: 0.3s; 
+            display: flex; justify-content: center; align-items: center;
         }
         .carousel-btn:hover { background: var(--primary); border-color: var(--primary); }
         
-        .plane-info { 
-            flex-grow: 1; 
-            text-align: center;
-        }
+        .plane-info { flex-grow: 1; text-align: center; }
         .plane-name { font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-weight: 700; }
         .plane-status { font-size: 0.9rem; font-weight: 700; margin: 0; }
 
-        /* الأزرار المحسنة بلمسات مضيئة */
+        /* الأزرار الاحترافية */
         .main-btn { 
             background: linear-gradient(135deg, #4fc3f7 0%, #0288d1 100%);
             border: 2px solid rgba(255, 255, 255, 0.4);
-            color: white; 
-            padding: 12px 45px;
-            font-size: 1.4rem; 
-            font-family: 'Cairo', sans-serif;
-            font-weight: 900; 
-            border-radius: 50px; 
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(3, 169, 244, 0.4), inset 0 0 10px rgba(255,255,255,0.2);
-            transition: all 0.2s ease; 
-            flex: 1;
-            text-align: center;
+            color: white; padding: 12px 20px; font-size: 1.2rem; 
+            font-family: 'Cairo', sans-serif; font-weight: 900; 
+            border-radius: 50px; cursor: pointer;
+            box-shadow: 0 0 15px rgba(3, 169, 244, 0.4);
+            transition: all 0.2s ease; flex: 1; text-align: center;
         }
-        .main-btn:hover:not(:disabled) { 
-            transform: scale(1.05); 
-            box-shadow: 0 0 30px rgba(3, 169, 244, 0.7), inset 0 0 15px rgba(255,255,255,0.4); 
-        }
-        .main-btn:active:not(:disabled) { transform: scale(0.98); }
+        .main-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 25px rgba(3, 169, 244, 0.7); }
         .main-btn:disabled { background: #555 !important; border-color: #777; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
         
         .secondary-btn {
             background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
             border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: white; 
-            padding: 12px 45px;
-            font-size: 1.4rem; 
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700; 
-            border-radius: 50px; 
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: all 0.2s ease; 
-            flex: 1;
-            text-align: center;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            color: white; padding: 12px 20px; font-size: 1.1rem; 
+            font-family: 'Cairo', sans-serif; font-weight: 700; 
+            border-radius: 50px; cursor: pointer; transition: all 0.2s ease; 
+            flex: 1; text-align: center;
         }
-        .secondary-btn:hover { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.5); transform: scale(1.05); }
-        .secondary-btn:active { transform: scale(0.98); }
+        .secondary-btn:hover { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.5); transform: scale(1.02); }
 
-        /* شاشة النهاية */
+        /* زر الشحن المميز وبراق */
+        .buy-pi-btn {
+            background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%);
+            border: 2px solid #fff;
+            color: #1a052e; font-weight: 900;
+            box-shadow: 0 0 15px var(--pi-gold);
+        }
+        .buy-pi-btn:hover { box-shadow: 0 0 25px #ffb703; transform: scale(1.02); }
+
         #gameover-mask { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
 
-        /* شاشة التحميل */
         #loading { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: #0f172a; z-index: 9999; 
@@ -259,9 +244,7 @@
         .loading-bar { width: 0%; height: 100%; background: #00d2ff; animation: fill-bar 2s ease-out forwards; }
         @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
-        /* ضوابط اللمس للهواتف */
         #touch-controls { display: none; }
-        
         #joystick-zone {
             position: absolute; bottom: 40px; left: 40px; width: 140px; height: 140px;
             background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15);
@@ -280,14 +263,12 @@
         }
 
         @media (max-width: 768px) {
-            #start-mask { padding: 50px 20px; }
-            .action-container-main { flex-direction: column; gap: 12px; width: 90vw; }
-            .main-btn, .secondary-btn { width: 100%; padding: 10px 0; font-size: 1.2rem; }
-            #shop-carousel { width: 90vw; }
+            .main-btn, .secondary-btn { padding: 10px 0; font-size: 1rem; }
+            #shop-carousel { width: 85vw; }
             #joystick-zone { width: 120px; height: 120px; bottom: 20px; left: 20px; }
             #joystick-knob { width: 60px; height: 60px; top: 30px; left: 30px; }
             #speed-btn { width: 80px; height: 80px; bottom: 40px; right: 20px; font-size: 16px; }
-            .pi-top-banner, .pi-bottom-banner { font-size: 9px; padding: 10px 15px; }
+            .pi-top-banner, .pi-bottom-tech-info { font-size: 9px; padding: 4px 5px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -315,8 +296,8 @@
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <div class="pi-top-banner">
-            <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_NET_AUTH</span>
-            <span class="tech-glow-gold">π PI MAINNET ACTIVE</span>
+            <span class="tech-glow-purple">🛰️ PROTOCOL: SECURE_LINK // PI_TESTNET_AUTH</span>
+            <span class="tech-glow-gold">π PI TESTNET ACTIVE</span>
         </div>
 
         <div id="shop-carousel" class="glass-panel">
@@ -328,14 +309,22 @@
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
         </div>
 
-        <div class="action-container-main">
-            <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن 🚀</button>
-            <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">الحظيرة 🛠️</button>
-        </div>
-
+        <!-- الأزرار مستقرة كلياً في المساحة السوداء الفارغة السفليّة -->
         <div class="pi-bottom-banner">
-            <span class="tech-glow-purple">🔒 STATUS: ACCOUNT_LINKED_SUCCESSFULLY</span>
-            <span class="tech-glow-gold">SECURE APP WALLET v1.2</span>
+            <div class="action-container-main">
+                <div class="buttons-row">
+                    <button id="start-btn" class="main-btn" onclick="startGame()">إقلاع الآن 🚀</button>
+                    <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">الحظيرة 🛠️</button>
+                </div>
+                <!-- زر ربط المحفظة والشراء الفعلي من التست نت -->
+                <button id="buy-points-btn" class="main-btn buy-pi-btn" onclick="launchPiPayment(1, 'شحن 1000 نقطة طيران تجريبية')">
+                    ⚡ شحن 1000 نقطة بـ 1 Pi Testnet
+                </button>
+            </div>
+            <div class="pi-bottom-tech-info">
+                <span class="tech-glow-purple">🔒 STATUS: TESTNET_ACCOUNT_LINKED</span>
+                <span class="tech-glow-gold">SECURE TEST WALLET v1.2</span>
+            </div>
         </div>
     </div>
 
@@ -348,7 +337,64 @@
     </div>
 
     <script>
-        // إعداد محرك اللعبة الخلفي
+        // 2. دالة التعامل مع الـ SDK والمحفظة لإتمام الدفع الفعلي والتحقق بالخلفية
+        async function launchPiPayment(amountInPi, descriptionText) {
+            try {
+                const btn = document.getElementById('buy-points-btn');
+                btn.disabled = true;
+                btn.innerText = "جاري الاتصال بالمحفظة... ⏳";
+
+                const payment = await Pi.createPayment({
+                    amount: amountInPi,
+                    memo: descriptionText,
+                    metadata: { flightAppCustomId: "points_pack_" + Date.now() },
+                }, {
+                    onReadyForServerApproval: function(paymentId) {
+                        console.log("الموافقة المبدئية للمعاملة:", paymentId);
+                    },
+                    onReadyForServerCompletion: async function(paymentId, txid) {
+                        console.log("تم توقيع المعاملة. جاري التأكيد من السيرفر السري...");
+                        
+                        // إرسال التوقيع إلى خادم Vercel الخلفي الذي قمت بإنشائه لتوك
+                        const response = await fetch('/api/complete-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId, txid })
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert("🥳 رائع! تمت عملية الدفع بنجاح عبر الـ Testnet، وتمت إضافة 1000 نقطة لحسابك!");
+                            totalPoints += 1000;
+                            localStorage.setItem('flight_totalPoints', totalPoints);
+                            document.getElementById('total-points').innerText = totalPoints;
+                            updateShopUI();
+                        } else {
+                            alert("فشل السيرفر في التحقق من المعاملة.");
+                        }
+                        
+                        btn.disabled = false;
+                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                    },
+                    onCancel: function(paymentId) {
+                        alert("تم إلغاء عملية الدفع.");
+                        btn.disabled = false;
+                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                    },
+                    onError: function(error, payment) {
+                        alert("حدث خطأ أثناء الدفع: " + error.message);
+                        btn.disabled = false;
+                        btn.innerText = "⚡ شحن 1000 نقطة بـ 1 Pi Testnet";
+                    }
+                });
+            } catch (err) {
+                console.error("خطأ غير متوقع:", err);
+                document.getElementById('buy-points-btn').disabled = false;
+            }
+        }
+
+        // إعداد المحرك الرسومي وتفاصيل اللعبة المخفية
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa3d2f7);
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
@@ -407,100 +453,52 @@
             carousel.style.display = (carousel.style.display === 'none' || carousel.style.display === '') ? 'flex' : 'none';
         }
 
-        // 🔊 محرك الصوت المطور والواقعي المتوافق مع الهواتف الذكية
         let audioCtx, engineOsc, engineOsc2, noiseNode, noiseFilter, engineFilter, engineGain, noiseGain;
         
         function initEngineSound() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             if (engineOsc) return; 
 
-            engineOsc = audioCtx.createOscillator();
-            engineOsc.type = 'sawtooth';
-            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            engineOsc = audioCtx.createOscillator(); engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            engineOsc2 = audioCtx.createOscillator(); engineOsc2.type = 'sawtooth'; engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
             
-            engineOsc2 = audioCtx.createOscillator();
-            engineOsc2.type = 'sawtooth';
-            engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
+            engineFilter = audioCtx.createBiquadFilter(); engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+            engineGain = audioCtx.createGain(); engineGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
             
-            engineFilter = audioCtx.createBiquadFilter();
-            engineFilter.type = 'lowpass';
-            engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+            engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter); engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
             
-            engineGain = audioCtx.createGain();
-            engineGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-            
-            engineOsc.connect(engineFilter);
-            engineOsc2.connect(engineFilter);
-            engineFilter.connect(engineGain);
-            engineGain.connect(audioCtx.destination);
-            
-            let bufferSize = 2 * audioCtx.sampleRate;
-            let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            let bufferSize = 2 * audioCtx.sampleRate; let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             let output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) { 
-                output[i] = Math.random() * 2 - 1; 
-            }
+            for (let i = 0; i < bufferSize; i++) { output[i] = Math.random() * 2 - 1; }
             
-            noiseNode = audioCtx.createBufferSource();
-            noiseNode.buffer = noiseBuffer;
-            noiseNode.loop = true;
-            
-            noiseFilter = audioCtx.createBiquadFilter();
-            noiseFilter.type = 'bandpass';
-            noiseFilter.frequency.setValueAtTime(380, audioCtx.currentTime);
+            noiseNode = audioCtx.createBufferSource(); noiseNode.buffer = noiseBuffer; noiseNode.loop = true;
+            noiseFilter = audioCtx.createBiquadFilter(); noiseFilter.type = 'bandpass'; noiseFilter.frequency.setValueAtTime(380, audioCtx.currentTime);
             noiseFilter.Q.setValueAtTime(1.2, audioCtx.currentTime);
             
-            noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            noiseGain = audioCtx.createGain(); noiseGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            noiseNode.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
             
-            noiseNode.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            
-            engineOsc.start();
-            engineOsc2.start();
-            noiseNode.start();
+            engineOsc.start(); engineOsc2.start(); noiseNode.start();
         }
 
         function updateEngineSound(speedUp) {
             if (!audioCtx || !engineOsc) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             let isFighter = fleet[currentSelectionIndex].type === 'fighter';
             let baseFreq = isFighter ? 70 : 55;
-            
             const targetFreq = speedUp ? (baseFreq * 1.6) : baseFreq;
             const targetFilter = speedUp ? 550 : 280;
-            const targetNoiseFilter = speedUp ? 750 : 380;
-            const targetNoiseGain = speedUp ? 0.14 : 0.07;
-            
             engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.15);
             engineOsc2.frequency.setTargetAtTime(targetFreq + 0.6, audioCtx.currentTime, 0.15);
             engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.2);
-            
-            if (noiseFilter) {
-                noiseFilter.frequency.setTargetAtTime(targetNoiseFilter, audioCtx.currentTime, 0.2);
-                noiseGain.gain.setTargetAtTime(targetNoiseGain, audioCtx.currentTime, 0.15);
-            }
         }
 
         function stopEngineSound() { 
             if(engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15); 
             if(noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15);
-            setTimeout(() => {
-                engineOsc = null; engineOsc2 = null; noiseNode = null;
-            }, 200);
         }
 
-        // التضاريس والبيئة
-        const terrainGroup = new THREE.Group();
-        scene.add(terrainGroup);
+        const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175, mountain: 0x7a8b99, forest: 0x1e5631 };
         let currentEnv = 'desert';
 
@@ -516,9 +514,6 @@
                     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.5, 15, 6), new THREE.MeshStandardMaterial({ color: 0x4a3728 })); trunk.position.y = 7.5; tree.add(trunk);
                     const leaves = new THREE.Mesh(new THREE.ConeGeometry(10, 24, 6), new THREE.MeshStandardMaterial({ color: 0x145a32, flatShading:true })); leaves.position.y = 22; tree.add(leaves);
                     mesh = tree; mesh.position.set(x, -10, zPos + (Math.random() * 1000 - 500));
-                } else if (envType === 'mountain') {
-                    mesh = new THREE.Mesh(new THREE.ConeGeometry(Math.random() * 40 + 20, Math.random() * 90 + 40, 5), new THREE.MeshStandardMaterial({ color: 0x566573, flatShading:true }));
-                    mesh.position.set(x * 1.5, Math.random() * 10 - 10, zPos + (Math.random() * 1000 - 500));
                 }
                 if(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); environmentObjects.push(mesh); }
             }
@@ -538,7 +533,6 @@
             geometry.computeVertexNormals();
             const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
-
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x212121 }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
@@ -549,24 +543,19 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل الطائرات
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.5, 3.5, 3.5);
-            basePassengerModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             checkAllLoaded();
         }, undefined, (err) => {
-            const geom = new THREE.BoxGeometry(5,2,10); const mat = new THREE.MeshStandardMaterial({color: 0xffffff});
-            basePassengerModel = new THREE.Mesh(geom, mat); checkAllLoaded();
+            basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(5,2,10), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
         });
 
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = gltf.scene; baseFighterModel.scale.set(1.0, 1.0, 1.0);
-            baseFighterModel.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; c.frustumCulled = false; } });
             checkAllLoaded();
         }, undefined, (err) => {
-            const geom = new THREE.ConeGeometry(4, 14, 16); const mat = new THREE.MeshStandardMaterial({color: 0x555555});
-            baseFighterModel = new THREE.Mesh(geom, mat); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
+            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(4, 14, 16), new THREE.MeshStandardMaterial({color: 0x555555})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
         });
         
         let loadedCount = 0;
@@ -597,20 +586,13 @@
         function spawnSelectedPlane(planeData) {
             if (currentActiveAirplane) scene.remove(currentActiveAirplane);
             let baseModel = planeData.type === 'passenger' ? basePassengerModel : baseFighterModel;
-            
             currentActiveAirplane = baseModel.clone();
             currentActiveAirplane.traverse(c => {
-                if (c.isMesh) {
-                    c.castShadow = true; c.receiveShadow = true; c.frustumCulled = false;
-                    if (c.material) {
-                        c.material = c.material.clone();
-                        if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); }
-                        c.material.needsUpdate = true;
-                    }
+                if (c.isMesh && c.material && planeData.colorHex !== null) {
+                    c.material = c.material.clone(); c.material.color.setHex(planeData.colorHex);
                 }
             });
-            currentActiveAirplane.position.set(0, -9.8, 300);
-            currentActiveAirplane.rotation.set(0, Math.PI, 0);
+            currentActiveAirplane.position.set(0, -9.8, 300); currentActiveAirplane.rotation.set(0, Math.PI, 0);
             scene.add(currentActiveAirplane);
         }
 
@@ -622,7 +604,6 @@
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
-        // أزرار التحكم والمدخلات
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
             if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
@@ -651,31 +632,18 @@
         joyZone.addEventListener('touchstart', (e) => {
             e.preventDefault(); joyState.active = true; const rect = joyZone.getBoundingClientRect();
             joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e);
-            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         }, {passive: false});
         joyZone.addEventListener('touchmove', handleTouchMove, {passive: false});
         joyZone.addEventListener('touchend', () => { joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; });
-        
-        const speedBtn = document.getElementById('speed-btn');
-        speedBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, {passive: false});
-        speedBtn.addEventListener('touchend', () => { keys.space = false; });
 
         function startGame() {
             document.getElementById('start-mask').style.display = 'none';
             document.getElementById('hud-container').style.display = 'flex';
-            
             renderer.domElement.style.visibility = 'visible';
+            if (window.innerWidth <= 768) document.getElementById('touch-controls').style.display = 'block';
             
-            if (window.innerWidth <= 768) {
-                document.getElementById('touch-controls').style.display = 'block';
-            }
-            
-            spawnSelectedPlane(fleet[currentSelectionIndex]);
-            initEngineSound();
-            
-            isPlaying = true;
-            score = 0; document.getElementById('points').innerText = score;
-            timeLeft = 30; document.getElementById('time-left').innerText = timeLeft;
+            spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
+            isPlaying = true; score = 0; timeLeft = 30;
             
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -700,16 +668,9 @@
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none';
             hasTakenOff = false; currentSpeed = 1.5;
-            document.getElementById('shop-carousel').style.display = 'none';
-            
             renderer.domElement.style.visibility = 'hidden';
-            document.getElementById('touch-controls').style.display = 'none';
-            
             if(currentActiveAirplane) { scene.remove(currentActiveAirplane); currentActiveAirplane = null; }
-            
             updateShopUI();
-            rings.forEach(r => scene.remove(r)); rings.length = 0;
-            for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
 
@@ -717,12 +678,10 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            
             if (isPlaying && currentActiveAirplane) {
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
                 let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
-                
                 updateEngineSound(keys.space);
 
                 currentActiveAirplane.position.z -= currentSpeed;
@@ -731,25 +690,15 @@
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY += 1; if (keys.s) inputY -= 1;
                 if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                
-                if (joyState.active) { 
-                    inputX += joyState.x; 
-                    inputY += joyState.y; 
-                }
-
-                inputX = Math.max(-1, Math.min(1, inputX)); inputY = Math.max(-1, Math.min(1, inputY));
+                if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
 
                 if (!hasTakenOff) {
                     if (inputY > 0) {
-                        currentActiveAirplane.position.y += 0.25 * inputY;
-                        currentActiveAirplane.rotation.x = 0.1;
+                        currentActiveAirplane.position.y += 0.25 * inputY; currentActiveAirplane.rotation.x = 0.1;
                         if (currentActiveAirplane.position.y > -1) hasTakenOff = true;
-                    } else { currentActiveAirplane.rotation.x = 0; }
+                    }
                 } else {
                     currentActiveAirplane.position.y += 0.65 * inputY;
-                    if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    if(currentActiveAirplane.position.y > 150) currentActiveAirplane.position.y = 150;
-
                     currentActiveAirplane.position.x += 1.2 * inputX;
                     currentActiveAirplane.rotation.z = (inputX !== 0) ? THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.45 * inputX, 0.08) : THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, 0, 0.08);
                 }
@@ -758,36 +707,21 @@
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 7.5, 0.07);
                 camera.position.z = currentActiveAirplane.position.z + 45;
                 camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1.5, currentActiveAirplane.position.z - 45));
-                sunLight.position.set(currentActiveAirplane.position.x + 300, currentActiveAirplane.position.y + 500, currentActiveAirplane.position.z + 200);
-
-                if (distanceTraveled > 3500 && currentEnv === 'desert') {
-                    currentEnv = 'mountain'; scene.background.setHex(0x8ba3b5); fog.color.setHex(0x8ba3b5);
-                } else if (distanceTraveled > 7500 && currentEnv === 'mountain') {
-                    currentEnv = 'forest'; scene.background.setHex(0x7ecbb3); fog.color.setHex(0x7ecbb3);
-                }
 
                 if (currentActiveAirplane.position.z < lastTerrainZ + 1500) {
                     lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors[currentEnv]);
                 }
 
                 for (let i = rings.length - 1; i >= 0; i--) {
-                    const ring = rings[i]; ring.rotation.y += 0.015;
+                    const ring = rings[i];
                     const dist = currentActiveAirplane.position.distanceTo(ring.position);
-
                     if (dist < 20 && Math.abs(currentActiveAirplane.position.z - ring.position.z) < 8) {
                         scene.remove(ring); rings.splice(i, 1); score += 10; timeLeft += 3;
-                        document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
-                        createRing(rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z) - 160);
-                    } else if (currentActiveAirplane.position.z < ring.position.z - 80) {
-                        scene.remove(ring); rings.splice(i, 1);
+                        document.getElementById('points').innerText = score;
                         createRing(rings.reduce((min, r) => r.position.z < min ? r.position.z : min, currentActiveAirplane.position.z) - 160);
                     }
                 }
-                for (let i = environmentObjects.length - 1; i >= 0; i--) {
-                    if (environmentObjects[i].position.z > currentActiveAirplane.position.z + 120) { scene.remove(environmentObjects[i]); environmentObjects.splice(i, 1); }
-                }
             }
-            
             renderer.render(scene, camera);
         }
         animate();
