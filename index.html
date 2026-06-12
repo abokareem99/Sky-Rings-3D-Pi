@@ -94,7 +94,7 @@
         .action-container-main {
             display: flex;
             gap: 20px;
-            justify-content: center;
+            justify-center: center;
             align-items: center;
             width: 100%;
             max-width: 600px;
@@ -198,7 +198,7 @@
         .loading-bar { width: 0%; height: 100%; background: #00d2ff; animation: fill-bar 2s ease-out forwards; }
         @keyframes fill-bar { 0% { width: 0%; } 80% { width: 85%; } 100% { width: 100%; } }
 
-        /* ضوابط اللمس للهواتف - مخفية افتراضياً للجميع */
+        /* ضوابط اللمس للهواتف */
         #touch-controls { display: none; }
         
         #joystick-zone {
@@ -335,30 +335,106 @@
             carousel.style.display = (carousel.style.display === 'none' || carousel.style.display === '') ? 'flex' : 'none';
         }
 
-        // إعداد وتحديث الصوت
-        let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
+        // 🔊 محرك الصوت المطور والواقعي المتوافق مع الهواتف الذكية
+        let audioCtx, engineOsc, engineOsc2, noiseNode, noiseFilter, engineFilter, engineGain, noiseGain;
+        
         function initEngineSound() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            engineOsc = audioCtx.createOscillator(); engineOsc2 = audioCtx.createOscillator();
-            engineFilter = audioCtx.createBiquadFilter(); engineGain = audioCtx.createGain();
-            engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(45, audioCtx.currentTime); 
-            engineOsc2.type = 'triangle'; engineOsc2.frequency.setValueAtTime(90, audioCtx.currentTime); 
-            engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(200, audioCtx.currentTime);
-            engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-            engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter);
-            engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
-            engineOsc.start(); engineOsc2.start();
+            // إنشاء سياق الصوت وضمان استئنافه عند تفاعل المستخدم الحقيقي
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            // إذا كان الصوت يعمل بالفعل فلا تكرره
+            if (engineOsc) return; 
+
+            // 1. التردد الأساسي الأول للمحرك (Humming النفاث الباص المكتوم)
+            engineOsc = audioCtx.createOscillator();
+            engineOsc.type = 'sawtooth';
+            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            
+            // 2. التردد الثانوي متزحزح قليلاً (Detuned) لإعطاء تأثير Chorus واقعي وضخامة للصوت
+            engineOsc2 = audioCtx.createOscillator();
+            engineOsc2.type = 'sawtooth';
+            engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
+            
+            // فلتر لتنعيم حدة الموجة وجعلها تبدو كمحرك حقيقي خلف الهيكل
+            engineFilter = audioCtx.createBiquadFilter();
+            engineFilter.type = 'lowpass';
+            engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+            
+            engineGain = audioCtx.createGain();
+            engineGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            
+            engineOsc.connect(engineFilter);
+            engineOsc2.connect(engineFilter);
+            engineFilter.connect(engineGain);
+            engineGain.connect(audioCtx.destination);
+            
+            // 3. 💨 محاكاة الرياح واندفاع الهواء النفاث (White Noise)
+            let bufferSize = 2 * audioCtx.sampleRate;
+            let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            let output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { 
+                output[i] = Math.random() * 2 - 1; 
+            }
+            
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = noiseBuffer;
+            noiseNode.loop = true;
+            
+            // فلتر تمرير النطاق (Bandpass) ليعطي صوت صفير الهواء واحتكاكه الديناميكي
+            noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.setValueAtTime(380, audioCtx.currentTime);
+            noiseFilter.Q.setValueAtTime(1.2, audioCtx.currentTime);
+            
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            
+            noiseNode.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            
+            // بدء التشغيل الفعلي للموجات
+            engineOsc.start();
+            engineOsc2.start();
+            noiseNode.start();
         }
 
         function updateEngineSound(speedUp) {
-            if (!engineOsc) return;
+            if (!audioCtx || !engineOsc) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             let isFighter = fleet[currentSelectionIndex].type === 'fighter';
-            let baseFreq = isFighter ? 60 : 45;
-            const targetFreq = speedUp ? (baseFreq + 35) : baseFreq;
-            engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.2);
+            let baseFreq = isFighter ? 70 : 55;
+            
+            // تعديل ديناميكي للترددات والفلتر اعتماداً على تفعيل التيربو ليعطي إحساساً رائعاً بالسرعة
+            const targetFreq = speedUp ? (baseFreq * 1.6) : baseFreq;
+            const targetFilter = speedUp ? 550 : 280;
+            const targetNoiseFilter = speedUp ? 750 : 380;
+            const targetNoiseGain = speedUp ? 0.14 : 0.07;
+            
+            engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.15);
+            engineOsc2.frequency.setTargetAtTime(targetFreq + 0.6, audioCtx.currentTime, 0.15);
+            engineFilter.frequency.setTargetAtTime(targetFilter, audioCtx.currentTime, 0.2);
+            
+            if (noiseFilter) {
+                noiseFilter.frequency.setTargetAtTime(targetNoiseFilter, audioCtx.currentTime, 0.2);
+                noiseGain.gain.setTargetAtTime(targetNoiseGain, audioCtx.currentTime, 0.15);
+            }
         }
-        function stopEngineSound() { if(audioCtx) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
+
+        function stopEngineSound() { 
+            if(engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15); 
+            if(noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15);
+            // تصفير المتغيرات ليتم إعادتها بشكل سليم في الجولة التالية
+            setTimeout(() => {
+                engineOsc = null; engineOsc2 = null; noiseNode = null;
+            }, 200);
+        }
 
         // التضاريس والبيئة
         const terrainGroup = new THREE.Group();
@@ -444,7 +520,6 @@
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
-        // تحديث متجر الطائرات والرصيد الافتراضي الحالي
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
@@ -514,6 +589,7 @@
         joyZone.addEventListener('touchstart', (e) => {
             e.preventDefault(); joyState.active = true; const rect = joyZone.getBoundingClientRect();
             joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e);
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); // تفعيل إضافي عند لمس عصا التحكم
         }, {passive: false});
         joyZone.addEventListener('touchmove', handleTouchMove, {passive: false});
         joyZone.addEventListener('touchend', () => { joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; });
@@ -535,8 +611,8 @@
             
             spawnSelectedPlane(fleet[currentSelectionIndex]);
             
+            // تشغيل واستئناف محرك الصوت الواقعي فوراً بناء على الضغطة الفردية
             initEngineSound();
-            if(audioCtx) engineGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
             
             isPlaying = true;
             score = 0; document.getElementById('points').innerText = score;
@@ -588,6 +664,8 @@
                 let isFighter = fleet[currentSelectionIndex].type === 'fighter';
                 let speedMultiplier = keys.space ? (isFighter ? 5.5 : 4.2) : (isFighter ? 2.8 : 2.2);
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
+                
+                // تحديث تأثير الصوت باستمرار مع حركة اللاعب وحالة التيربو
                 updateEngineSound(keys.space);
 
                 currentActiveAirplane.position.z -= currentSpeed;
@@ -597,7 +675,6 @@
                 if (keys.w) inputY += 1; if (keys.s) inputY -= 1;
                 if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
                 
-                // 💡 التعديل هنا لتصحيح اتجاه عصا التحكم (السحب لأسفل يرفع الطائرة واليمين يوجه يميناً)
                 if (joyState.active) { 
                     inputX += joyState.x; 
                     inputY += joyState.y; 
