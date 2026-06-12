@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    // إعدادات الأمان والسماح بالاتصال (CORS)
+    // إعدادات CORS للسماح بالاتصال من المحفظة
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
