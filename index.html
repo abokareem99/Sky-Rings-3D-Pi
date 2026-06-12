@@ -10,7 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <script>Pi.init({ version: "2.0", sandbox: true });</script>
+    <!-- تم إرجاع تهيئة الـ SDK الرسمية التلقائية التي تتوافق مع السيرفر دون إجبار الـ Sandbox -->
+    <script>Pi.init({ version: "2.0" });</script>
     
     <style>
         :root {
@@ -373,7 +374,6 @@
             }
         }
 
-        // --- نظام الدفع المتكامل الجديد باستخدام مسارات المجلد api ---
         async function executePiPayment(plane) {
             if (!authenticatedPiUser) {
                 showNotification("يرجى الضغط على زر 'ربط المحفظة' أولاً لتفعيل الشراء آمن عبر Pi.", true);
@@ -395,7 +395,6 @@
                     onReadyForServer: function(paymentId) {
                         console.log("تم إنشاء المعاملة، جاري إرسالها للسيرفر للموافقة (Approve):", paymentId);
                         
-                        // استدعاء ملف الموافقة الأول
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -410,12 +409,11 @@
                         });
                     },
                     onReadyForServerToPay: function(paymentId) {
-                        console.log("جاهز لدفع السيرفر للمستخدم (لا تنطبق هنا):", paymentId);
+                        console.log("جاهز لدفع السيرفر للمستخدم:", paymentId);
                     },
                     onCompleted: function(payment) {
                         console.log("اكتملت المعاملة على البلوكشين، جاري تأكيدها للسيرفر (Complete):", payment);
                         
-                        // استدعاء ملف الإكمال لتسجيل الدفع نهائياً
                         fetch('/api/complete-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -424,7 +422,6 @@
                         .then(response => response.json())
                         .then(data => {
                             console.log("تم تأكيد الدفع من السيرفر بنجاح:", data);
-                            // هنا فقط نفتح الطائرة بعد إتمام دورة الدفع كاملة مع السيرفر
                             localStorage.setItem(`plane_unlocked_${plane.id}`, 'true');
                             showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح! 🚀`);
                             startBtn.disabled = false;
@@ -460,7 +457,6 @@
             }
         }
 
-        // إعدادات صوت المحرك
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -490,7 +486,6 @@
             engineOsc = null;
         }
 
-        // بناء البيئة
         const terrainGroup = new THREE.Group();
         scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175 };
@@ -510,7 +505,6 @@
         createTerrainSegment(-1000, envColors.desert);
         createTerrainSegment(-2000, envColors.desert);
 
-        // تحميل مجسمات الطائرات
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = gltf.scene; basePassengerModel.scale.set(3.5, 3.5, 3.5);
@@ -589,7 +583,6 @@
         }
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
-        // عناصر التحكم
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
             if(e.key === 'a' || e.key === 'ArrowLeft') keys.a = true; if(e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
