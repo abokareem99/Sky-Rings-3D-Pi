@@ -526,14 +526,74 @@
         }
         initInitialTerrain();
 
+        // دالة بناء طائرة حربية مذهلة برمجياً في حال عدم توفر الملف الخارجي
+        function createProceduralFighter() {
+            const group = new THREE.Group();
+            
+            // الهيكل الرئيسي (Fuselage)
+            const bodyGeom = new THREE.CylinderGeometry(0.8, 1.2, 14, 8);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x556677, roughness: 0.4, metalness: 0.3 });
+            const body = new THREE.Mesh(bodyGeom, bodyMat);
+            body.rotation.x = Math.PI / 2;
+            group.add(body);
+            
+            // مقدمة الطائرة المدببة (Nose Cone)
+            const noseGeom = new THREE.ConeGeometry(0.8, 4, 8);
+            const noseMat = new THREE.MeshStandardMaterial({ color: 0x223344 });
+            const nose = new THREE.Mesh(noseGeom, noseMat);
+            nose.rotation.x = -Math.PI / 2;
+            nose.position.z = -9;
+            group.add(nose);
+            
+            // الأجنحة الحربية الرئيسية (Swept Wings)
+            const wingGeom = new THREE.BoxGeometry(16, 0.15, 4);
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x667788, roughness: 0.4 });
+            const wings = new THREE.Mesh(wingGeom, wingMat);
+            wings.position.set(0, 0, -1);
+            group.add(wings);
+            
+            // الأجنحة الخلفية التوازنية
+            const tailWingsGeom = new THREE.BoxGeometry(6, 0.1, 2);
+            const tailWings = new THREE.Mesh(tailWingsGeom, wingMat);
+            tailWings.position.set(0, 0, 5);
+            group.add(tailWings);
+
+            // الزعنفة العمودية الخلفية (Tail Fin)
+            const finGeom = new THREE.BoxGeometry(0.15, 3, 2.5);
+            const fin = new THREE.Mesh(finGeom, wingMat);
+            fin.position.set(0, 1.5, 5.5);
+            group.add(fin);
+            
+            // كابينة الطيار الزجاجية (Cockpit)
+            const cockpitGeom = new THREE.SphereGeometry(0.7, 8, 8);
+            const cockpitMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, roughness: 0.1, transparent: true, opacity: 0.6 });
+            const cockpit = new THREE.Mesh(cockpitGeom, cockpitMat);
+            cockpit.position.set(0, 0.6, -3);
+            cockpit.scale.set(1, 1, 2.5);
+            group.add(cockpit);
+            
+            // صواريخ هجومية حمراء على أطراف الأجنحة
+            const rocketGeom = new THREE.CylinderGeometry(0.15, 0.15, 2.5, 4);
+            const rocketMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+            
+            const leftRocket = new THREE.Mesh(rocketGeom, rocketMat);
+            leftRocket.rotation.x = Math.PI / 2;
+            leftRocket.position.set(-8, 0, -1);
+            group.add(leftRocket);
+            
+            const rightRocket = leftRocket.clone();
+            rightRocket.position.x = 8;
+            group.add(rightRocket);
+
+            return group;
+        }
+
         const loader = new THREE.GLTFLoader();
         let loadedCount = 0;
         
         function checkAllLoaded() {
             loadedCount++;
-            if(loadedCount >= 2) { 
-                hideLoadingScreen();
-            }
+            if(loadedCount >= 2) { hideLoadingScreen(); }
         }
 
         function hideLoadingScreen() {
@@ -545,16 +605,17 @@
             }
         }
 
-        // تم زيادة صمام الأمان إلى 20 ثانية لمنح الطائرات الحربية الوقت الكافي للتحميل الكامل
+        // صمام الأمان الزمني
         setTimeout(() => {
             if (loadedCount < 2) {
                 console.warn("تجاوز شاشة التحميل التلقائي عبر صمام الأمان.");
                 if (!basePassengerModel) basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff}));
-                if (!baseFighterModel) baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444}));
+                if (!baseFighterModel) baseFighterModel = createProceduralFighter();
                 hideLoadingScreen();
             }
         }, 20000);
 
+        // تحميل طائرة الركاب
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); 
             gltf.scene.rotation.y = Math.PI; 
@@ -567,19 +628,30 @@
             checkAllLoaded();
         });
 
+        // نظام التحميل الثنائي الذكي للمقاتلة لمنع ظهور المثلث نهائياً
         loader.load('Fighter.glb', (gltf) => { 
+            setupFighterModel(gltf);
+        }, undefined, (err) => {
+            // محاولة ثانية بحروف صغيرة (fighter.glb) لتخطي حساسية الأحرف في السيرفرات
+            loader.load('fighter.glb', (gltf2) => {
+                setupFighterModel(gltf2);
+            }, undefined, (err2) => {
+                // إذا فشلت المحاولتان تماماً، نقوم فوراً ببناء طائرة حربية مجسمة متكاملة برمجياً بدلاً من المثلث
+                console.warn("تعذر تحميل الملف الخارجي، تم تشغيل الطائرة الحربية البرمجية التلقائية.");
+                baseFighterModel = createProceduralFighter();
+                checkAllLoaded();
+                if(!isPlaying && fleet[currentSelectionIndex].type === 'fighter') updateShopUI();
+            });
+        });
+
+        function setupFighterModel(gltf) {
             baseFighterModel = new THREE.Group();
             gltf.scene.rotation.y = Math.PI; 
             baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2);
             checkAllLoaded();
-            // تحديث ذكي: استبدال طراز المثلث فوراً بالطائرة الحقيقية بمجرد اكتمال تحميل الملف
             if(!isPlaying && fleet[currentSelectionIndex].type === 'fighter') updateShopUI();
-        }, undefined, (err) => {
-            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); 
-            baseFighterModel.rotation.x = Math.PI/2; 
-            checkAllLoaded();
-        });
+        }
 
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
