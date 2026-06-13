@@ -110,7 +110,6 @@
 
         .action-container-main { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
-        /* تعديل الزر الرئيسي (البنفسجي والذهبي) */
         .main-btn { 
             background: linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%);
             border: 2px solid var(--pi-gold); 
@@ -121,7 +120,6 @@
         }
         .main-btn:disabled { background: #555 !important; border-color: #777 !important; color: #aaa !important; cursor: not-allowed; box-shadow: none; }
         
-        /* تعديل الزر الثانوي (الذهبي والبنفسجي) */
         .secondary-btn {
             background: linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%);
             border: 2px solid var(--pi-purple-dark);
@@ -133,7 +131,6 @@
 
         .pi-features-bar { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
         
-        /* تعديل أزرار الخصائص */
         .feature-icon-btn {
             flex: 1; background: rgba(74, 20, 140, 0.7); border: 1px solid var(--pi-gold);
             color: var(--pi-gold); padding: 10px 10px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
@@ -276,6 +273,10 @@
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
         sunLight.position.set(100, 300, 100);
         scene.add(sunLight);
+
+        // --- تحميل شعار Pi ---
+        const textureLoader = new THREE.TextureLoader();
+        const piLogoTexture = textureLoader.load('pi_logo.png');
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -548,7 +549,6 @@
                 statusEl.innerText = "متاحة في الحظيرة ✔️"; 
                 statusEl.style.color = "var(--pi-gold)"; 
                 startBtn.innerText = "إقلاع الآن 🚀";
-                // اللون البنفسجي الأساسي والنص الذهبي
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%)";
                 startBtn.style.color = "var(--pi-gold)";
                 startBtn.style.borderColor = "var(--pi-gold)";
@@ -556,7 +556,6 @@
                 statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`; 
                 statusEl.style.color = "#ff7675"; 
                 startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
-                // اللون الذهبي الأساسي والنص البنفسجي
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)"; 
                 startBtn.style.color = "var(--pi-purple-dark)"; 
                 startBtn.style.borderColor = "var(--pi-purple-dark)";
@@ -574,6 +573,32 @@
                     if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); }
                 }
             });
+
+            // إضافة شعار Pi كملصق
+            const logoMaterial = new THREE.MeshBasicMaterial({ 
+                map: piLogoTexture, 
+                transparent: true, 
+                side: THREE.DoubleSide,
+                alphaTest: 0.5 
+            });
+            
+            const logoSize = planeData.type === 'passenger' ? 1.5 : 0.8; 
+            const logoMeshRight = new THREE.Mesh(new THREE.PlaneGeometry(logoSize, logoSize), logoMaterial);
+            
+            // ضبط موقع الشعار
+            if (planeData.type === 'passenger') {
+                logoMeshRight.position.set(0.65, 2.8, 5.2); 
+            } else {
+                logoMeshRight.position.set(0.3, 1.2, 2.8);
+            }
+            logoMeshRight.rotation.y = Math.PI / 2;
+
+            const logoMeshLeft = logoMeshRight.clone();
+            logoMeshLeft.position.x = -logoMeshRight.position.x;
+            logoMeshLeft.rotation.y = -Math.PI / 2;
+
+            currentActiveAirplane.add(logoMeshRight);
+            currentActiveAirplane.add(logoMeshLeft);
 
             if (isPlaying) {
                 currentActiveAirplane.position.set(0, -9.8, 300);
