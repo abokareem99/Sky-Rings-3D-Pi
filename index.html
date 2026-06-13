@@ -30,6 +30,7 @@
             background-color: #a3d2f7; 
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none; /* لمنع تحديث الصفحة عند السحب للأسفل */
         }
         
         #hud-container {
@@ -281,6 +282,10 @@
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         
+        // إعدادات اللمس العائم على مساحة اللعبة
+        let screenTouchState = { active: false, x: 0, y: 0 };
+        let screenTouchCenter = { x: 0, y: 0 };
+
         const fleet = [
             { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
@@ -305,7 +310,6 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
-        // تم تغيير مفتاح التخزين هنا لضمان إغلاق جميع الطائرات باستثناء الأولى متجاهلاً أي مشتريات سابقة
         function isPlaneUnlocked(plane) {
             if (plane.id === 0) return true; 
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
@@ -386,47 +390,30 @@
                 const paymentData = {
                     amount: plane.piCost,
                     memo: "شراء " + plane.name,
-                    metadata: { 
-                        planeId: String(plane.id), 
-                        developer: "AbuKareem"
-                    }
+                    metadata: { planeId: String(plane.id), developer: "AbuKareem" }
                 };
 
                 const callbacks = {
                     onReadyForServerApproval: function(paymentId) {
-                        console.log("طلب موافقة السيرفر:", paymentId);
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ paymentId: paymentId })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if(data.error) throw new Error(data.error);
-                            console.log("تمت الموافقة من السيرفر:", data);
-                        })
-                        .catch(err => {
-                            console.error("خطأ في الموافقة:", err);
-                        });
+                        }).catch(err => console.error("خطأ في الموافقة:", err));
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        console.log("جاهز لاكتمال الدفع على السيرفر:", paymentId, txid);
                         fetch('/api/complete-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ paymentId: paymentId, txid: txid })
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("تم تأكيد الدفع من السيرفر بنجاح:", data);
-                            // تم استخدام مفتاح التخزين الجديد هنا أيضاً لتسجيل عملية الشراء الصحيحة
+                        .then(() => {
                             localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
                             showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`);
                             startBtn.disabled = false;
                             updateShopUI();
                         })
                         .catch(err => {
-                            console.error("خطأ في إكمال الدفع:", err);
                             showNotification("حدث خطأ أثناء تأكيد الدفع مع السيرفر. تواصل مع الدعم.", true);
                             startBtn.disabled = false;
                             updateShopUI();
@@ -438,8 +425,6 @@
                         updateShopUI();
                     },
                     onError: function(error, payment) {
-                        console.error("خطأ أثناء معالجة الدفع:", error);
-                        alert("خطأ من منصة باي: " + (error.message || JSON.stringify(error)));
                         showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                         startBtn.disabled = false;
                         updateShopUI();
@@ -448,8 +433,6 @@
 
                 await Pi.createPayment(paymentData, callbacks);
             } catch (err) {
-                console.error("فشل استدعاء Pi Payment API:", err);
-                alert("تفاصيل الخطأ: " + err.message);
                 showNotification("تعذر بدء المعاملة. حاول مجدداً.", true);
                 startBtn.disabled = false;
                 updateShopUI();
@@ -506,7 +489,6 @@
 
         const loader = new THREE.GLTFLoader();
         
-        // الطائرة المدنية (تمت إضافة حاوية لتدويرها للامام وزيادة الحجم 30%)
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); 
             gltf.scene.rotation.y = Math.PI; 
@@ -517,9 +499,11 @@
             basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
         });
 
-        // الطائرة الحربية (لم يتم إجراء أي تعديل عليها بناءً على طلبك)
+        // تم تعديل الطائرة الحربية بإضافتها داخل Group وتدويرها 180 درجة لضبط اتجاهها
         loader.load('Fighter.glb.glb', (gltf) => { 
-            baseFighterModel = gltf.scene; 
+            baseFighterModel = new THREE.Group();
+            gltf.scene.rotation.y = Math.PI; 
+            baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2);
             checkAllLoaded();
         }, undefined, (err) => {
@@ -600,6 +584,7 @@
             if(e.key === ' ') keys.space = false;
         });
 
+        // أحداث اللمس المرتبطة بعصا التحكم (الـ Joystick)
         const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
         function handleTouchMove(e) {
@@ -607,17 +592,50 @@
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); if(dist > 30) { dx = (dx/dist)*30; dy = (dy/dist)*30; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            joyState.x = dx / 30; joyState.y = -dy / 30;
+            joyState.x = dx / 30; 
+            joyState.y = dy / 30; // تم العكس: الأسفل موجب مما يعني الارتفاع للأعلى
         }
         joyZone.addEventListener('touchstart', (e) => {
+            e.stopPropagation(); // لمنع تداخل اللمس مع الشاشة الكاملة
             joyState.active = true; const rect = joyZone.getBoundingClientRect();
             joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e);
         });
-        joyZone.addEventListener('touchmove', handleTouchMove);
-        joyZone.addEventListener('touchend', () => { joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; });
+        joyZone.addEventListener('touchmove', (e) => { e.stopPropagation(); handleTouchMove(e); });
+        joyZone.addEventListener('touchend', (e) => { e.stopPropagation(); joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; });
         
-        document.getElementById('speed-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; });
-        document.getElementById('speed-btn').addEventListener('touchend', () => { keys.space = false; });
+        document.getElementById('speed-btn').addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; });
+        document.getElementById('speed-btn').addEventListener('touchend', (e) => { e.stopPropagation(); keys.space = false; });
+
+        // أحداث اللمس على مساحة الشاشة بالكامل (التحكم بالتحريك المباشر على الشاشة)
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (!isPlaying) return;
+            screenTouchState.active = true;
+            screenTouchCenter = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (!isPlaying || !screenTouchState.active) return;
+            e.preventDefault(); // منع تمرير الصفحة
+            let dx = e.touches[0].clientX - screenTouchCenter.x;
+            let dy = e.touches[0].clientY - screenTouchCenter.y;
+
+            // تحديد حد أقصى لحساسية السحب على الشاشة
+            const maxDrag = 60;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > maxDrag) {
+                dx = (dx / dist) * maxDrag;
+                dy = (dy / dist) * maxDrag;
+            }
+
+            screenTouchState.x = dx / maxDrag;
+            screenTouchState.y = dy / maxDrag; // الأسفل موجب مما يعني الارتفاع للأعلى
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('touchend', () => {
+            screenTouchState.active = false;
+            screenTouchState.x = 0;
+            screenTouchState.y = 0;
+        });
 
         function startGame() {
             isPlaying = true;
@@ -676,12 +694,23 @@
                 currentActiveAirplane.position.z -= currentSpeed;
                 
                 let inputY = 0; let inputX = 0;
-                if (keys.w) inputY += 1; if (keys.s) inputY -= 1;
+                
+                // التحكم بلوحة المفاتيح: تم عكس المحور العمودي (W = نزول، S = صعود)
+                if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
+                
+                // دمج قراءة عصا التحكم إذا كانت مفعلة
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
 
+                // دمج قراءة اللمس المباشر على مساحة الشاشة إذا كان مفعلاً
+                if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
+
                 if (!hasTakenOff) {
-                    if (inputY > 0) { currentActiveAirplane.position.y += 0.2; currentActiveAirplane.rotation.x = 0.1; if (currentActiveAirplane.position.y > -1) hasTakenOff = true; }
+                    if (inputY > 0) { 
+                        currentActiveAirplane.position.y += 0.2; 
+                        currentActiveAirplane.rotation.x = 0.1; 
+                        if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
+                    }
                 } else {
                     currentActiveAirplane.position.y += 0.6 * inputY;
                     currentActiveAirplane.position.x += 1.2 * inputX;
