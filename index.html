@@ -228,12 +228,12 @@
         </div>
 
         <div id="shop-carousel" class="glass-panel"> 
-            <button class="carousel-btn" onclick="prevPlane()">◀</button>
+            <button class="carousel-btn" onclick="nextPlane()">▶</button>
             <div class="plane-info">
                 <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
                 <p id="cp-status" class="plane-status">-</p>
             </div>
-            <button class="carousel-btn" onclick="nextPlane()">▶</button>
+            <button class="carousel-btn" onclick="prevPlane()">◀</button>
         </div>
 
         <div class="btn-area-bottom">
@@ -493,7 +493,6 @@
             engineOsc = null;
         }
 
-        // --- نظام التضاريس الديناميكي المطور ---
         const activeTerrains = [];
         const envColors = { desert: 0xdfb175, forest: 0x228b22, snow: 0xdddddd, sea: 0x1ca3ec };
         const biomesList = ['desert', 'forest', 'snow', 'sea'];
@@ -525,7 +524,6 @@
             const color = envColors[biomeType] || envColors.desert;
             const groundMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, flatShading: true });
             
-            // إضافة لمعان للبحار
             if (biomeType === 'sea') {
                 groundMat.roughness = 0.1;
                 groundMat.metalness = 0.6;
@@ -546,12 +544,11 @@
                 runway.receiveShadow = true; 
                 segmentGroup.add(runway);
             } else {
-                // تزيين البيئات
                 if (biomeType === 'forest') {
                     for(let i=0; i<40; i++) {
                         const tree = createTree();
                         const xPos = (Math.random() - 0.5) * 800;
-                        if (Math.abs(xPos) > 60) { // ترك مسار في المنتصف
+                        if (Math.abs(xPos) > 60) { 
                             tree.position.set(xPos, -10, (Math.random() - 0.5) * 1000);
                             segmentGroup.add(tree);
                         }
@@ -570,11 +567,9 @@
             activeTerrains.push({ group: segmentGroup, z: zPos });
         }
 
-        // إنشاء التضاريس المبدئية
         createTerrainSegment(0, 'desert', true);
         createTerrainSegment(-1000, 'desert');
         createTerrainSegment(-2000, 'forest');
-        // ----------------------------------------
 
         const loader = new THREE.GLTFLoader();
         
@@ -589,7 +584,7 @@
             checkAllLoaded();
         });
 
-        // تم تصحيح امتداد الطائرة هنا لإزالة (.glb.glb) المكررة
+        // تم إصلاح مسار الطائرة وإزالة الخطأ المطبعي
         loader.load('Fighter.glb', (gltf) => { 
             baseFighterModel = new THREE.Group();
             gltf.scene.rotation.y = Math.PI; 
@@ -597,7 +592,6 @@
             baseFighterModel.scale.set(1.2, 1.2, 1.2);
             checkAllLoaded();
         }, undefined, (err) => {
-            // هذا هو المخروط الذي كان يظهر بسبب خطأ التحميل
             baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); 
             baseFighterModel.rotation.x = Math.PI/2; 
             checkAllLoaded();
@@ -812,13 +806,11 @@
                 camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                 sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                // إدارة البيئات ديناميكياً
                 if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
                     lastTerrainZ -= 1000;
                     const randomBiome = biomesList[Math.floor(Math.random() * biomesList.length)];
                     createTerrainSegment(lastTerrainZ, randomBiome); 
                     
-                    // تنظيف البيئات القديمة لتخفيف العبء على المتصفح
                     if (activeTerrains.length > 5) {
                         const oldTerrain = activeTerrains.shift();
                         scene.remove(oldTerrain.group);
@@ -841,13 +833,4 @@
                 camera.lookAt(0, 2.8, 0); 
             }
             
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+            renderer.render(scene, camera
