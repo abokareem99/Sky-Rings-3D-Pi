@@ -39,7 +39,25 @@
             position: absolute;
             top: 75px; left: 15px; right: 15px;
             display: flex; justify-content: space-between;
-            z-index: 10; pointer-events: none;
+            z-index: 100; /* تم رفع الطبقة ليكون الشعار والواجهة في الأعلى دائماً */
+            pointer-events: none;
+        }
+
+        /* تنسيق الشعار في الواجهة */
+        .logo-overlay {
+            position: absolute;
+            top: -55px; 
+            right: 0;
+            width: 45px;
+            height: 45px;
+            pointer-events: auto; 
+            cursor: pointer;
+            filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.8));
+            transition: transform 0.2s ease;
+        }
+
+        .logo-overlay:hover {
+            transform: scale(1.1);
         }
 
         .glass-panel {
@@ -189,6 +207,8 @@
     <div id="game-toast" class="glass-panel"></div>
 
     <div id="hud-container" style="display: none;">
+        <img src="pi_logo.png" alt="Pi Network" class="logo-overlay">
+        
         <div>
             <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ الوقت: <span id="time-left">30</span>ث</div>
             <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 14px;">إجمالي النقاط: <span id="total-points">0</span></div>
@@ -273,10 +293,6 @@
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
         sunLight.position.set(100, 300, 100);
         scene.add(sunLight);
-
-        // --- تحميل شعار Pi ---
-        const textureLoader = new THREE.TextureLoader();
-        const piLogoTexture = textureLoader.load('pi_logo.png');
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -573,32 +589,6 @@
                     if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); }
                 }
             });
-
-            // إضافة شعار Pi كملصق
-            const logoMaterial = new THREE.MeshBasicMaterial({ 
-                map: piLogoTexture, 
-                transparent: true, 
-                side: THREE.DoubleSide,
-                alphaTest: 0.5 
-            });
-            
-            const logoSize = planeData.type === 'passenger' ? 1.5 : 0.8; 
-            const logoMeshRight = new THREE.Mesh(new THREE.PlaneGeometry(logoSize, logoSize), logoMaterial);
-            
-            // ضبط موقع الشعار
-            if (planeData.type === 'passenger') {
-                logoMeshRight.position.set(0.65, 2.8, 5.2); 
-            } else {
-                logoMeshRight.position.set(0.3, 1.2, 2.8);
-            }
-            logoMeshRight.rotation.y = Math.PI / 2;
-
-            const logoMeshLeft = logoMeshRight.clone();
-            logoMeshLeft.position.x = -logoMeshRight.position.x;
-            logoMeshLeft.rotation.y = -Math.PI / 2;
-
-            currentActiveAirplane.add(logoMeshRight);
-            currentActiveAirplane.add(logoMeshLeft);
 
             if (isPlaying) {
                 currentActiveAirplane.position.set(0, -9.8, 300);
