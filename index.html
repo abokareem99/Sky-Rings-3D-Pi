@@ -206,19 +206,19 @@
         #touch-controls { display: none; }
         #joystick-zone {
             position: absolute;
-            bottom: 25px; left: 25px; width: 90px; height: 90px; /* تصغير العصا */
+            bottom: 25px; left: 25px; width: 90px; height: 90px;
             background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
             touch-action: none;
         }
         #joystick-knob {
             position: absolute;
-            top: 22.5px; left: 22.5px; width: 45px; height: 45px; /* تصغير المؤشر */
+            top: 22.5px; left: 22.5px; width: 45px; height: 45px;
             background: rgba(138, 43, 226, 0.7); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
         }
         #speed-btn {
             position: absolute;
-            bottom: 40px; right: 25px; width: 65px; height: 65px; /* تصغير التيربو */
+            bottom: 40px; right: 25px; width: 65px; height: 65px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
             color: var(--pi-purple-dark); font-weight: 900; font-size: 15px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none;
@@ -360,6 +360,9 @@
 
         let cameraShakeIntensity = 0;
 
+        // مصفوفة الجزيئات المضافة حديثاً
+        const activeParticles = [];
+
         const fleet = [
             { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
@@ -374,6 +377,62 @@
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
+
+        // --- دوال المؤثرات البصرية (VFX) ---
+        function createExplosion(position, colorHex) {
+            const particleCount = 15;
+            const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5); 
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = new THREE.Mesh(geo, mat);
+                particle.position.copy(position);
+                particle.userData = {
+                    velocity: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4),
+                    life: 1.0, decay: Math.random() * 0.03 + 0.02
+                };
+                scene.add(particle);
+                activeParticles.push(particle);
+            }
+        }
+
+        function createEngineTrail() {
+            if (!isPlaying || isPaused || !currentActiveAirplane) return;
+            if (Math.random() > (keys.space ? 0.8 : 0.3)) return;
+
+            const geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            const color = keys.space ? 0xe74c3c : 0xdddddd; 
+            const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 });
+
+            const particle = new THREE.Mesh(geo, mat);
+            const tailOffset = new THREE.Vector3(0, 0, 4);
+            tailOffset.applyQuaternion(currentActiveAirplane.quaternion);
+            particle.position.copy(currentActiveAirplane.position).add(tailOffset);
+
+            particle.userData = {
+                velocity: new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, Math.random() * 1.5),
+                life: 1.0, decay: keys.space ? 0.05 : 0.03
+            };
+            scene.add(particle);
+            activeParticles.push(particle);
+        }
+
+        function updateParticles() {
+            if (isPaused) return; 
+            for (let i = activeParticles.length - 1; i >= 0; i--) {
+                const p = activeParticles[i];
+                p.position.add(p.userData.velocity);
+                p.userData.life -= p.userData.decay;
+                p.material.opacity = p.userData.life;
+                p.scale.setScalar(Math.max(p.userData.life, 0.01));
+
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    activeParticles.splice(i, 1);
+                }
+            }
+        }
+        // -----------------------------------
 
         function showNotification(text, isError = false) {
             const toast = document.getElementById('game-toast');
@@ -679,7 +738,6 @@
             if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            // تقليص مسافة السحب بناءً على حجم العصا الجديد
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
             
@@ -803,6 +861,7 @@
                             if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                         }
                     } else {
+                        // فيزياء الطيران (المحور الصادي معكوس بناءً على طلبك ليكون أكثر واقعية)
                         currentActiveAirplane.position.y += 0.6 * inputY; 
                         currentActiveAirplane.position.x += 1.2 * inputX;
                         
@@ -828,6 +887,10 @@
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
 
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
+                            
+                            // --> استدعاء تأثير الانفجار عند التقاط الحلقة <--
+                            createExplosion(ring.position, ring.material.color.getHex());
+                            
                             score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
                             if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
                             else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
@@ -846,7 +909,14 @@
                             createRing(lastSpawnZ - 160);
                         }
                     }
+                    
+                    // --> استدعاء مسار دخان المحرك <--
+                    createEngineTrail();
                 }
+                
+                // --> تحديث فيزياء الجزيئات في كل إطار <--
+                updateParticles();
+                
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
                 camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
