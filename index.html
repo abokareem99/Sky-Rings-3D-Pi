@@ -311,7 +311,7 @@
     </div>
 
     <script>
-        // --- إعدادات سوبابيس (Supabase configuration) ---
+        // --- إعدادات سوبابيس ---
         const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
         let supabaseClient = null;
@@ -353,14 +353,19 @@
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
+        const obstacles = []; // مصفوفة العوائق والجبال
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         let screenTouchState = { active: false, x: 0, y: 0 };
         let screenTouchCenter = { x: 0, y: 0 };
-
         let cameraShakeIntensity = 0;
 
-        // مصفوفة الجزيئات المضافة حديثاً
+        // متغيرات دورة الليل والنهار
+        let dayCycleTime = 0.5; // يبدأ من منتصف النهار
+        const colorDay = new THREE.Color(0xa3d2f7);
+        const colorNight = new THREE.Color(0x050a1f);
+        const colorSunset = new THREE.Color(0xff7e5f);
+
         const activeParticles = [];
 
         const fleet = [
@@ -381,7 +386,7 @@
         // --- دوال المؤثرات البصرية (VFX) ---
         function createExplosion(position, colorHex) {
             const particleCount = 15;
-            const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5); 
+            const geo = new THREE.SphereGeometry(0.8, 4, 4); // كرات صغيرة للتناثر
             const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
 
             for (let i = 0; i < particleCount; i++) {
@@ -389,29 +394,38 @@
                 particle.position.copy(position);
                 particle.userData = {
                     velocity: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4),
-                    life: 1.0, decay: Math.random() * 0.03 + 0.02
+                    life: 1.0, decay: Math.random() * 0.03 + 0.02, type: 'explosion'
                 };
                 scene.add(particle);
                 activeParticles.push(particle);
             }
         }
 
+        // تم تحويل الدخان إلى سحابة متصلة (SphereGeometry)
         function createEngineTrail() {
             if (!isPlaying || isPaused || !currentActiveAirplane) return;
-            if (Math.random() > (keys.space ? 0.8 : 0.3)) return;
+            
+            // توليد دخان بشكل أسرع وأكثر كثافة لتبدو كسحابة متصلة
+            if (Math.random() > (keys.space ? 0.9 : 0.6)) return;
 
-            const geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-            const color = keys.space ? 0xe74c3c : 0xdddddd; 
-            const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 });
+            const geo = new THREE.SphereGeometry(1.2, 5, 5); 
+            const color = keys.space ? 0xff5500 : 0xdddddd; 
+            const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: keys.space ? 0.8 : 0.4 });
 
             const particle = new THREE.Mesh(geo, mat);
             const tailOffset = new THREE.Vector3(0, 0, 4);
             tailOffset.applyQuaternion(currentActiveAirplane.quaternion);
+            
+            // إضافة عشوائية بسيطة للمكان لتبدو السحابة منفوشة
+            tailOffset.x += (Math.random() - 0.5) * 0.5;
+            tailOffset.y += (Math.random() - 0.5) * 0.5;
+            
             particle.position.copy(currentActiveAirplane.position).add(tailOffset);
 
             particle.userData = {
-                velocity: new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, Math.random() * 1.5),
-                life: 1.0, decay: keys.space ? 0.05 : 0.03
+                // الدخان يندفع للخلف ببطء
+                velocity: new THREE.Vector3(0, 0, Math.random() * 0.5 + 0.5),
+                life: 1.0, decay: keys.space ? 0.04 : 0.02, type: 'smoke'
             };
             scene.add(particle);
             activeParticles.push(particle);
@@ -424,7 +438,13 @@
                 p.position.add(p.userData.velocity);
                 p.userData.life -= p.userData.decay;
                 p.material.opacity = p.userData.life;
-                p.scale.setScalar(Math.max(p.userData.life, 0.01));
+                
+                // سحابة الدخان تتمدد وتكبر أثناء تلاشيها للحصول على شكل واقعي
+                if(p.userData.type === 'smoke') {
+                    p.scale.setScalar(1 + (1 - p.userData.life) * 3.5);
+                } else {
+                    p.scale.setScalar(Math.max(p.userData.life, 0.01));
+                }
 
                 if (p.userData.life <= 0) {
                     scene.remove(p);
@@ -518,15 +538,6 @@
             }
         }
 
-        async function uploadScoreToSupabase(username, finalScore) {
-            if (!supabaseClient) return;
-            try {
-                await supabaseClient.from('leaderboard').insert([{ username: username, score: finalScore }]);
-            } catch(e) {
-                console.error("خطأ أثناء رفع النتيجة:", e);
-            }
-        }
-
         async function connectPiWallet() {
             const walletBtn = document.getElementById('wallet-connect-btn');
             walletBtn.disabled = true; walletBtn.innerText = "جاري الاتصال... ⏳";
@@ -563,34 +574,6 @@
             }
         }
 
-        async function executePiPayment(plane) {
-            const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
-            try {
-                const paymentData = {
-                    amount: plane.piCost,
-                    memo: "شراء " + plane.name,
-                    metadata: { planeId: String(plane.id), developer: "AbuKareem" }
-                };
-                const callbacks = {
-                    onReadyForServerApproval: function(paymentId) {
-                        fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) });
-                    },
-                    onReadyForServerCompletion: function(paymentId, txid) {
-                        fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) })
-                        .then(() => {
-                            localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
-                            showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`);
-                            startBtn.disabled = false; updateShopUI();
-                        }).catch(() => { startBtn.disabled = false; updateShopUI(); });
-                    },
-                    onCancel: function() { startBtn.disabled = false; updateShopUI(); },
-                    onError: function() { startBtn.disabled = false; updateShopUI(); }
-                };
-                await Pi.createPayment(paymentData, callbacks);
-            } catch (err) { startBtn.disabled = false; updateShopUI(); }
-        }
-
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initEngineSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -618,14 +601,36 @@
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175 };
+        const mountainMat = new THREE.MeshStandardMaterial({ color: 0x6e523d, roughness: 1.0, flatShading: true });
 
+        // توليد التضاريس مع إضافة الجبال (العوائق)
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const geometry = new THREE.PlaneGeometry(1200, 1000, 10, 10);
             const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
+            
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x222222 }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
+            } else {
+                // توليد الجبال عشوائياً كعوائق
+                for (let i = 0; i < 10; i++) {
+                    let height = Math.random() * 150 + 50;
+                    let radius = Math.random() * 50 + 30;
+                    const mGeo = new THREE.ConeGeometry(radius, height, 5);
+                    const mountain = new THREE.Mesh(mGeo, mountainMat);
+                    
+                    let mx = (Math.random() - 0.5) * 800; 
+                    // ترك مسار حر نوعاً ما في المنتصف
+                    if (Math.abs(mx) < 70) mx += (mx > 0 ? 100 : -100); 
+                    
+                    let mz = zPos + (Math.random() - 0.5) * 1000;
+                    
+                    mountain.position.set(mx, -10 + height / 2, mz);
+                    scene.add(mountain);
+                    
+                    obstacles.push({ mesh: mountain, radius: radius, height: height });
+                }
             }
         }
 
@@ -699,8 +704,7 @@
             let selected = rand < 0.60 ? ringTypes[0] : (rand < 0.80 ? ringTypes[1] : (rand < 0.90 ? ringTypes[2] : ringTypes[3]));
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
             const ringMaterial = new THREE.MeshStandardMaterial({ 
-                color: selected.color, 
-                metalness: 0.8, 
+                color: selected.color, metalness: 0.8, 
                 emissive: selected.type === 'golden' ? 0xffcc00 : (selected.type === 'bonus' ? 0x4a148c : 0x000000), 
                 emissiveIntensity: selected.type === 'golden' ? 2 : 0.5 
             });
@@ -746,41 +750,20 @@
         }
         
         joyZone.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            joyState.active = true; const rect = joyZone.getBoundingClientRect();
-            joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; 
+            e.preventDefault(); e.stopPropagation(); joyState.active = true; 
+            const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; 
             handleTouchMove(e);
         }, { passive: false });
         
-        joyZone.addEventListener('touchmove', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            handleTouchMove(e); 
-        }, { passive: false });
-        
-        joyZone.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; 
-        }, { passive: false });
+        joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); handleTouchMove(e); }, { passive: false });
+        joyZone.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; }, { passive: false });
         
         const speedButtonEl = document.getElementById('speed-btn');
-        speedButtonEl.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            keys.space = true; 
-        }, { passive: false });
-        
-        speedButtonEl.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            keys.space = false; 
-        }, { passive: false });
+        speedButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; }, { passive: false });
+        speedButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = false; }, { passive: false });
         
         renderer.domElement.addEventListener('touchstart', (e) => {
-            if (!isPlaying || isPaused) return;
-            if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl) return;
+            if (!isPlaying || isPaused || e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl) return;
             screenTouchState.active = true; screenTouchCenter = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: false });
         
@@ -789,8 +772,7 @@
             let dx = e.touches[0].clientX - screenTouchCenter.x; let dy = e.touches[0].clientY - screenTouchCenter.y;
             const maxDrag = 60; let dist = Math.sqrt(dx*dx + dy*dy);
             if (dist > maxDrag) { dx = (dx / dist) * maxDrag; dy = (dy / dist) * maxDrag; }
-            screenTouchState.x = dx / maxDrag; 
-            screenTouchState.y = (dy / maxDrag); 
+            screenTouchState.x = dx / maxDrag; screenTouchState.y = (dy / maxDrag); 
         }, { passive: false });
         
         renderer.domElement.addEventListener('touchend', () => { screenTouchState.active = false; screenTouchState.x = 0; screenTouchState.y = 0; });
@@ -822,14 +804,20 @@
             totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints; document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
-            if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score); }
         }
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0;
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
-            updateShopUI(); rings.forEach(r => scene.remove(r)); rings.length = 0;
+            
+            // تنظيف الحلقات والعوائق
+            rings.forEach(r => scene.remove(r)); rings.length = 0;
+            obstacles.forEach(o => scene.remove(o.mesh)); obstacles.length = 0;
+            activeParticles.forEach(p => scene.remove(p)); activeParticles.length = 0;
+            dayCycleTime = 0.5; // إعادة الزمن للنهار
+            
+            updateShopUI(); 
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
@@ -837,6 +825,22 @@
         let lastTerrainZ = -2000;
         function animate() {
             requestAnimationFrame(animate);
+            
+            if (isPlaying && !isPaused) {
+                // دورة الليل والنهار
+                dayCycleTime += 0.001;
+                let cycle = (Math.sin(dayCycleTime) + 1) / 2; // قيم من 0 إلى 1
+                let currentBg = new THREE.Color();
+                if (cycle > 0.5) {
+                    currentBg.lerpColors(colorSunset, colorDay, (cycle - 0.5) * 2);
+                } else {
+                    currentBg.lerpColors(colorNight, colorSunset, cycle * 2);
+                }
+                scene.background = currentBg;
+                scene.fog.color = currentBg;
+                sunLight.intensity = 0.3 + cycle * 1.1; // الإضاءة تخفت بالليل
+            }
+
             if (isPlaying && currentActiveAirplane) {
                 if (!isPaused) {
                     let speedMultiplier = keys.space ? 4.5 : 2.2;
@@ -861,13 +865,10 @@
                             if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                         }
                     } else {
-                        // فيزياء الطيران (المحور الصادي معكوس بناءً على طلبك ليكون أكثر واقعية)
                         currentActiveAirplane.position.y += 0.6 * inputY; 
                         currentActiveAirplane.position.x += 1.2 * inputX;
-                        
                         currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.4 * inputX, 0.1);
                         currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.25 * inputY, 0.1);
-                        
                         if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
                     }
 
@@ -882,15 +883,34 @@
 
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
 
+                    // نظام تصادم العوائق (الجبال) وتحديثها
+                    for (let i = obstacles.length - 1; i >= 0; i--) {
+                        const obs = obstacles[i];
+                        if (obs.mesh.position.z > currentActiveAirplane.position.z + 200) {
+                            scene.remove(obs.mesh);
+                            obstacles.splice(i, 1);
+                        } else if (currentActiveAirplane.position.z < obs.mesh.position.z + obs.radius && currentActiveAirplane.position.z > obs.mesh.position.z - obs.radius) {
+                            let dx = currentActiveAirplane.position.x - obs.mesh.position.x;
+                            let dz = currentActiveAirplane.position.z - obs.mesh.position.z;
+                            if (Math.sqrt(dx*dx + dz*dz) < obs.radius * 0.75) {
+                                if (currentActiveAirplane.position.y < (-10 + obs.height)) {
+                                    // ارتداد عند الاصطدام بالجبل
+                                    currentActiveAirplane.position.y += 8; 
+                                    cameraShakeIntensity = 3;
+                                    currentSpeed *= 0.5;
+                                    showNotification("💥 اصطدام بجبل! احذر التضاريس", true);
+                                }
+                            }
+                        }
+                    }
+
+                    // جمع الحلقات
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
 
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
-                            
-                            // --> استدعاء تأثير الانفجار عند التقاط الحلقة <--
                             createExplosion(ring.position, ring.material.color.getHex());
-                            
                             score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
                             if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
                             else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
@@ -909,14 +929,9 @@
                             createRing(lastSpawnZ - 160);
                         }
                     }
-                    
-                    // --> استدعاء مسار دخان المحرك <--
                     createEngineTrail();
                 }
-                
-                // --> تحديث فيزياء الجزيئات في كل إطار <--
                 updateParticles();
-                
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
                 camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
