@@ -490,10 +490,10 @@
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (engineOsc) return; 
-            engineOsc = audioCtx.createOscillator(); engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
-            engineOsc2 = audioCtx.createOscillator(); engineOsc2.type = 'sawtooth'; engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
-            engineFilter = audioCtx.createBiquadFilter(); engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
-            engineGain = audioCtx.createGain(); engineGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            engineOsc = audioCtx.createOscillator(); engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
+            engineOsc2 = audioCtx.createOscillator(); engineOsc2.type = 'sawtooth'; engineOsc2.frequency.setValueAtTime(42, audioCtx.currentTime);
+            engineFilter = audioCtx.createBiquadFilter(); engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(200, audioCtx.currentTime);
+            engineGain = audioCtx.createGain(); engineGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
             engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter); engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
             engineOsc.start(); engineOsc2.start();
         }
@@ -586,12 +586,18 @@
             const ringTypes = [
                 { type: 'normal', color: 0xffd700, points: 10, time: 4, scale: 1 },        
                 { type: 'danger', color: 0xe74c3c, points: -15, time: -6, scale: 0.85 },   
-                { type: 'bonus', color: 0x8a2be2, points: 30, time: 8, scale: 1.1 }        
+                { type: 'bonus', color: 0x8a2be2, points: 30, time: 8, scale: 1.1 },
+                { type: 'golden', color: 0xffcc00, points: 100, time: 15, scale: 1.5 }
             ];
             let rand = Math.random();
-            let selected = rand < 0.65 ? ringTypes[0] : (rand < 0.90 ? ringTypes[1] : ringTypes[2]);
+            let selected = rand < 0.60 ? ringTypes[0] : (rand < 0.80 ? ringTypes[1] : (rand < 0.90 ? ringTypes[2] : ringTypes[3]));
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
-            const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'bonus' ? 0x4a148c : 0x000000, emissiveIntensity: 0.5 });
+            const ringMaterial = new THREE.MeshStandardMaterial({ 
+                color: selected.color, 
+                metalness: 0.8, 
+                emissive: selected.type === 'golden' ? 0xffcc00 : (selected.type === 'bonus' ? 0x4a148c : 0x000000), 
+                emissiveIntensity: selected.type === 'golden' ? 2 : 0.5 
+            });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
             ring.position.set((Math.random() - 0.5) * 160, Math.random() * 50 + 15, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
@@ -770,7 +776,8 @@
                     // 1. فحص الاصطدام (جمع الحلقات بنجاح)
                     if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
                         score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
-                        if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
+                        if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
+                        else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
                         else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
                         document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
                         
