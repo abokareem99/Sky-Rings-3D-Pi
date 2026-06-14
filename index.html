@@ -529,11 +529,28 @@
             engineOsc = null;
         }
 
-        // --- التضاريس المحسنة ---
+        // --- التضاريس المحسنة وإضافة الخلفيات العشوائية ---
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const rockGeo = new THREE.DodecahedronGeometry(5, 0); 
         const mountainMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, flatShading: true, roughness: 0.9 });
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 1.0 });
+        
+        // --- إضافة الخلفيات المتغيرة للأرضية ---
+        const environments = [
+            '3d_city_buildings.png',
+            '3d_desert_dunes.png',
+            '3d_forest_environment.png',
+            '3d_mountains_landscape.png',
+            '3d_snow_winter.png'
+        ];
+        const randomEnv = environments[Math.floor(Math.random() * environments.length)];
+        const textureLoader = new THREE.TextureLoader();
+        const groundTexture = textureLoader.load(randomEnv);
+        // إعداد تكرار الصورة لتغطية مساحة الأرضية الواسعة بدون أن تمط
+        groundTexture.wrapS = THREE.RepeatWrapping;
+        groundTexture.wrapT = THREE.RepeatWrapping;
+        groundTexture.repeat.set(10, 5); 
+
+        const groundMat = new THREE.MeshStandardMaterial({ map: groundTexture, roughness: 1.0 });
 
         function createTerrainSegment(zPos, isRunway = false) {
             const plane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 1000), groundMat);
