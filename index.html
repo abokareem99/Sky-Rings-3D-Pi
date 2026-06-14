@@ -6,7 +6,6 @@
     <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700;900&display=swap" rel="stylesheet">
     
-    <!-- مكتبات المحرك، SDK الخاص بباي، ومكتبة سوبابيس للوحة الصدارة الحية -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -264,7 +263,6 @@
                 <div>SECURE WALLET v2.0-TEST</div>
             </div>
 
-            <!-- التذييل الخاص بحفظ الحقوق البرمجية -->
             <div style="width: 100%; text-align: center; padding-top: 5px; font-size: 11px; color: rgba(255,255,255,0.4); font-family: monospace; letter-spacing: 1px;">
                 Developed by Ateya magzoub
             </div>
@@ -626,8 +624,8 @@
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
             
             joyState.x = dx / 30; 
-            // عكس حركة الـ Y هنا لمحاكاة الطيران الحقيقي: سحب لأسفل (dy موجب) يعطي قيمة سالبة للتحكم ليرتفع، ودفع لأعلى يعطي قيمة موجبة لينخفض
-            joyState.y = -(dy / 30); 
+            // تعديل: سحب لأسفل (dy موجب) يعطي قيمة موجبة للتحكم لترتفع الطائرة تماشيًا مع طلبك
+            joyState.y = (dy / 30); 
         }
         
         joyZone.addEventListener('touchstart', (e) => {
@@ -676,8 +674,8 @@
             const maxDrag = 60; let dist = Math.sqrt(dx*dx + dy*dy);
             if (dist > maxDrag) { dx = (dx / dist) * maxDrag; dy = (dy / dist) * maxDrag; }
             screenTouchState.x = dx / maxDrag; 
-            // الملمس العشوائي على الشاشة يتبع أيضاً منطق الطيران الاحترافي المعكوس
-            screenTouchState.y = -(dy / maxDrag); 
+            // تعديل: التحكم باللمس على الشاشة يتبع الآن نفس طريقة العصا تماماً (سحب لأسفل يجعل الطائرة ترتفع)
+            screenTouchState.y = (dy / maxDrag); 
         }, { passive: false });
         
         renderer.domElement.addEventListener('touchend', () => { screenTouchState.active = false; screenTouchState.x = 0; screenTouchState.y = 0; });
@@ -732,7 +730,6 @@
                 
                 // الكيبورد: W ينزل الطائرة مقدمة لأسفل (inputY سالب)، و S يرفع الطائرة مقدمة لأعلى (inputY موجب)
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
-                if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
