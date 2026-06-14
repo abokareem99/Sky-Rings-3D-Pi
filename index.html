@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -31,7 +31,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #a3d2f7; 
+            background-color: #87CEEB; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -320,12 +320,13 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
+        // --- تهيئة المشهد والإضاءة المحسنة ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xa3d2f7);
-        const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
+        scene.background = new THREE.Color(0x87CEEB);
+        const fog = new THREE.FogExp2(0x87CEEB, 0.0015);
         scene.fog = fog;
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
    
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -333,9 +334,11 @@
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
-        sunLight.position.set(100, 300, 100);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        scene.add(hemiLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        sunLight.position.set(500, 500, 500);
+        sunLight.castShadow = true;
         scene.add(sunLight);
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
@@ -353,7 +356,7 @@
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
-        const obstacles = []; // مصفوفة العوائق والجبال
+        const obstacles = [];
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
         let screenTouchState = { active: false, x: 0, y: 0 };
@@ -361,12 +364,10 @@
         let cameraShakeIntensity = 0;
 
         // متغيرات دورة الليل والنهار
-        let dayCycleTime = 0.5; // يبدأ من منتصف النهار
-        const colorDay = new THREE.Color(0xa3d2f7);
+        let dayCycleTime = 0.5;
+        const colorDay = new THREE.Color(0x87CEEB);
         const colorNight = new THREE.Color(0x050a1f);
         const colorSunset = new THREE.Color(0xff7e5f);
-
-        const activeParticles = [];
 
         const fleet = [
             { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
@@ -382,77 +383,6 @@
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
-
-        // --- دوال المؤثرات البصرية (VFX) ---
-        function createExplosion(position, colorHex) {
-            const particleCount = 15;
-            const geo = new THREE.SphereGeometry(0.8, 4, 4); // كرات صغيرة للتناثر
-            const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = new THREE.Mesh(geo, mat);
-                particle.position.copy(position);
-                particle.userData = {
-                    velocity: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4),
-                    life: 1.0, decay: Math.random() * 0.03 + 0.02, type: 'explosion'
-                };
-                scene.add(particle);
-                activeParticles.push(particle);
-            }
-        }
-
-        // تم تحويل الدخان إلى سحابة متصلة (SphereGeometry)
-        function createEngineTrail() {
-            if (!isPlaying || isPaused || !currentActiveAirplane) return;
-            
-            // توليد دخان بشكل أسرع وأكثر كثافة لتبدو كسحابة متصلة
-            if (Math.random() > (keys.space ? 0.9 : 0.6)) return;
-
-            const geo = new THREE.SphereGeometry(1.2, 5, 5); 
-            const color = keys.space ? 0xff5500 : 0xdddddd; 
-            const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: keys.space ? 0.8 : 0.4 });
-
-            const particle = new THREE.Mesh(geo, mat);
-            const tailOffset = new THREE.Vector3(0, 0, 4);
-            tailOffset.applyQuaternion(currentActiveAirplane.quaternion);
-            
-            // إضافة عشوائية بسيطة للمكان لتبدو السحابة منفوشة
-            tailOffset.x += (Math.random() - 0.5) * 0.5;
-            tailOffset.y += (Math.random() - 0.5) * 0.5;
-            
-            particle.position.copy(currentActiveAirplane.position).add(tailOffset);
-
-            particle.userData = {
-                // الدخان يندفع للخلف ببطء
-                velocity: new THREE.Vector3(0, 0, Math.random() * 0.5 + 0.5),
-                life: 1.0, decay: keys.space ? 0.04 : 0.02, type: 'smoke'
-            };
-            scene.add(particle);
-            activeParticles.push(particle);
-        }
-
-        function updateParticles() {
-            if (isPaused) return; 
-            for (let i = activeParticles.length - 1; i >= 0; i--) {
-                const p = activeParticles[i];
-                p.position.add(p.userData.velocity);
-                p.userData.life -= p.userData.decay;
-                p.material.opacity = p.userData.life;
-                
-                // سحابة الدخان تتمدد وتكبر أثناء تلاشيها للحصول على شكل واقعي
-                if(p.userData.type === 'smoke') {
-                    p.scale.setScalar(1 + (1 - p.userData.life) * 3.5);
-                } else {
-                    p.scale.setScalar(Math.max(p.userData.life, 0.01));
-                }
-
-                if (p.userData.life <= 0) {
-                    scene.remove(p);
-                    activeParticles.splice(i, 1);
-                }
-            }
-        }
-        // -----------------------------------
 
         function showNotification(text, isError = false) {
             const toast = document.getElementById('game-toast');
@@ -599,42 +529,39 @@
             engineOsc = null;
         }
 
+        // --- التضاريس المحسنة ---
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175 };
-        const mountainMat = new THREE.MeshStandardMaterial({ color: 0x6e523d, roughness: 1.0, flatShading: true });
+        const rockGeo = new THREE.DodecahedronGeometry(5, 0); 
+        const mountainMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, flatShading: true, roughness: 0.9 });
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 1.0 });
 
-        // توليد التضاريس مع إضافة الجبال (العوائق)
-        function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const geometry = new THREE.PlaneGeometry(1200, 1000, 10, 10);
-            const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
-            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
+        function createTerrainSegment(zPos, isRunway = false) {
+            const plane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 1000), groundMat);
+            plane.rotation.x = -Math.PI / 2; plane.position.set(0, -10, zPos); plane.receiveShadow = true; terrainGroup.add(plane);
             
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x222222 }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             } else {
-                // توليد الجبال عشوائياً كعوائق
-                for (let i = 0; i < 10; i++) {
-                    let height = Math.random() * 150 + 50;
-                    let radius = Math.random() * 50 + 30;
-                    const mGeo = new THREE.ConeGeometry(radius, height, 5);
-                    const mountain = new THREE.Mesh(mGeo, mountainMat);
+                for (let i = 0; i < 15; i++) {
+                    const isMountain = Math.random() > 0.6;
+                    const size = isMountain ? (Math.random() * 80 + 40) : (Math.random() * 8 + 3);
+                    const geo = isMountain ? new THREE.ConeGeometry(size/2, size, 5) : rockGeo;
+                    const mesh = new THREE.Mesh(geo, mountainMat);
                     
-                    let mx = (Math.random() - 0.5) * 800; 
-                    // ترك مسار حر نوعاً ما في المنتصف
-                    if (Math.abs(mx) < 70) mx += (mx > 0 ? 100 : -100); 
+                    let x = (Math.random() - 0.5) * 1200; 
+                    if (Math.abs(x) < 120) x += (x > 0 ? 150 : -150); 
                     
-                    let mz = zPos + (Math.random() - 0.5) * 1000;
+                    mesh.position.set(x, isMountain ? (size/2 - 10) : -8, zPos + (Math.random() - 0.5) * 800);
+                    mesh.castShadow = true; mesh.receiveShadow = true;
+                    scene.add(mesh);
                     
-                    mountain.position.set(mx, -10 + height / 2, mz);
-                    scene.add(mountain);
-                    
-                    obstacles.push({ mesh: mountain, radius: radius, height: height });
+                    obstacles.push({ mesh: mesh, radius: isMountain ? size/2 : size, height: isMountain ? size : size });
                 }
             }
         }
 
-        createTerrainSegment(0, envColors.desert, true); createTerrainSegment(-1000, envColors.desert); createTerrainSegment(-2000, envColors.desert);
+        createTerrainSegment(0, true); createTerrainSegment(-1000); createTerrainSegment(-2000);
 
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
@@ -811,11 +738,9 @@
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             
-            // تنظيف الحلقات والعوائق
             rings.forEach(r => scene.remove(r)); rings.length = 0;
             obstacles.forEach(o => scene.remove(o.mesh)); obstacles.length = 0;
-            activeParticles.forEach(p => scene.remove(p)); activeParticles.length = 0;
-            dayCycleTime = 0.5; // إعادة الزمن للنهار
+            dayCycleTime = 0.5;
             
             updateShopUI(); 
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
@@ -827,9 +752,8 @@
             requestAnimationFrame(animate);
             
             if (isPlaying && !isPaused) {
-                // دورة الليل والنهار
                 dayCycleTime += 0.001;
-                let cycle = (Math.sin(dayCycleTime) + 1) / 2; // قيم من 0 إلى 1
+                let cycle = (Math.sin(dayCycleTime) + 1) / 2;
                 let currentBg = new THREE.Color();
                 if (cycle > 0.5) {
                     currentBg.lerpColors(colorSunset, colorDay, (cycle - 0.5) * 2);
@@ -838,7 +762,8 @@
                 }
                 scene.background = currentBg;
                 scene.fog.color = currentBg;
-                sunLight.intensity = 0.3 + cycle * 1.1; // الإضاءة تخفت بالليل
+                sunLight.intensity = 0.3 + cycle * 1.1;
+                hemiLight.intensity = 0.2 + cycle * 0.5;
             }
 
             if (isPlaying && currentActiveAirplane) {
@@ -881,9 +806,8 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
+                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ); }
 
-                    // نظام تصادم العوائق (الجبال) وتحديثها
                     for (let i = obstacles.length - 1; i >= 0; i--) {
                         const obs = obstacles[i];
                         if (obs.mesh.position.z > currentActiveAirplane.position.z + 200) {
@@ -894,7 +818,6 @@
                             let dz = currentActiveAirplane.position.z - obs.mesh.position.z;
                             if (Math.sqrt(dx*dx + dz*dz) < obs.radius * 0.75) {
                                 if (currentActiveAirplane.position.y < (-10 + obs.height)) {
-                                    // ارتداد عند الاصطدام بالجبل
                                     currentActiveAirplane.position.y += 8; 
                                     cameraShakeIntensity = 3;
                                     currentSpeed *= 0.5;
@@ -904,15 +827,13 @@
                         }
                     }
 
-                    // جمع الحلقات
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
 
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
-                            createExplosion(ring.position, ring.material.color.getHex());
                             score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
-                            if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
+                            if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; cameraShakeIntensity = 0.5;}
                             else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
                             else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
                             document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
@@ -929,9 +850,7 @@
                             createRing(lastSpawnZ - 160);
                         }
                     }
-                    createEngineTrail();
                 }
-                updateParticles();
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
                 camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
