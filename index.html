@@ -37,6 +37,19 @@
             touch-action: none;
         }
         
+        /* إضافة ستايل لاختيار الخلفية */
+        #bg-selector {
+            position: absolute; top: 15px; right: 15px; z-index: 100;
+            background: var(--bg-glass); color: white; padding: 8px 12px; 
+            border-radius: 8px; font-size: 14px; backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass); font-family: 'Cairo', sans-serif;
+        }
+        #bg-selector select {
+            background: transparent; color: var(--pi-gold); border: none; 
+            font-family: 'Cairo', sans-serif; font-weight: bold; outline: none; cursor: pointer;
+        }
+        #bg-selector select option { background: #0f172a; color: white; }
+
         #hud-container {
             position: absolute;
             top: 75px; left: 15px; right: 15px;
@@ -206,19 +219,19 @@
         #touch-controls { display: none; }
         #joystick-zone {
             position: absolute;
-            bottom: 25px; left: 25px; width: 90px; height: 90px; /* تصغير العصا */
+            bottom: 25px; left: 25px; width: 90px; height: 90px;
             background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
             touch-action: none;
         }
         #joystick-knob {
             position: absolute;
-            top: 22.5px; left: 22.5px; width: 45px; height: 45px; /* تصغير المؤشر */
+            top: 22.5px; left: 22.5px; width: 45px; height: 45px;
             background: rgba(138, 43, 226, 0.7); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
         }
         #speed-btn {
             position: absolute;
-            bottom: 40px; right: 25px; width: 65px; height: 65px; /* تصغير التيربو */
+            bottom: 40px; right: 25px; width: 65px; height: 65px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
             color: var(--pi-purple-dark); font-weight: 900; font-size: 15px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none;
@@ -226,6 +239,15 @@
     </style>
 </head>
 <body>
+
+    <div id="bg-selector">
+        <label>الخلفية:</label>
+        <select id="env-select" onchange="changeBackground(this.value)">
+            <option value="1000097393.png">الخلفية الأساسية 1</option>
+            <option value="background2.png">الخلفية 2 (أضف مسارها هنا)</option>
+            <option value="background3.png">الخلفية 3 (أضف مسارها هنا)</option>
+        </select>
+    </div>
 
     <div id="game-toast" class="glass-panel"></div>
 
@@ -321,8 +343,19 @@
         }
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xa3d2f7);
-        const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
+        
+        // --- إعدادات الخلفية الديناميكية ---
+        const textureLoader = new THREE.TextureLoader();
+        function changeBackground(fileName) {
+            textureLoader.load(fileName, (texture) => {
+                scene.background = texture;
+            });
+        }
+        // تحميل الصورة الافتراضية
+        changeBackground('1000097393.png');
+        
+        // تعديل الضباب ليناسب الصور (تخفيف الكثافة)
+        const fog = new THREE.FogExp2(0xa3d2f7, 0.0004);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -679,7 +712,6 @@
             if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            // تقليص مسافة السحب بناءً على حجم العصا الجديد
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
             
