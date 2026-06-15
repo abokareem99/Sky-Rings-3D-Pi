@@ -29,7 +29,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #a3d2f7; 
+            background-color: #dfb175; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -240,8 +240,8 @@
     <div id="bg-selector">
         <label>المشهد:</label>
         <select id="env-select" onchange="changeBackground(this.value)">
+            <option value="3d_desert_dunes.png" selected>الصحراء</option>
             <option value="3d_city_buildings.png">المدينة</option>
-            <option value="3d_desert_dunes.png">الصحراء</option>
             <option value="3d_forest_environment.png">الغابة</option>
             <option value="3d_mountains_landscape.png">الجبال</option>
             <option value="3d_snow_winter.png">الثلج</option>
@@ -332,11 +332,9 @@
     </div>
 
     <script>
-        // مزامنة آمنة لتهيئة مكتبة Pi بعد التأكد من اكتمال تحميل السكربتات لمنع انهيار الواجهة
         window.addEventListener('load', () => {
             if (window.Pi) {
                 try {
-                    // تفعيل نمط اختبار الـ Sandbox لضمان دعم المحاكاة على كافة المتصفحات
                     Pi.init({ version: "2.0", sandbox: true });
                     console.log("Pi SDK has been successfully initialized on window load.");
                 } catch (e) {
@@ -363,9 +361,11 @@
                 scene.background = texture;
             });
         }
-        changeBackground('3d_city_buildings.png');
+        // تعيين خلفية الصحراء كافتراضية
+        changeBackground('3d_desert_dunes.png');
         
-        const fog = new THREE.FogExp2(0xa3d2f7, 0.0004);
+        // تعديل لون الضباب ليتناسب مع البيئة الرملية الصحراوية
+        const fog = new THREE.FogExp2(0xdfb175, 0.0006);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -376,9 +376,9 @@
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
-        sunLight.position.set(100, 300, 100);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const sunLight = new THREE.DirectionalLight(0xffedd3, 1.5);
+        sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
@@ -631,19 +631,58 @@
         }
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175 };
+        const envColors = { desert: 0xdfb175, mountain: 0xcc9955 };
 
+        // دالة توليد الجبال الصحراوية والممرات تلقائياً بأداء عالي جداً للهواتف
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const geometry = new THREE.PlaneGeometry(1200, 1000, 10, 10);
-            const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
-            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
+            // إنشاء شبكة جغرافية معقدة نسبياً لتشكيل التضاريس والجبال
+            const geometry = new THREE.PlaneGeometry(1400, 1000, 40, 30);
+            const pos = geometry.attributes.position;
+
+            // توليد الارتفاعات برمجياً لتشكيل الجبال على الأطراف وتأمين ممر الطائرة في المنتصف
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                
+                // معادلة جيبية رياضية لتصميم القمم والقيعان الصحراوية المتموجة
+                let zHeight = Math.sin(x * 0.015) * Math.cos(y * 0.015) * 65;
+                zHeight += Math.sin(x * 0.04) * 15; 
+                
+                // خفض الجبال كلياً في منتصف المسار (ممر الطيران) لضمان عدم الاصطدام المباشر والرؤية الواضحة
+                if (Math.abs(x) < 140) {
+                    let factor = Math.abs(x) / 140;
+                    zHeight *= (factor * factor); 
+                }
+
+                pos.setZ(i, zHeight);
+            }
+            
+            geometry.computeVertexNormals();
+
+            // استخدام مادة غير لامعة وبأوجه مضلعةLow-Poly لإعطاء مظهر ثلاثي الأبعاد جميل ومثالي للهواتف
+            const terrainMaterial = new THREE.MeshStandardMaterial({ 
+                color: colorHex, 
+                roughness: 0.95, 
+                flatShading: true 
+            });
+
+            const terrain = new THREE.Mesh(geometry, terrainMaterial);
+            terrain.rotation.x = -Math.PI / 2; 
+            terrain.position.set(0, -18, zPos); 
+            terrain.receiveShadow = true; 
+            terrain.castShadow = true;
+            terrainGroup.add(terrain);
+
             if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
+                const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 800), new THREE.MeshStandardMaterial({ color: 0x292522, roughness: 0.8 }));
+                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -17.6, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             }
         }
 
-        createTerrainSegment(0, envColors.desert, true); createTerrainSegment(-1000, envColors.desert); createTerrainSegment(-2000, envColors.desert);
+        // بناء البيئة التمهيدية الأولية للجبال والصحراء
+        createTerrainSegment(0, envColors.desert, true); 
+        createTerrainSegment(-1000, envColors.desert); 
+        createTerrainSegment(-2000, envColors.desert);
 
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
@@ -719,7 +758,8 @@
                 emissiveIntensity: selected.type === 'golden' ? 2 : 0.5 
             });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 50 + 15, zPos);
+            // تعديل ارتفاع الحلقات برمجياً لتطير بمحاذاة الارتفاع المريح فوق ممر الجبال
+            ring.position.set((Math.random() - 0.5) * 190, Math.random() * 45 + 10, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
         }
@@ -865,7 +905,7 @@
                         if (inputY > 0) { 
                             currentActiveAirplane.position.y += 0.2; 
                             currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.15, 0.1); 
-                            if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
+                            if (currentActiveAirplane.position.y > -5) hasTakenOff = true; 
                         }
                     } else {
                         currentActiveAirplane.position.y += 0.6 * inputY; 
@@ -874,7 +914,7 @@
                         currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.4 * inputX, 0.1);
                         currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.25 * inputY, 0.1);
                         
-                        if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
+                        if(currentActiveAirplane.position.y < -12) currentActiveAirplane.position.y = -12;
                     }
 
                     camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.08);
@@ -886,6 +926,7 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
+                    // تمديد سلاسل الجبال اللانهائية تلقائياً أثناء تقدم الطائرة في الأفق الصحراوي
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
 
                     for (let i = rings.length - 1; i >= 0; i--) {
