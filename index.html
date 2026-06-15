@@ -37,7 +37,6 @@
             touch-action: none;
         }
         
-        /* إضافة ستايل لاختيار الخلفية */
         #bg-selector {
             position: absolute; top: 15px; right: 15px; z-index: 100;
             background: var(--bg-glass); color: white; padding: 8px 12px; 
@@ -240,12 +239,15 @@
 </head>
 <body>
 
+    <!-- قائمة اختيار الخلفية محدثة بأسماء الصور -->
     <div id="bg-selector">
-        <label>الخلفية:</label>
+        <label>المشهد:</label>
         <select id="env-select" onchange="changeBackground(this.value)">
-            <option value="1000097393.png">الخلفية الأساسية 1</option>
-            <option value="background2.png">الخلفية 2 (أضف مسارها هنا)</option>
-            <option value="background3.png">الخلفية 3 (أضف مسارها هنا)</option>
+            <option value="3d_city_buildings.png">المدينة</option>
+            <option value="3d_desert_dunes.png">الصحراء</option>
+            <option value="3d_forest_environment.png">الغابة</option>
+            <option value="3d_mountains_landscape.png">الجبال</option>
+            <option value="3d_snow_winter.png">الثلج</option>
         </select>
     </div>
 
@@ -267,7 +269,7 @@
     </div>
 
     <div id="loading">
-        <div class="loading-text">جاري تجهيز حظيرة الطائرات...</div>
+        <div class="loading-text">جاري التجهيز...</div>
         <div class="loading-bar-container"><div class="loading-bar"></div></div>
     </div>
     
@@ -333,7 +335,6 @@
     </div>
 
     <script>
-        // --- إعدادات سوبابيس (Supabase configuration) ---
         const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
         let supabaseClient = null;
@@ -344,17 +345,15 @@
 
         const scene = new THREE.Scene();
         
-        // --- إعدادات الخلفية الديناميكية ---
         const textureLoader = new THREE.TextureLoader();
         function changeBackground(fileName) {
             textureLoader.load(fileName, (texture) => {
                 scene.background = texture;
             });
         }
-        // تحميل الصورة الافتراضية
-        changeBackground('1000097393.png');
+        // تعيين صورة المدينة كخلفية افتراضية عند التحميل
+        changeBackground('3d_city_buildings.png');
         
-        // تعديل الضباب ليناسب الصور (تخفيف الكثافة)
         const fog = new THREE.FogExp2(0xa3d2f7, 0.0004);
         scene.fog = fog;
 
