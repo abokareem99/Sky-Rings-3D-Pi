@@ -34,18 +34,6 @@
             -webkit-user-select: none;
             touch-action: none;
         }
-        
-        #bg-selector {
-            position: absolute; top: 15px; right: 15px; z-index: 100;
-            background: var(--bg-glass); color: white; padding: 8px 12px; 
-            border-radius: 8px; font-size: 14px; backdrop-filter: blur(12px);
-            border: 1px solid var(--border-glass); font-family: 'Cairo', sans-serif;
-        }
-        #bg-selector select {
-            background: transparent; color: var(--pi-gold); border: none; 
-            font-family: 'Cairo', sans-serif; font-weight: bold; outline: none; cursor: pointer;
-        }
-        #bg-selector select option { background: #0f172a; color: white; }
 
         #hud-container {
             position: absolute;
@@ -237,17 +225,6 @@
 </head>
 <body>
 
-    <div id="bg-selector">
-        <label>المشهد:</label>
-        <select id="env-select" onchange="changeBackground(this.value)">
-            <option value="3d_desert_dunes.png" selected>الصحراء</option>
-            <option value="3d_city_buildings.png">المدينة</option>
-            <option value="3d_forest_environment.png">الغابة</option>
-            <option value="3d_mountains_landscape.png">الجبال</option>
-            <option value="3d_snow_winter.png">الثلج</option>
-        </select>
-    </div>
-
     <div id="game-toast" class="glass-panel"></div>
 
     <button id="pause-btn" onclick="togglePause()">⏸️ إيقاف مؤقت</button>
@@ -364,7 +341,6 @@
         // تعيين خلفية الصحراء كافتراضية
         changeBackground('3d_desert_dunes.png');
         
-        // تعديل لون الضباب ليتناسب مع البيئة الرملية الصحراوية
         const fog = new THREE.FogExp2(0xdfb175, 0.0006);
         scene.fog = fog;
 
@@ -633,33 +609,33 @@
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { desert: 0xdfb175, mountain: 0xcc9955 };
 
-        // دالة توليد الجبال الصحراوية والممرات تلقائياً بأداء عالي جداً للهواتف
+        // دالة توليد الجبال والممرات تلقائياً مع السطر البرمجي المصلح لإجبار المحرك على رسم البروزات ثلاثية الأبعاد
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            // إنشاء شبكة جغرافية معقدة نسبياً لتشكيل التضاريس والجبال
-            const geometry = new THREE.PlaneGeometry(1400, 1000, 40, 30);
+            // استخدام تقسيمات أعلى للحصول على دقة ووضوح في سلاسل القمم الجبلية الجانبية
+            const geometry = new THREE.PlaneGeometry(1600, 1000, 50, 40);
             const pos = geometry.attributes.position;
 
-            // توليد الارتفاعات برمجياً لتشكيل الجبال على الأطراف وتأمين ممر الطائرة في المنتصف
             for (let i = 0; i < pos.count; i++) {
                 const x = pos.getX(i);
                 const y = pos.getY(i);
                 
-                // معادلة جيبية رياضية لتصميم القمم والقيعان الصحراوية المتموجة
-                let zHeight = Math.sin(x * 0.015) * Math.cos(y * 0.015) * 65;
-                zHeight += Math.sin(x * 0.04) * 15; 
+                // تشكيل الجبال بارتفاع شاهق وواضح متعرج على أطراف المسار
+                let zHeight = Math.sin(x * 0.015) * Math.cos(y * 0.015) * 85;
+                zHeight += Math.sin(x * 0.04) * 25; 
                 
-                // خفض الجبال كلياً في منتصف المسار (ممر الطيران) لضمان عدم الاصطدام المباشر والرؤية الواضحة
-                if (Math.abs(x) < 140) {
-                    let factor = Math.abs(x) / 140;
+                // حفر الممر الأوسط (الوادي الآمن) لانسيابية طيران الطائرة
+                if (Math.abs(x) < 160) {
+                    let factor = Math.abs(x) / 160;
                     zHeight *= (factor * factor); 
                 }
 
                 pos.setZ(i, zHeight);
             }
             
+            // السطر المصلح والمفقود: إخطار محرك الرندرة بحدوث تعديل في المصفوفة ليقوم ببناء الارتفاعات والجبال فوراً
+            pos.needsUpdate = true; 
             geometry.computeVertexNormals();
 
-            // استخدام مادة غير لامعة وبأوجه مضلعةLow-Poly لإعطاء مظهر ثلاثي الأبعاد جميل ومثالي للهواتف
             const terrainMaterial = new THREE.MeshStandardMaterial({ 
                 color: colorHex, 
                 roughness: 0.95, 
@@ -679,7 +655,6 @@
             }
         }
 
-        // بناء البيئة التمهيدية الأولية للجبال والصحراء
         createTerrainSegment(0, envColors.desert, true); 
         createTerrainSegment(-1000, envColors.desert); 
         createTerrainSegment(-2000, envColors.desert);
@@ -758,7 +733,6 @@
                 emissiveIntensity: selected.type === 'golden' ? 2 : 0.5 
             });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            // تعديل ارتفاع الحلقات برمجياً لتطير بمحاذاة الارتفاع المريح فوق ممر الجبال
             ring.position.set((Math.random() - 0.5) * 190, Math.random() * 45 + 10, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
@@ -926,7 +900,6 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    // تمديد سلاسل الجبال اللانهائية تلقائياً أثناء تقدم الطائرة في الأفق الصحراوي
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
 
                     for (let i = rings.length - 1; i >= 0; i--) {
