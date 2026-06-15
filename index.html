@@ -11,8 +11,6 @@
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <script>Pi.init({ version: "2.0" });</script>
-    
     <style>
         :root {
             --primary: #3498db;
@@ -334,6 +332,21 @@
     </div>
 
     <script>
+        // مزامنة آمنة لتهيئة مكتبة Pi بعد التأكد من اكتمال تحميل السكربتات لمنع انهيار الواجهة
+        window.addEventListener('load', () => {
+            if (window.Pi) {
+                try {
+                    // تفعيل نمط اختبار الـ Sandbox لضمان دعم المحاكاة على كافة المتصفحات
+                    Pi.init({ version: "2.0", sandbox: true });
+                    console.log("Pi SDK has been successfully initialized on window load.");
+                } catch (e) {
+                    console.error("Error configuration during Pi initialization:", e);
+                }
+            } else {
+                console.warn("Pi SDK not detected. Ensure this page runs inside Pi Browser or script is linked.");
+            }
+        });
+
         const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
         let supabaseClient = null;
@@ -498,8 +511,11 @@
             }
         }
 
-        // --- تعديل وتثبيت دالة ربط المحفظة البيئية آمنة ---
         async function connectPiWallet() {
+            if (!window.Pi) {
+                showNotification("لم يتم العثور على بروتوكول Pi. افتح اللعبة داخل متصفح Pi Browser", true);
+                return;
+            }
             const walletBtn = document.getElementById('wallet-connect-btn');
             walletBtn.disabled = true; walletBtn.innerText = "جاري الاتصال... ⏳";
             try {
@@ -508,7 +524,7 @@
                 handlePiAuthSuccess(auth);
             } catch (err) {
                 console.error("Pi Auth Error:", err);
-                showNotification("فشل الاتصال. تأكد من فتح اللعبة داخل Pi Browser", true);
+                showNotification("فشل الاتصال. تأكد من استقرار الشبكة ومنح الصلاحيات المطلوبة", true);
                 walletBtn.disabled = false; walletBtn.innerText = "🔗 ربط المحفظة";
             }
         }
@@ -538,7 +554,6 @@
             }
         }
 
-        // --- تعديل وتثبيت واجهة استدعاء بوابة دفع Pi بالكامل ---
         async function executePiPayment(plane) {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
@@ -552,7 +567,6 @@
                 await Pi.createPayment(paymentData, {
                     onReadyForServerApproval: function(paymentId) {
                         console.log("Payment Ready for Server Approval:", paymentId);
-                        // في بيئة الاختبار المحلية أو بدون Backend يمكنك تفعيل الشراء مباشرة للتجربة:
                         fetch('/api/approve-payment', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/json' }, 
@@ -567,7 +581,6 @@
                             body: JSON.stringify({ paymentId: paymentId, txid: txid }) 
                         }).catch(e => console.log("Backend completion skipped on test environment"));
 
-                        // تم الشراء وتأكيد فتح الطائرة محلياً بنجاح لضمان استمرار اللعب
                         localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
                         showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`);
                         startBtn.disabled = false; 
@@ -882,7 +895,7 @@
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
                             score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
                             if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
-                            else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
+                            else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقه خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
                             else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
                             document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
                             
