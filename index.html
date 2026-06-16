@@ -221,7 +221,6 @@
             color: var(--pi-purple-dark); font-weight: 900; font-size: 14px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none; text-align: center;
         }
-        /* زر إطلاق النار الجديد */
         #fire-btn {
             position: absolute;
             bottom: 25px; right: 25px; width: 65px; height: 65px;
@@ -374,7 +373,6 @@
         let screenTouchState = { active: false, x: 0, y: 0 };
         let screenTouchCenter = { x: 0, y: 0 };
 
-        // نظام الأسلحة والقتال
         const bullets = [];
         const targets = [];
         const explosions = [];
@@ -555,7 +553,7 @@
             } catch (err) { startBtn.disabled = false; updateShopUI(); }
         }
 
-        // --- نظام الصوت الديناميكي ---
+        // --- نظام الصوت الديناميكي المحسّن ---
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -585,17 +583,52 @@
             engineOsc = null;
         }
 
+        // دالة إطلاق النار بواقعية عسكرية عالية (دمج طرقة معدنية + تفريغ هواء وموجة صوتية عريضة)
         function playShootSound() {
             if(!audioCtx) return;
+            
+            // 1. ضربة المقذوف الحادة (The Punch)
             const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            const oscGain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.14);
+            
+            oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
+            
+            // 2. صدى البارود وتفريغ الغاز (Noise Echo Effect)
+            const bufferSize = audioCtx.sampleRate * 0.25; // ربع ثانية صدى
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.setValueAtTime(900, audioCtx.currentTime);
+            noiseFilter.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.18);
+            
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+            
+            // ربط القنوات بالخرج الرئيسي
+            osc.connect(oscGain);
+            oscGain.connect(audioCtx.destination);
+            
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.14);
+            noise.start();
+            noise.stop(audioCtx.currentTime + 0.22);
         }
 
         function playExplosionSound() {
@@ -606,7 +639,7 @@
             osc.frequency.setValueAtTime(100, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.3);
             gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
@@ -712,12 +745,13 @@
             scene.add(ring); rings.push(ring);
         }
 
-        // --- نظام إنشاء الأهداف الجوية ---
+        // نظام إنشاء الأهداف الجوية لتكون معلقة في خط الطيران بدلاً من السقوط الأرضي
         function spawnTarget(zPos) {
             const geom = new THREE.IcosahedronGeometry(8);
-            const mat = new THREE.MeshStandardMaterial({color: 0xe74c3c, metalness: 0.5, roughness: 0.5});
+            const mat = new THREE.MeshStandardMaterial({color: 0xe74c3c, metalness: 0.6, roughness: 0.4});
             const target = new THREE.Mesh(geom, mat);
-            target.position.set((Math.random() - 0.5) * 200, 120, zPos); // تسقط من الأعلى
+            // تحديد موقع مناسب لمرور الطائرة والحلقات
+            target.position.set((Math.random() - 0.5) * 180, Math.random() * 40 + 15, zPos);
             scene.add(target);
             targets.push(target);
         }
@@ -739,7 +773,7 @@
             const bullet = new THREE.Mesh(bulletGeom, bulletMat);
             
             bullet.position.copy(currentActiveAirplane.position);
-            bullet.position.z -= 6; // تبدأ من مقدمة الطائرة
+            bullet.position.z -= 6; 
             bullet.rotation.copy(currentActiveAirplane.rotation);
             
             scene.add(bullet);
@@ -789,7 +823,6 @@
         speedButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; }, { passive: false });
         speedButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = false; }, { passive: false });
 
-        // زر إطلاق النار اللمسي
         const fireButtonEl = document.getElementById('fire-btn');
         fireButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); isFiring = true; }, { passive: false });
         fireButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); isFiring = false; }, { passive: false });
@@ -818,7 +851,6 @@
             
             if (window.innerWidth <= 768) {
                 document.getElementById('touch-controls').style.display = 'block';
-                // إظهار زر النار فقط إذا كانت الطائرة حربية
                 if (fleet[currentSelectionIndex].type === 'fighter') {
                     document.getElementById('fire-btn').style.display = 'flex';
                 } else {
@@ -832,12 +864,10 @@
             
             targetRoll = 0; currentRoll = 0; targetYaw = 0; currentYaw = 0;
 
-            // مسح أي أهداف أو طلقات سابقة
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
             explosions.forEach(e => scene.remove(e)); explosions.length = 0;
             
-            // إضافة أهداف مبدئية إذا كانت الطائرة حربية
             if (fleet[currentSelectionIndex].type === 'fighter') {
                 for(let i=0; i<4; i++) spawnTarget(-400 - i*300);
             }
@@ -925,44 +955,46 @@
 
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, rockColor); }
 
-                    // --- تحديث الرصاص (Bullets) ---
                     if (isFiring && fleet[currentSelectionIndex].type === 'fighter' && Date.now() - lastShootTime > 150) {
                         shootBullet(); lastShootTime = Date.now();
                     }
 
                     for (let i = bullets.length - 1; i >= 0; i--) {
                         const b = bullets[i];
-                        b.translateZ(-12); // الرصاص أسرع من الطائرة
+                        b.translateZ(-12); 
                         if (currentActiveAirplane.position.distanceTo(b.position) > 1200) {
                             scene.remove(b); bullets.splice(i, 1);
                         }
                     }
 
-                    // --- تحديث الأهداف والانفجارات ---
+                    // --- تحديث الأهداف والانفجارات المستمر (دون إخفاء الأهداف عند الإصابة) ---
                     if (fleet[currentSelectionIndex].type === 'fighter') {
-                        // تعويض الأهداف الناقصة
                         if(targets.length < 4) spawnTarget(currentActiveAirplane.position.z - 1000 - Math.random() * 500);
 
                         for (let i = targets.length - 1; i >= 0; i--) {
                             const t = targets[i];
-                            t.position.y -= 0.6; // السقوط للأسفل
                             t.rotation.x += 0.02; t.rotation.y += 0.02;
 
-                            // إذا تم تجاوز الهدف أو سقط للأرض
-                            if (t.position.z > currentActiveAirplane.position.z + 100 || t.position.y < -30) {
-                                scene.remove(t); targets.splice(i, 1); continue;
+                            // محاكاة حركة الحلقات: إعادة توليد الهدف في الأمام عند تجاوزه
+                            if (t.position.z > currentActiveAirplane.position.z + 100) {
+                                scene.remove(t); targets.splice(i, 1);
+                                let lastTargetZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
+                                spawnTarget(lastTargetZ - 300);
+                                continue;
                             }
 
                             // التحقق من تصادم الرصاص بالهدف
-                            let hit = false;
                             for (let j = bullets.length - 1; j >= 0; j--) {
                                 const b = bullets[j];
-                                if (b.position.distanceTo(t.position) < 14) {
+                                if (b.position.distanceTo(t.position) < 16) {
                                     createExplosion(t.position);
-                                    scene.remove(t); targets.splice(i, 1);
+                                    
+                                    // تم إلغاء أسطر حذف الهدف هنا ليستمر في طريقه!
+                                    // تغيير لون الهدف المصاب ليعطي تلميحاً بصرياً ممتعاً للبطل
+                                    t.material.color.setHex(0xffcc00); 
+                                    
                                     scene.remove(b); bullets.splice(j, 1);
-                                    hit = true;
-                                    score += 50; // زيادة النقاط
+                                    score += 50; 
                                     document.getElementById('points').innerText = score;
                                     break;
                                 }
