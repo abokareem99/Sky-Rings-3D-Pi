@@ -351,7 +351,6 @@
         }
 
         const scene = new THREE.Scene();
-        // تفتيح درجة ألوان الخلفية لضمان عدم حدوث أي سواد مطلقاً
         scene.background = new THREE.Color(0x7ec0ee);
     
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 5000);
@@ -627,15 +626,14 @@
 
         const loader = new THREE.GLTFLoader();
 
-        // كود معالجة وتأمين ملف السحب الخفيف 442 كيلوبايت لمنع أي توقف في المحرك البصري
-        loader.load('Sky.glb', (gltf) => {
+        // تم استبدال الكود بملف الخلفية الحية المطلوب من مستودع GitHub الخاص بك مباشرة
+        loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
             skyBackgroundMesh = gltf.scene;
             skyBackgroundMesh.scale.set(700, 700, 700);
             skyBackgroundMesh.position.set(0, 0, 0);
             
             skyBackgroundMesh.traverse((child) => {
                 if (child.isMesh) {
-                    // جعل الإضاءة مزدوجة ومحيطة لعرض السحاب بشكل رائع من الداخل والخارج
                     if(child.material) {
                         child.material.side = THREE.DoubleSide;
                     }
@@ -643,7 +641,7 @@
             });
             scene.add(skyBackgroundMesh);
         }, undefined, (err) => {
-            console.log("Sky component active.");
+            console.error("خطأ أثناء تحميل ملف الخلفية السحابية:", err);
         });
 
         loader.load('airplane.glb', (gltf) => {
@@ -653,7 +651,6 @@
             basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
         });
 
-        // تم الإبقاء على التسمية المفضلة لديك تماماً دون تعديل
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2); checkAllLoaded();
@@ -775,7 +772,6 @@
         document.getElementById('fire-btn').addEventListener('touchend', (e) => { e.preventDefault(); isFiring = false; }, { passive: false });
 
         function startGame() {
-            // تفعيل حالة بدء اللعبة بشكل صريح وحاسم لإجبار الكاميرا والطائرة على الانطلاق
             isPlaying = true; 
             isPaused = false; 
             hasTakenOff = false;
@@ -841,7 +837,6 @@
                     currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                     updateEngineSound(keys.space);
                     
-                    // تحريك الطائرة للأمام بشكل إجباري متواصل
                     currentActiveAirplane.position.z -= currentSpeed;
                     
                     if (skyBackgroundMesh) {
@@ -867,7 +862,6 @@
                         currentActiveAirplane.rotation.y = currentYaw; currentActiveAirplane.rotation.z = currentRoll;
                     }
 
-                    // ربط الكاميرا بقوة خلف الطائرة لتبدأ الحركة فوراً
                     camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
                     camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 6.5, 0.07);
                     camera.position.z = currentActiveAirplane.position.z + 38;
@@ -917,7 +911,6 @@
                     }
                 }
             } else {
-                // العرض الافتراضي المريح للمرآب لاستكشاف الأفق قبل الطيران
                 hangarRotationAngle += 0.005; 
                 let radius = 28;
                 camera.position.x = Math.sin(hangarRotationAngle) * radius;
