@@ -29,7 +29,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #7fc8f8; 
+            background-color: #0f172a; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -90,7 +90,8 @@
             text-shadow: 0 0 5px var(--pi-purple);
         }
 
-        .pi-top-banner .right-text { color: #fff; font-family: monospace; font-size: 12px; }
+        .pi-top-banner .right-text { color: #fff;
+            font-family: monospace; font-size: 12px; }
         .pi-top-banner .right-text span { color: var(--pi-gold); font-weight: bold; }
 
         #shop-carousel { 
@@ -110,9 +111,12 @@
             transition: 0.2s;
         }
         
-        .plane-info { flex-grow: 1; text-align: center; }
-        .plane-name { font-size: 1.2rem; color: #fff; margin: 0 0 2px 0; font-weight: 900; }
-        .plane-status { font-size: 0.85rem; font-weight: 700; margin: 0; }
+        .plane-info { flex-grow: 1;
+            text-align: center; }
+        .plane-name { font-size: 1.2rem; color: #fff;
+            margin: 0 0 2px 0; font-weight: 900; }
+        .plane-status { font-size: 0.85rem;
+            font-weight: 700; margin: 0; }
 
         .btn-area-bottom {
             width: 90vw;
@@ -130,7 +134,8 @@
             box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
             text-align: center; width: 100%; box-sizing: border-box; transition: all 0.2s ease;
         }
-        .main-btn:disabled { background: #555 !important; border-color: #777 !important; color: #aaa !important; cursor: not-allowed; box-shadow: none; }
+        .main-btn:disabled { background: #555 !important; border-color: #777 !important; color: #aaa !important;
+            cursor: not-allowed; box-shadow: none; }
         
         .secondary-btn {
             background: linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%);
@@ -156,7 +161,8 @@
             width: 100%;
             text-align: center; font-family: monospace; font-size: 11px;
             color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; gap: 15px;
-            margin-top: 5px; background: rgba(0,0,0,0.4); padding: 4px 0;
+            margin-top: 5px;
+            background: rgba(0,0,0,0.4); padding: 4px 0;
         }
 
         #game-toast {
@@ -174,19 +180,24 @@
             border: 2px solid var(--pi-gold);
         }
 
-        #gameover-mask { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
+        #gameover-mask { background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
 
         #pause-mask { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh; 
             background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
-            z-index: 150; display: none; flex-direction: column; 
+            z-index: 150; display: none;
+            flex-direction: column; 
             justify-content: center; align-items: center; text-align: center;
         }
 
         #pause-btn {
-            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+            position: absolute;
+            top: 60px; left: 50%; transform: translateX(-50%);
             background: rgba(15, 23, 42, 0.65); border: 2px solid var(--pi-gold);
-            color: var(--pi-gold); font-family: 'Cairo', sans-serif; font-weight: 700;
+            color: var(--pi-gold); font-family: 'Cairo', sans-serif;
+            font-weight: 700;
             padding: 6px 16px; border-radius: 20px; cursor: pointer; z-index: 100;
             backdrop-filter: blur(12px); display: none; pointer-events: auto;
         }
@@ -198,7 +209,9 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .loading-text { color: var(--pi-gold); font-size: 24px; font-weight: 900; margin-bottom: 30px; }
-        .loading-bar-container { width: 70%; max-width: 300px; height: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; border: 1px solid var(--pi-purple); }
+        .loading-bar-container { width: 70%; max-width: 300px; height: 14px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; border: 1px solid var(--pi-purple);
+        }
         .loading-bar { width: 100%; height: 100%; background: var(--pi-gold); }
 
         #touch-controls { display: none; }
@@ -218,15 +231,18 @@
             position: absolute;
             bottom: 110px; right: 25px; width: 65px; height: 65px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
-            color: var(--pi-purple-dark); font-weight: 900; font-size: 14px; z-index: 100; display: flex; justify-content: center; align-items: center;
+            color: var(--pi-purple-dark);
+            font-weight: 900; font-size: 14px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none; text-align: center;
         }
         #fire-btn {
             position: absolute;
             bottom: 25px; right: 25px; width: 65px; height: 65px;
             background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; border: 2px solid #fff;
-            color: #fff; font-weight: 900; font-size: 14px; z-index: 100; display: none; justify-content: center; align-items: center;
-            touch-action: none; box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); text-align: center;
+            color: #fff;
+            font-weight: 900; font-size: 14px; z-index: 100; display: none; justify-content: center; align-items: center;
+            touch-action: none;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); text-align: center;
         }
     </style>
 </head>
@@ -336,12 +352,13 @@
         }
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x7fc8f8);
-        const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
+        // تم تعيين لون رمادي مزرق غامق متناسق مع الضباب لحين اكتمال تحميل الخلفية ثلاثية الأبعاد
+        scene.background = new THREE.Color(0x0a0f1d);
+    
+        // تحسين إعدادات الضباب لتعطي عمق حقيقي رائع متوافق مع الموديل ثلاثي الأبعاد
+        const fog = new THREE.FogExp2(0x0a0f1d, 0.0012);
         scene.fog = fog;
-
-        // 🌟 تعديل مدى الرؤية الأقصى للكاميرا من 4000 إلى 8000 لضمان احتواء مساحة السماء بالكامل
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 8000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
    
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -357,10 +374,10 @@
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
 
-        let basePassengerModel = null; 
+        let basePassengerModel = null;
         let baseFighterModel = null;
-        let skyboxMesh = null; // متغير بيئة السماء ثلاثية الأبعاد
         let currentActiveAirplane = null; 
+        let skyBackgroundMesh = null; // متغير مخصص للاحتفاظ بالخلفية 3D
         
         let isPlaying = false;
         let isPaused = false;
@@ -374,17 +391,14 @@
         const joyState = { x: 0, y: 0, active: false };
         let screenTouchState = { active: false, x: 0, y: 0 };
         let screenTouchCenter = { x: 0, y: 0 };
-
         const bullets = [];
         const targets = [];
         const explosions = [];
         let isFiring = false;
         let lastShootTime = 0;
-
         let targetRoll = 0; let currentRoll = 0;
         let targetYaw = 0; let currentYaw = 0;
         let cameraShakeIntensity = 0;
-
         const fleet = [
             { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
@@ -428,7 +442,7 @@
             isPaused = false;
             document.getElementById('pause-mask').style.display = 'none';
             if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            endGame(); 
+            endGame();
         }
 
         function isPlaneUnlocked(plane) {
@@ -498,7 +512,8 @@
                 return;
             }
             const walletBtn = document.getElementById('wallet-connect-btn');
-            walletBtn.disabled = true; walletBtn.innerText = "جاري الاتصال... ⏳";
+            walletBtn.disabled = true;
+            walletBtn.innerText = "جاري الاتصال... ⏳";
             try {
                 const scopes = ['username', 'payments'];
                 const auth = await Pi.authenticate(scopes, onPiAuthIncomplete);
@@ -519,7 +534,8 @@
             statusLabel.innerText = "متصل بنجاح"; statusLabel.style.color = "var(--pi-gold)";
             const walletBtn = document.getElementById('wallet-connect-btn');
             walletBtn.innerText = "✔️ المحفظة مرتبطة"; walletBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
-            walletBtn.style.color = "var(--pi-purple-dark)"; walletBtn.style.borderColor = "var(--pi-purple-dark)";
+            walletBtn.style.color = "var(--pi-purple-dark)";
+            walletBtn.style.borderColor = "var(--pi-purple-dark)";
             showNotification(`أهلاً بك كابتن ${auth.user.username}!`);
             updateShopUI();
         }
@@ -527,7 +543,8 @@
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
             if (isPlaneUnlocked(planeData)) { startGame(); } else {
-                if (!authenticatedPiUser) { showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true); return; }
+                if (!authenticatedPiUser) { showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true);
+                return; }
                 executePiPayment(planeData);
             }
         }
@@ -555,7 +572,6 @@
             } catch (err) { startBtn.disabled = false; updateShopUI(); }
         }
 
-        // --- نظام الصوت الديناميكي المحسّن ---
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -587,7 +603,6 @@
 
         function playShootSound() {
             if(!audioCtx) return;
-            
             const osc = audioCtx.createOscillator();
             const oscGain = audioCtx.createGain();
             osc.type = 'sawtooth';
@@ -596,8 +611,7 @@
             
             oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-            
-            const bufferSize = audioCtx.sampleRate * 0.25; 
+            const bufferSize = audioCtx.sampleRate * 0.25;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -644,12 +658,12 @@
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const rockColor = 0x5a4d41;
-
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const geometry = new THREE.PlaneGeometry(1600, 1000, 60, 50);
             const pos = geometry.attributes.position;
             for (let i = 0; i < pos.count; i++) {
-                const x = pos.getX(i); const y = pos.getY(i);
+                const x = pos.getX(i);
+                const y = pos.getY(i);
                 let zHeight = Math.sin(x * 0.02) * Math.cos(y * 0.02) * 95;
                 zHeight += Math.abs(Math.sin(x * 0.07)) * 30; 
                 zHeight += Math.cos(y * 0.05) * 15;
@@ -661,26 +675,47 @@
             const terrain = new THREE.Mesh(geometry, terrainMaterial);
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -22, zPos); terrain.receiveShadow = true; terrain.castShadow = true;
             terrainGroup.add(terrain);
-
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 800), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 }));
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -21.6, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             }
         }
 
-        createTerrainSegment(0, rockColor, true); 
+        createTerrainSegment(0, rockColor, true);
         createTerrainSegment(-1000, rockColor); 
         createTerrainSegment(-2000, rockColor);
 
         const loader = new THREE.GLTFLoader();
-        
+
+        // ─── [تعديل رئيسي] نظام دمج وتثبيت ملف السماء ثلاثية الأبعاد ───
+        loader.load('Sky.glb', (gltf) => {
+            skyBackgroundMesh = gltf.scene;
+            
+            // ضبط الحجم بنطاق واسع ليحيط بكاميرا اللعبة بشكل كامل وثلاثي الأبعاد
+            skyBackgroundMesh.scale.set(300, 300, 300);
+            skyBackgroundMesh.position.set(0, 0, 0);
+            
+            skyBackgroundMesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.depthWrite = false; // لمنع السماء من حجب الطائرة أو الأهداف
+                    if (child.material.emissive) {
+                        child.material.emissive = child.material.color; // الحفاظ على التوهج اللوني للسماء
+                    }
+                }
+            });
+            scene.add(skyBackgroundMesh);
+            console.log("تم تحميل ملف السماء ثلاثية الأبعاد بنجاح.");
+        }, undefined, (err) => {
+            console.error("ملاحظة: لم يتم العثور على ملف Sky.glb في المجلد الرئيسي أو تعذر تحميله.", err);
+        });
+
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
             basePassengerModel.scale.set(4.55, 4.55, 4.55); checkAllLoaded();
         }, undefined, () => {
             basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
         });
-        
+
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2); checkAllLoaded();
@@ -688,41 +723,12 @@
             baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
         });
 
-        // 🌟 تعديل منطق معالجة خامة مجسم السماء ثلاثي الأبعاد وإلغاء تأثير الضباب عليه بشكل احترافي مع دعم الـ Case-Sensitivity
-        loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/skybox_skydays_3.glb', (gltf) => {
-            skyboxMesh = gltf.scene;
-            skyboxMesh.scale.set(3000, 3000, 3000); // حجم ممتاز وموزون بالكامل مع مدى الكاميرا الجديد
-            skyboxMesh.traverse(child => {
-                if (child.isMesh) {
-                    // معالجة الأسطح حتى لو كانت تحتوي على مصفوفة خامات متعددة (Multi-Material)
-                    const materials = Array.isArray(child.material) ? child.material : [child.material];
-                    materials.forEach(mat => {
-                        mat.side = THREE.BackSide; // تفعيل العرض الداخلي المحيطي باللاعب لرؤية الأفق من الداخل
-                        mat.depthWrite = false;    // تأكيد بقائها دائماً خلف المجسمات الأخرى كخلفية مطلقة وعميقة
-                        mat.fog = false;           // حظر الضباب الأزرق من إخفاء أو تغطية تفاصيل غيوم السماء
-                        
-                        // تحفيز ألوان الغيوم على الإضاءة الذاتية لتبرز بوضوح فائق ومشرق على شاشات الهواتف
-                        if (mat.map) {
-                            mat.emissive = new THREE.Color(0xffffff);
-                            mat.emissiveMap = mat.map;
-                            mat.emissiveIntensity = 1.0; 
-                        }
-                    });
-                }
-            });
-            scene.add(skyboxMesh);
-            checkAllLoaded();
-            console.log("✅ تم إطلاق غيوم السماء وإلغاء تأثيرات الضباب عنها بنجاح!");
-        }, undefined, (error) => {
-            console.error("لم يتم العثور على ملف skybox_skydays_3.glb في المسار الحالي، سيتم الاعتماد على الأفق الافتراضي", error);
-            checkAllLoaded(); // الاستمرار لحماية المحرك من الانهيار عند الفشل
-        });
-        
         let loadedCount = 0;
         function checkAllLoaded() {
             loadedCount++;
-            if(loadedCount >= 3) { // انتظار الملفات الثلاثة الأساسية بنجاح
-                document.getElementById('loading').style.display = 'none'; document.getElementById('start-mask').style.display = 'flex';
+            if(loadedCount >= 2) { 
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('start-mask').style.display = 'flex';
                 updateShopUI();
             }
         }
@@ -736,11 +742,14 @@
             const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
             if(!isPlaying) { spawnSelectedPlane(planeData); }
             if (isPlaneUnlocked(planeData)) {
-                statusEl.innerText = "متاحة في الحظيرة ✔️"; statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
+                statusEl.innerText = "متاحة في الحظيرة ✔️";
+                statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%)";
-                startBtn.style.color = "var(--pi-gold)"; startBtn.style.borderColor = "var(--pi-gold)";
+                startBtn.style.color = "var(--pi-gold)";
+                startBtn.style.borderColor = "var(--pi-gold)";
             } else {
-                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`; statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
+                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`;
+                statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
                 startBtn.style.color = "var(--pi-purple-dark)"; startBtn.style.borderColor = "var(--pi-purple-dark)";
             }
@@ -765,7 +774,8 @@
                 { type: 'bonus', color: 0x8a2be2, points: 30, time: 8, scale: 1.1 },
                 { type: 'golden', color: 0xffcc00, points: 100, time: 15, scale: 1.5 }
             ];
-            let rand = Math.random(); let selected = rand < 0.60 ? ringTypes[0] : (rand < 0.80 ? ringTypes[1] : (rand < 0.90 ? ringTypes[2] : ringTypes[3]));
+            let rand = Math.random(); let selected = rand < 0.60 ?
+            ringTypes[0] : (rand < 0.80 ? ringTypes[1] : (rand < 0.90 ? ringTypes[2] : ringTypes[3]));
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
             const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'golden' ? 0xffcc00 : (selected.type === 'bonus' ? 0x4a148c : 0x000000), emissiveIntensity: selected.type === 'golden' ? 2 : 0.5 });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -802,7 +812,6 @@
             bullet.position.copy(currentActiveAirplane.position);
             bullet.position.z -= 6; 
             bullet.rotation.copy(currentActiveAirplane.rotation);
-            
             scene.add(bullet);
             bullets.push(bullet);
             playShootSound();
@@ -828,24 +837,21 @@
             if(e.key === ' ') keys.space = false;
             if(k === 'f' || k === 'ب') isFiring = false;
         });
-
         const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
-        
         function handleTouchMove(e) {
             e.preventDefault(); if(!joyState.active) return;
             const touch = e.targetTouches[0]; if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
-            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
-            joyState.x = dx / 22.5; joyState.y = dy / 22.5; 
+            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            joyState.x = dx / 22.5; joyState.y = dy / 22.5;
         }
         
         joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = true; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e); }, { passive: false });
         joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); handleTouchMove(e); }, { passive: false });
         joyZone.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; }, { passive: false });
-        
         const speedButtonEl = document.getElementById('speed-btn');
         speedButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; }, { passive: false });
         speedButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = false; }, { passive: false });
@@ -853,13 +859,11 @@
         const fireButtonEl = document.getElementById('fire-btn');
         fireButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); isFiring = true; }, { passive: false });
         fireButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); isFiring = false; }, { passive: false });
-        
         renderer.domElement.addEventListener('touchstart', (e) => {
             if (!isPlaying || isPaused) return;
             if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl || e.target === fireButtonEl) return;
             screenTouchState.active = true; screenTouchCenter = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: false });
-        
         renderer.domElement.addEventListener('touchmove', (e) => {
             if (!isPlaying || !screenTouchState.active || isPaused) return; e.preventDefault(); 
             let dx = e.touches[0].clientX - screenTouchCenter.x; let dy = e.touches[0].clientY - screenTouchCenter.y;
@@ -867,11 +871,10 @@
             if (dist > maxDrag) { dx = (dx / dist) * maxDrag; dy = (dy / dist) * maxDrag; }
             screenTouchState.x = dx / maxDrag; screenTouchState.y = dy / maxDrag; 
         }, { passive: false });
-        
         renderer.domElement.addEventListener('touchend', () => { screenTouchState.active = false; screenTouchState.x = 0; screenTouchState.y = 0; });
-
+        
         function startGame() {
-            isPlaying = true; isPaused = false; 
+            isPlaying = true; isPaused = false;
             document.getElementById('start-mask').style.display = 'none'; 
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('pause-btn').style.display = 'block';
@@ -885,11 +888,13 @@
                 }
             }
 
-            spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
+            spawnSelectedPlane(fleet[currentSelectionIndex]);
+            initEngineSound();
             score = 0; document.getElementById('points').innerText = score;
             timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
             
-            targetRoll = 0; currentRoll = 0; targetYaw = 0; currentYaw = 0;
+            targetRoll = 0; currentRoll = 0;
+            targetYaw = 0; currentYaw = 0;
 
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
@@ -909,21 +914,25 @@
         }
 
         function endGame() {
-            isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
+            isPlaying = false;
+            stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none'; 
             document.getElementById('touch-controls').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none';
             totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
-            document.getElementById('total-points').innerText = totalPoints; document.getElementById('final-score').innerText = score;
+            document.getElementById('total-points').innerText = totalPoints;
+            document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
             if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score); }
         }
 
         function restartGame() {
-            document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0;
+            document.getElementById('gameover-mask').style.display = 'none';
+            hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0;
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
-            updateShopUI(); rings.forEach(r => scene.remove(r)); rings.length = 0;
+            updateShopUI();
+            rings.forEach(r => scene.remove(r)); rings.length = 0;
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
@@ -941,22 +950,27 @@
                     if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix(); }
 
                     currentActiveAirplane.position.z -= currentSpeed;
-                    let inputY = 0; let inputX = 0;
                     
+                    // ─── [تعديل رئيسي] جعل الخلفية الـ 3D تتبع حركة الطائرة في المحور Z بانتظام ───
+                    if (skyBackgroundMesh) {
+                        skyBackgroundMesh.position.z = currentActiveAirplane.position.z;
+                        skyBackgroundMesh.rotation.y += 0.0003; // دوران تلقائي خفيف لمنح لمسة سينمائية جذابة
+                    }
+
+                    let inputY = 0; let inputX = 0;
                     if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                     if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
                     if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                     if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                    // محاكاة تحكم الطيران العكسي المحترف (سحب المقود لأسفل يدفع الطائرة للصعود والارتفاع)
                     if (!hasTakenOff) {
                         if (inputY > 0) { 
-                            currentActiveAirplane.position.y += 0.2; 
+                            currentActiveAirplane.position.y += 0.2;
                             currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.15, 0.1); 
-                            if (currentActiveAirplane.position.y > -5) hasTakenOff = true; 
+                            if (currentActiveAirplane.position.y > -5) hasTakenOff = true;
                         }
                     } else {
-                        currentActiveAirplane.position.y += 0.6 * inputY; 
+                        currentActiveAirplane.position.y += 0.6 * inputY;
                         currentActiveAirplane.position.x += 1.4 * inputX;
                         
                         targetRoll = -0.55 * inputX; 
@@ -967,20 +981,13 @@
 
                         currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.22 * inputY, 0.1);
                         currentActiveAirplane.rotation.y = currentYaw; 
-                        currentActiveAirplane.rotation.z = currentRoll; 
-                        
+                        currentActiveAirplane.rotation.z = currentRoll;
                         if(currentActiveAirplane.position.y < -12) currentActiveAirplane.position.y = -12;
                     }
 
                     camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
                     camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 6.5, 0.07);
                     camera.position.z = currentActiveAirplane.position.z + 38;
-
-                    // مزامنة موقع مجسم السماء ليدور ويتحرك دائماً في سنتر كاميرا اللاعب مع حظر الفوج عنه
-                    if (skyboxMesh) {
-                        skyboxMesh.position.copy(camera.position);
-                    }
-
                     if (cameraShakeIntensity > 0) { camera.position.x += (Math.random() - 0.5) * cameraShakeIntensity; camera.position.y += (Math.random() - 0.5) * cameraShakeIntensity; cameraShakeIntensity *= 0.9; }
 
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 0.8, currentActiveAirplane.position.z - 40));
@@ -989,26 +996,28 @@
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, rockColor); }
 
                     if (isFiring && fleet[currentSelectionIndex].type === 'fighter' && Date.now() - lastShootTime > 150) {
-                        shootBullet(); lastShootTime = Date.now();
+                        shootBullet();
+                        lastShootTime = Date.now();
                     }
 
                     for (let i = bullets.length - 1; i >= 0; i--) {
                         const b = bullets[i];
                         b.translateZ(-12); 
                         if (currentActiveAirplane.position.distanceTo(b.position) > 1200) {
-                            scene.remove(b); bullets.splice(i, 1);
+                            scene.remove(b);
+                            bullets.splice(i, 1);
                         }
                     }
 
                     if (fleet[currentSelectionIndex].type === 'fighter') {
                         if(targets.length < 4) spawnTarget(currentActiveAirplane.position.z - 1000 - Math.random() * 500);
-
                         for (let i = targets.length - 1; i >= 0; i--) {
                             const t = targets[i];
                             t.rotation.x += 0.02; t.rotation.y += 0.02;
 
                             if (t.position.z > currentActiveAirplane.position.z + 100) {
-                                scene.remove(t); targets.splice(i, 1);
+                                scene.remove(t);
+                                targets.splice(i, 1);
                                 let lastTargetZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
                                 spawnTarget(lastTargetZ - 300);
                                 continue;
@@ -1018,7 +1027,7 @@
                                 const b = bullets[j];
                                 if (b.position.distanceTo(t.position) < 16) {
                                     createExplosion(t.position);
-                                    t.material.color.setHex(0xffcc00); 
+                                    t.material.color.setHex(0xffcc00);
                                     scene.remove(b); bullets.splice(j, 1);
                                     score += 50; 
                                     document.getElementById('points').innerText = score;
@@ -1032,21 +1041,22 @@
                         const exp = explosions[i];
                         exp.scale.addScalar(0.4);
                         exp.material.opacity -= 0.05;
-                        if (exp.material.opacity <= 0) {
-                            scene.remove(exp); explosions.splice(i, 1);
-                        }
+                        if (exp.material.opacity <= 0) { scene.remove(exp); explosions.splice(i, 1); }
                     }
 
                     for (let i = rings.length - 1; i >= 0; i--) {
-                        const ring = rings[i]; ring.rotation.y += 0.01;
+                        const ring = rings[i];
+                        ring.rotation.y += 0.01;
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
 
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
-                            score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
+                            score += ring.userData.points;
+                            timeLeft += ring.userData.time; if (score < 0) score = 0;
                             if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
                             else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقه خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
                             else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
-                            document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
+                            document.getElementById('points').innerText = score;
+                            document.getElementById('time-left').innerText = timeLeft;
                             
                             scene.remove(ring); rings.splice(i, 1); 
                             let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
@@ -1055,7 +1065,8 @@
                         }
 
                         if (ring.position.z > currentActiveAirplane.position.z + 80) {
-                            scene.remove(ring); rings.splice(i, 1);
+                            scene.remove(ring);
+                            rings.splice(i, 1);
                             let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
                             createRing(lastSpawnZ - 160);
                         }
@@ -1063,8 +1074,14 @@
                 }
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
-                camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
-                if (skyboxMesh) { skyboxMesh.rotation.y += 0.0005; } // دوران هادئ وتلقائي للغيوم داخل الهنجر الرئيسي
+                camera.position.set(0, 3.5, 18);
+                camera.lookAt(0, 2.8, 0); 
+                
+                // ─── [تعديل إضافي] الحفاظ على تمركز وثبات حركة السماء داخل المرآب الافتراضي ───
+                if (skyBackgroundMesh) {
+                    skyBackgroundMesh.position.set(0, 2.8, 0);
+                    skyBackgroundMesh.rotation.y += 0.001;
+                }
             }
             renderer.render(scene, camera);
         }
