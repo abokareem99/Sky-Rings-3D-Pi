@@ -366,7 +366,8 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x7ec0ee);
     
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 5000);
+        // تم تكبير الفضاء الخلفي للكاميرا إلى 30000 لمنع اختفاء السماء الممتدة
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30000);
    
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -639,17 +640,23 @@
 
         const loader = new THREE.GLTFLoader();
 
-        // [تم تحديث هذا الجزء] - تحميل الخلفية السحابية بإعدادات احترافية
+        // تحميل الخلفية السحابية مع تحويل المادة لمنع اسوداد أو اختفاء السماء
         loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
             skyBackgroundMesh = gltf.scene;
-            skyBackgroundMesh.scale.set(2000, 2000, 2000); // تكبير الخلفية لتكون عملاقة
+            skyBackgroundMesh.scale.set(3500, 3500, 3500); // حجم ضخم ومثالي يتوافق مع أبعاد الكاميرا الجديدة
             
             skyBackgroundMesh.traverse((child) => {
                 if (child.isMesh) {
-                    child.material.side = THREE.BackSide; // للرؤية من الداخل
-                    child.material.depthWrite = false;    // عدم التأثير على عمق المشهد
-                    child.renderOrder = -1;               // رسم الخلفية أولاً
-                    child.frustumCulled = false;          // منع الاختفاء عند التحرك
+                    const oldMat = child.material;
+                    // تحويل إلى مادة أساسية ذاتية الإضاءة لتظهر معالم الفضاء كاملة بدون الاحتياج لإضاءة خارجية مسلطة
+                    child.material = new THREE.MeshBasicMaterial({
+                        map: oldMat.map,
+                        color: oldMat.color,
+                        side: THREE.BackSide, // رؤية السماء من الداخل
+                        depthWrite: false
+                    });
+                    child.renderOrder = -1; // البدء برسم الخلفية أولاً قبل بقية العناصر لضمان ترتيب الرؤية
+                    child.frustumCulled = false; // عدم السماح للمحرك بحذفها عشوائياً عند الحركة السريعة
                 }
             });
             scene.add(skyBackgroundMesh);
@@ -887,31 +894,31 @@
                     
                     currentActiveAirplane.position.z -= currentSpeed;
                     
-                    // تحديث موقع الخلفية لتتبع الطائرة
                     if (skyBackgroundMesh) {
                         skyBackgroundMesh.position.copy(currentActiveAirplane.position);
                     }
 
-                    let inputY = 0; let inputX = 0;
-                    if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
+                    let inputX = 0;
                     if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                    
-                    if (joyState.active) { 
-                        inputX += joyState.x; 
-                        inputY += joyState.y; 
-                    }
+                    if (joyState.active) { inputX += joyState.x; }
 
                     if (!hasTakenOff) {
                         if (currentActiveAirplane.position.z < -100) { hasTakenOff = true; }
                     } else {
-                        currentActiveAirplane.position.y += 0.6 * -inputY; 
+                        // إعداد الحركية الاحترافية المقلوبة: سحب العصا لأسفل (موجب) أو الضغط على W يرفع الطائرة لأعلى
+                        let moveY = 0;
+                        if (keys.w) moveY += 1; 
+                        if (keys.s) moveY -= 1; 
+                        if (joyState.active) { moveY += joyState.y; }
+
+                        currentActiveAirplane.position.y += 0.6 * moveY; 
                         currentActiveAirplane.position.x += 1.4 * inputX;
                         
                         targetRoll = -0.55 * inputX; targetYaw = -0.22 * inputX;
                         currentRoll = THREE.MathUtils.lerp(currentRoll, targetRoll, 0.08);
                         currentYaw = THREE.MathUtils.lerp(currentYaw, targetYaw, 0.06);
 
-                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.22 * inputY, 0.1);
+                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, -0.22 * moveY, 0.1);
                         currentActiveAirplane.rotation.y = currentYaw; currentActiveAirplane.rotation.z = currentRoll;
                     }
 
