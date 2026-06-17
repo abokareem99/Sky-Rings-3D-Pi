@@ -689,7 +689,7 @@
         });
 
         // 🌟 تعديل منطق معالجة خامة مجسم السماء ثلاثي الأبعاد وإلغاء تأثير الضباب عليه بشكل احترافي مع دعم الـ Case-Sensitivity
-        loader.load('Skybox_skydays_3.glb', (gltf) => {
+        loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/skybox_skydays_3.glb', (gltf) => {
             skyboxMesh = gltf.scene;
             skyboxMesh.scale.set(3000, 3000, 3000); // حجم ممتاز وموزون بالكامل مع مدى الكاميرا الجديد
             skyboxMesh.traverse(child => {
@@ -714,7 +714,7 @@
             checkAllLoaded();
             console.log("✅ تم إطلاق غيوم السماء وإلغاء تأثيرات الضباب عنها بنجاح!");
         }, undefined, (error) => {
-            console.error("لم يتم العثور على ملف Skybox_skydays_3.glb في المسار الحالي، سيتم الاعتماد على الأفق الافتراضي", error);
+            console.error("لم يتم العثور على ملف skybox_skydays_3.glb في المسار الحالي، سيتم الاعتماد على الأفق الافتراضي", error);
             checkAllLoaded(); // الاستمرار لحماية المحرك من الانهيار عند الفشل
         });
         
