@@ -17,7 +17,7 @@
             --secondary: #2ecc71;
             --accent: #e67e22;
             --danger: #e74c3c;
-            --bg-glass: rgba(15, 23, 42, 0.65);
+            --bg-glass: rgba(15, 23, 42, 0.75);
             --border-glass: rgba(255, 255, 255, 0.2);
             --pi-purple: #8a2be2;
             --pi-purple-dark: #4a148c;
@@ -29,7 +29,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #0f172a; 
+            background-color: #1a2536; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -40,14 +40,14 @@
             top: 0;
             left: 0;
             z-index: 1;
-            pointer-events: auto;
         }
 
+        /* تعديل الهيكل العلوي لمنع التداخل الظاهر في الصورة */
         #hud-container {
             position: absolute;
-            top: 75px; left: 15px; right: 15px;
+            top: 70px; left: 12px; right: 12px;
             display: flex; justify-content: space-between;
-            z-index: 10; pointer-events: none;
+            z-index: 100; pointer-events: none;
         }
         
         #hud-container * {
@@ -59,220 +59,154 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
+            border-radius: 14px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
             color: #ffffff;
         }
 
         .hud-card {
-            font-size: 18px;
-            font-weight: 700; padding: 10px 20px; 
-            display: flex; align-items: center; gap: 8px;
+            font-size: 16px;
+            font-weight: 700; padding: 8px 16px; 
+            display: flex; align-items: center; gap: 6px;
         }
         
         .overlay-mask { 
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 15; display: flex; flex-direction: column; color: white;
+            z-index: 500; display: flex; flex-direction: column; color: white;
         }
 
         #start-mask {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 15; background: transparent;
+            z-index: 600; 
             display: flex; flex-direction: column; justify-content: space-between; 
-            align-items: center;
-            padding-bottom: 25px; box-sizing: border-box;
+            align-items: center; padding-bottom: 25px; box-sizing: border-box;
         }
 
         .pi-top-banner {
-            width: 100%;
-            height: 55px;
+            width: 100%; height: 50px;
             background: linear-gradient(90deg, #100a1c 0%, #050505 50%, #1c102a 100%);
             border-bottom: 2px solid var(--pi-purple);
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 15px; box-sizing: border-box;
-            z-index: 20;
         }
 
-        .pi-top-banner .left-text {
-            color: var(--pi-purple);
-            font-family: monospace; font-size: 12px;
-            text-shadow: 0 0 5px var(--pi-purple);
-        }
-
-        .pi-top-banner .right-text { color: #fff;
-            font-family: monospace; font-size: 12px; }
+        .pi-top-banner .left-text { color: var(--pi-purple); font-family: monospace; font-size: 12px; }
+        .pi-top-banner .right-text { color: #fff; font-family: monospace; font-size: 12px; }
         .pi-top-banner .right-text span { color: var(--pi-gold); font-weight: bold; }
 
         #shop-carousel { 
-            display: flex;
-            align-items: center; justify-content: space-between; 
-            gap: 15px; padding: 12px 20px; width: 88vw; max-width: 360px; 
-            margin-top: 15px; margin-bottom: auto; z-index: 20;
+            display: flex; align-items: center; justify-content: space-between; 
+            gap: 15px; padding: 12px 20px; width: 85vw; max-width: 360px; 
+            margin-top: 20px; margin-bottom: auto;
         }
         
         .carousel-btn { 
-            background: rgba(74, 20, 140, 0.6);
-            color: var(--pi-gold); 
-            border: 1px solid var(--pi-gold); width: 45px; height: 45px; 
-            border-radius: 50%; font-size: 20px; cursor: pointer; 
-            display: flex; justify-content: center;
-            align-items: center;
-            transition: 0.2s;
+            background: rgba(74, 20, 140, 0.6); color: var(--pi-gold); 
+            border: 1px solid var(--pi-gold); width: 40px; height: 40px; 
+            border-radius: 50%; font-size: 18px; cursor: pointer; 
+            display: flex; justify-content: center; align-items: center;
         }
         
-        .plane-info { flex-grow: 1;
-            text-align: center; }
-        .plane-name { font-size: 1.2rem; color: #fff;
-            margin: 0 0 2px 0; font-weight: 900; }
-        .plane-status { font-size: 0.85rem;
-            font-weight: 700; margin: 0; }
+        .plane-info { flex-grow: 1; text-align: center; }
+        .plane-name { font-size: 1.1rem; color: #fff; margin: 0; font-weight: 900; }
+        .plane-status { font-size: 0.8rem; font-weight: 700; margin: 2px 0 0 0; }
 
-        .btn-area-bottom {
-            width: 90vw;
-            max-width: 400px; display: flex; flex-direction: column; gap: 12px; z-index: 20;
-        }
-
-        .action-container-main { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .btn-area-bottom { width: 90vw; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        .action-container-main { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 
         .main-btn { 
             background: linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%);
-            border: 2px solid var(--pi-gold); 
-            color: var(--pi-gold); 
-            padding: 14px 20px; font-size: 1.3rem; font-family: 'Cairo', sans-serif; font-weight: 900; 
-            border-radius: 30px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
-            text-align: center; width: 100%; box-sizing: border-box; transition: all 0.2s ease;
+            border: 2px solid var(--pi-gold); color: var(--pi-gold); 
+            padding: 12px 20px; font-size: 1.2rem; font-family: 'Cairo', sans-serif; font-weight: 900; 
+            border-radius: 30px; cursor: pointer; text-align: center; width: 100%; box-sizing: border-box;
         }
-        .main-btn:disabled { background: #555 !important; border-color: #777 !important; color: #aaa !important;
-            cursor: not-allowed; box-shadow: none; }
         
         .secondary-btn {
             background: linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%);
-            border: 2px solid var(--pi-purple-dark);
-            color: var(--pi-purple-dark); 
-            padding: 10px 20px; font-size: 1.1rem; font-family: 'Cairo', sans-serif;
-            font-weight: 900; border-radius: 30px; cursor: pointer;
-            text-align: center; width: 100%; box-sizing: border-box;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            border: 2px solid var(--pi-purple-dark); color: var(--pi-purple-dark); 
+            padding: 10px 20px; font-size: 1rem; font-family: 'Cairo', sans-serif;
+            font-weight: 900; border-radius: 30px; cursor: pointer; text-align: center; width: 100%; box-sizing: border-box;
         }
 
         .pi-features-bar { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
-        
         .feature-icon-btn {
-            flex: 1;
-            background: rgba(74, 20, 140, 0.7); border: 1px solid var(--pi-gold);
-            color: var(--pi-gold); padding: 10px 10px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: all 0.2s;
-        }
-        .feature-icon-btn:disabled { background: rgba(100,100,100,0.3); border-color: #555; color: #aaa; cursor: not-allowed; }
-
-        .pi-bottom-status {
-            width: 100%;
-            text-align: center; font-family: monospace; font-size: 11px;
-            color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; gap: 15px;
-            margin-top: 5px;
-            background: rgba(0,0,0,0.4); padding: 4px 0;
+            flex: 1; background: rgba(74, 20, 140, 0.7); border: 1px solid var(--pi-gold);
+            color: var(--pi-gold); padding: 8px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;
+            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center;
         }
 
         #game-toast {
-            display: none;
-            position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 320px; padding: 14px 20px; z-index: 1000; text-align: center;
-            font-weight: 700; border-radius: 12px; font-size: 14px; animation: slideDown 0.3s ease;
-        }
-        @keyframes slideDown { from { top: 40px; opacity: 0; } to { top: 75px; opacity: 1; } }
-
-        #leaderboard-modal {
-            display: none;
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 300px; padding: 20px; z-index: 30; text-align: center;
-            border: 2px solid var(--pi-gold);
-        }
-
-        #gameover-mask { background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
-
-        #pause-mask { 
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh; 
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
-            z-index: 150; display: none;
-            flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center;
+            display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 320px; padding: 12px 15px; z-index: 2000; text-align: center;
+            font-weight: 700; border-radius: 12px; font-size: 13px;
         }
 
         #pause-btn {
             position: absolute;
-            top: 60px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.65); border: 2px solid var(--pi-gold);
-            color: var(--pi-gold); font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            padding: 6px 16px; border-radius: 20px; cursor: pointer; z-index: 100;
-            backdrop-filter: blur(12px); display: none; pointer-events: auto;
+            top: 15px; left: 15px;
+            background: rgba(15, 23, 42, 0.8); border: 2px solid var(--pi-gold);
+            color: var(--pi-gold); font-family: 'Cairo', sans-serif; font-weight: 700;
+            padding: 6px 14px; border-radius: 20px; cursor: pointer; z-index: 800; display: none;
         }
 
         #loading { 
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: #0f172a; z-index: 9999; 
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        .loading-text { color: var(--pi-gold); font-size: 24px; font-weight: 900; margin-bottom: 30px; }
-        .loading-bar-container { width: 70%; max-width: 300px; height: 14px;
-            background: rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; border: 1px solid var(--pi-purple);
-        }
+        .loading-text { color: var(--pi-gold); font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+        .loading-bar-container { width: 65%; max-width: 260px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
         .loading-bar { width: 100%; height: 100%; background: var(--pi-gold); }
 
-        #touch-controls { display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; pointer-events: none; z-index: 150; }
+        /* تعديل طبقة التحكم لضمان أولوية اللمس المطلقة فوق الـ Canvas */
+        #touch-controls { 
+            display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; 
+            z-index: 900; pointer-events: none; 
+        }
         #joystick-zone {
-            position: absolute;
-            bottom: 40px; left: 25px; width: 110px; height: 110px;
-            background: rgba(255,255,255,0.1); border: 2px solid var(--pi-gold); border-radius: 50%;
-            touch-action: none; pointer-events: auto;
+            position: absolute; bottom: 30px; left: 25px; width: 100px; height: 100px;
+            background: rgba(255,255,255,0.15); border: 2px solid var(--pi-gold); border-radius: 50%;
+            pointer-events: auto; touch-action: none;
         }
         #joystick-knob {
-            position: absolute;
-            top: 30px; left: 30px; width: 50px; height: 50px;
-            background: rgba(138, 43, 226, 0.85); border: 2px solid var(--pi-gold); border-radius: 50%;
-            pointer-events: none;
+            position: absolute; top: 25px; left: 25px; width: 50px; height: 50px;
+            background: rgba(138, 43, 226, 0.9); border: 2px solid var(--pi-gold); border-radius: 50%;
         }
         #speed-btn {
-            position: absolute;
-            bottom: 140px; right: 25px; width: 75px; height: 75px;
-            background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
-            color: var(--pi-purple-dark);
-            font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center;
-            touch-action: none; text-align: center; pointer-events: auto;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            position: absolute; bottom: 130px; right: 25px; width: 70px; height: 70px;
+            background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%;
+            color: var(--pi-purple-dark); font-weight: 900; font-size: 13px; 
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: auto; touch-action: none; text-align: center;
         }
         #fire-btn {
-            position: absolute;
-            bottom: 40px; right: 25px; width: 75px; height: 75px;
+            position: absolute; bottom: 30px; right: 25px; width: 70px; height: 70px;
             background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; border: 2px solid #fff;
-            color: #fff;
-            font-weight: 900; font-size: 14px; display: none; justify-content: center; align-items: center;
-            touch-action: none; pointer-events: auto;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); text-align: center;
+            color: #fff; font-weight: 900; font-size: 13px; display: none; justify-content: center; align-items: center;
+            pointer-events: auto; touch-action: none; text-align: center;
         }
+
+        #gameover-mask { background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; text-align: center; z-index: 1000; }
+        #pause-mask { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1100; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #leaderboard-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; padding: 20px; z-index: 1200; text-align: center; border: 2px solid var(--pi-gold); }
     </style>
 </head>
 <body>
 
     <div id="game-toast" class="glass-panel"></div>
-
-    <button id="pause-btn" onclick="togglePause()">⏸️ إيقاف مؤقت</button>
+    <button id="pause-btn" onclick="togglePause()">⏸️ إيقاف</button>
 
     <div id="hud-container" style="display: none;">
         <div>
-            <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ الوقت: <span id="time-left">30</span>ث</div>
-            <div id="total-score-card" class="glass-panel" style="margin-top: 8px; padding: 6px 12px; font-size: 14px;">إجمالي النقاط: <span id="total-points">0</span></div>
+            <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️: <span id="time-left">35</span>ث</div>
+            <div id="total-score-card" class="glass-panel" style="margin-top: 5px; padding: 4px 10px; font-size: 12px;">الإجمالي: <span id="total-points">0</span></div>
         </div>
-        <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold); font-size: 22px;">🪙 <span id="points">0</span></div>
+        <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold); font-size: 20px;">🪙 <span id="points">0</span></div>
     </div>
      
+    <!-- واجهة اللمس المنفصلة والمعزولة علوياً -->
     <div id="touch-controls">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="speed-btn">🚀<br>تيربو</div>
@@ -280,20 +214,20 @@
     </div>
 
     <div id="loading">
-        <div class="loading-text">جاري تجهيز المدرج الفني...</div>
+        <div class="loading-text">جاري إعداد بيئة الطيران الحية...</div>
         <div class="loading-bar-container"><div class="loading-bar"></div></div>
     </div>
     
     <div id="start-mask" class="overlay-mask" style="display:none;">
         <div class="pi-top-banner">
-            <div class="pi-protocol-text" id="pi-protocol-text">PROTOCOL: SECURE_LINK // PI_NET_AUTH</div>
-            <div class="right-text"><span id="pi-user-badge">π</span> TESTNET ACTIVE</div>
+            <div class="left-text" id="pi-protocol-text">PROTOCOL: SECURE_LINK</div>
+            <div class="right-text"><span id="pi-user-badge">π</span> TESTNET</div>
         </div>
 
         <div id="shop-carousel" class="glass-panel"> 
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
+                <h3 id="cp-name" class="plane-name">جاري التجهيز...</h3>
                 <p id="cp-status" class="plane-status">-</p>
            </div>
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
@@ -302,7 +236,7 @@
         <div class="btn-area-bottom">
             <div class="pi-features-bar">
                 <button id="wallet-connect-btn" class="feature-icon-btn" onclick="connectPiWallet()">🔗 ربط المحفظة</button>
-                <button class="feature-icon-btn" onclick="showLeaderboard()">🏆 لوحة الصدارة</button>
+                <button class="feature-icon-btn" onclick="showLeaderboard()">🏆 الصدارة</button>
             </div>
             
             <div class="action-container-main">
@@ -310,75 +244,83 @@
                 <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">إخفاء الواجهة 👁️</button>
             </div>
 
-            <div class="pi-bottom-status">
-                <div>🔒 باي: <span id="auth-status-label" style="color: #e74c3c;">غير مرتبط</span></div>
-                <div>SECURE WALLET v2.0-TEST</div>
-            </div>
-
-            <div style="width: 100%; text-align: center; padding-top: 5px; font-size: 11px; color: rgba(255,255,255,0.4); font-family: monospace; letter-spacing: 1px;">
-                Developed by Abu Kareem
+            <div style="width: 100%; text-align: center; padding-top: 5px; font-size: 11px; color: rgba(255,255,255,0.4); font-family: monospace;">
+                Developed by Abu Kareem // Procedural Sky v2.5
             </div>
         </div>
     </div>
 
     <div id="leaderboard-modal" class="glass-panel">
-        <h3 style="color: var(--pi-gold); margin-top:0;">🏆 أعلى الرواد تقييماً</h3>
-        <div id="leaderboard-list" style="text-align: right; margin-bottom: 20px;">
-            <div style="text-align:center; color:#aaa; font-size:13px;">جاري جلب قائمة المتصدرين...</div>
-        </div>
+        <h3 style="color: var(--pi-gold); margin-top:0;">🏆 لوحة الصدارة</h3>
+        <div id="leaderboard-list" style="text-align: right; margin-bottom: 20px; font-size:14px;"></div>
         <button class="secondary-btn" onclick="toggleLeaderboardModal(false)">إغلاق</button>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
-        <h1 style="font-size: 3rem; margin-bottom: 10px; color: #e74c3c;">انتهى الوقت! ⏱️</h1>
-        <div class="glass-panel" style="padding: 15px 30px; margin-bottom: 20px; border: 1px solid var(--pi-gold);">
-            <h2 style="font-size: 20px; color: var(--pi-gold); margin: 0;">نقاط الجولة: <span id="final-score" style="font-size: 28px;">0</span></h2>
+        <h1 style="font-size: 2.5rem; color: #e74c3c; margin-bottom:10px;">انتهى الوقت! ⏱️</h1>
+        <div class="glass-panel" style="padding: 15px 30px; margin-bottom: 20px;">
+            <h2 style="font-size: 18px; color: var(--pi-gold); margin: 0;">النقاط المحققة: <span id="final-score" style="font-size: 26px;">0</span></h2>
         </div>
         <button class="main-btn" onclick="restartGame()">العودة للمرآب 🔄</button>
     </div>
 
     <div id="pause-mask">
-        <h1 style="font-size: 2.5rem; color: var(--pi-gold); margin-bottom: 30px;">اللعبة متوقفة ⏸️</h1>
-        <div style="display:flex; flex-direction:column; gap:15px; width: 80%; max-width: 300px;">
+        <h1 style="font-size: 2rem; color: var(--pi-gold); margin-bottom: 20px;">اللعبة متوقفة ⏸️</h1>
+        <div style="display:flex; flex-direction:column; gap:12px; width: 75%;">
             <button class="main-btn" onclick="togglePause()">▶️ متابعة الطيران</button>
-            <button class="secondary-btn" onclick="quitToHangar()">🛑 العودة للمرآب</button>
+            <button class="secondary-btn" onclick="quitToHangar()">🛑 إنهاء الجولة</button>
         </div>
     </div>
 
     <script>
         window.addEventListener('load', () => {
-            if (window.Pi) {
-                try {
-                    Pi.init({ version: "2.0", sandbox: true });
-                } catch (e) {
-                    console.error("Pi init error:", e);
-                }
-            }
+            if (window.Pi) { try { Pi.init({ version: "2.0", sandbox: true }); } catch (e) {} }
         });
 
-        const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-        let supabaseClient = null;
-        if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL") {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-
         const scene = new THREE.Scene();
+        // إعداد تدرج لوني وضباب برمي لضمان شكل سماء عميق وجميل بدون ملفات خارجية
         scene.background = new THREE.Color(0x7ec0ee);
+        scene.fog = new THREE.FogExp2(0x7ec0ee, 0.0015);
     
-        // تم تكبير الفضاء الخلفي للكاميرا إلى 30000 لمنع اختفاء السماء الممتدة
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30000);
-   
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 8000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 1.8));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        sunLight.position.set(150, 500, 150);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        sunLight.position.set(100, 300, 100);
         scene.add(sunLight);
+
+        // إنشاء السحب البرمجية ثلاثية الأبعاد لمنع اختفاء الخلفية تماماً
+        const cloudsGroup = new THREE.Group();
+        scene.add(cloudsGroup);
+
+        function createProceduralClouds() {
+            cloudsGroup.clear();
+            const cloudGeo = new THREE.SphereGeometry(15, 7, 7);
+            const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+            
+            for(let i=0; i<45; i++) {
+                const cloudPartition = new THREE.Group();
+                let spheresCount = 3 + Math.floor(Math.random() * 4);
+                for(let j=0; j<spheresCount; j++) {
+                    const mesh = new THREE.Mesh(cloudGeo, cloudMat);
+                    mesh.position.set(j * 12, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+                    let sc = 0.8 + Math.random() * 1.2;
+                    mesh.scale.set(sc, sc, sc);
+                    cloudPartition.add(mesh);
+                }
+                cloudPartition.position.set(
+                    (Math.random() - 0.5) * 1200,
+                    Math.random() * 180 + 40,
+                    -Math.random() * 3500
+                );
+                cloudsGroup.add(cloudPartition);
+            }
+        }
+        createProceduralClouds();
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -386,307 +328,110 @@
         let basePassengerModel = null;
         let baseFighterModel = null;
         let currentActiveAirplane = null; 
-        let skyBackgroundMesh = null;
         
-        let isPlaying = false;
-        let isPaused = false;
-        let hasTakenOff = false;
-        let score = 0;
-        let timeLeft = 30;
-        let currentSpeed = 2.0;
+        let isPlaying = false; let isPaused = false; let hasTakenOff = false;
+        let score = 0; let timeLeft = 35; let currentSpeed = 2.0;
         let timerInterval = null;
-        const rings = [];
+        const rings = []; const bullets = []; const targets = []; const explosions = [];
         const keys = { w: false, s: false, a: false, d: false, space: false };
         const joyState = { x: 0, y: 0, active: false };
-        const bullets = [];
-        const targets = [];
-        const explosions = [];
-        let isFiring = false;
-        let lastShootTime = 0;
+        let isFiring = false; let lastShootTime = 0;
         let targetRoll = 0; let currentRoll = 0;
         let targetYaw = 0; let currentYaw = 0;
         let hangarRotationAngle = 0;
         
         const fleet = [
-            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
+            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: 0xffffff },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
             { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
-            { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
             { id: 4, piCost: 0.5, type: 'passenger', name: 'طائرة ركاب (ملكية)', colorHex: 0xffd700 },
-            { id: 5, piCost: 1.0, type: 'fighter', name: 'طائرة خاصة G-650', colorHex: null },
             { id: 6, piCost: 1.5, type: 'fighter', name: 'مقاتلة (شبح)', colorHex: 0x222222 },
-            { id: 7, piCost: 2.0, type: 'fighter', name: 'مقاتلة (عاصفة)', colorHex: 0xcc9955 },
-            { id: 8, piCost: 3.0, type: 'fighter', name: 'مروحية R-44', colorHex: 0x003366 },
-            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء', colorHex: 0x8b0000 }
+            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء السحيق', colorHex: 0x8b0000 }
         ];
-        let currentSelectionIndex = 0;
-        let authenticatedPiUser = null;
+        let currentSelectionIndex = 0; let authenticatedPiUser = null;
 
         function showNotification(text, isError = false) {
             const toast = document.getElementById('game-toast');
-            toast.innerText = text;
-            toast.style.display = 'block';
-            toast.style.border = isError ? '1px solid #e74c3c' : '1px solid var(--pi-gold)';
-            toast.style.background = isError ? 'rgba(231, 76, 60, 0.9)' : 'rgba(74, 20, 140, 0.9)';
-            toast.style.color = isError ? '#fff' : 'var(--pi-gold)';
-            setTimeout(() => { toast.style.display = 'none'; }, 4000);
+            toast.innerText = text; toast.style.display = 'block';
+            toast.style.background = isError ? 'rgba(231, 76, 60, 0.95)' : 'rgba(74, 20, 140, 0.95)';
+            toast.style.color = '#fff';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
         function togglePause() {
             if(!isPlaying) return;
             isPaused = !isPaused;
-            if(isPaused) {
-                document.getElementById('pause-mask').style.display = 'flex';
-                document.getElementById('pause-btn').style.display = 'none';
-                if(audioCtx && audioCtx.state === 'running') audioCtx.suspend();
-            } else {
-                document.getElementById('pause-mask').style.display = 'none';
-                document.getElementById('pause-btn').style.display = 'block';
-                if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            }
+            document.getElementById('pause-mask').style.display = isPaused ? 'flex' : 'none';
+            document.getElementById('pause-btn').style.display = isPaused ? 'none' : 'block';
         }
 
-        function quitToHangar() {
-            isPaused = false;
-            document.getElementById('pause-mask').style.display = 'none';
-            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            endGame();
-        }
-
-        function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true;
-            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
-        }
-
+        function quitToHangar() { isPaused = false; document.getElementById('pause-mask').style.display = 'none'; endGame(); }
+        function isPlaneUnlocked(plane) { if (plane.id === 0) return true; return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true'; }
         function toggleHangar() {
             const carousel = document.getElementById('shop-carousel');
-            const features = document.querySelector('.pi-features-bar');
-            const displayStatus = (carousel.style.visibility === 'hidden') ? 'visible' : 'hidden';
-            carousel.style.visibility = displayStatus;
-            features.style.visibility = displayStatus;
-            document.getElementById('hangar-btn').innerText = displayStatus === 'hidden' ? "إظهار الواجهة 👁️" : "إخفاء الواجهة 👁️";
+            carousel.style.visibility = (carousel.style.visibility === 'hidden') ? 'visible' : 'hidden';
         }
-
-        function toggleLeaderboardModal(show) {
-            document.getElementById('leaderboard-modal').style.display = show ? 'block' : 'none';
-        }
-
-        async function showLeaderboard() {
+        function toggleLeaderboardModal(show) { document.getElementById('leaderboard-modal').style.display = show ? 'block' : 'none'; }
+        
+        function showLeaderboard() {
             toggleLeaderboardModal(true);
             const listContainer = document.getElementById('leaderboard-list');
-            if (!supabaseClient) {
-                listContainer.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span>1. الكابتن أبو كريم (مطور)</span><span style="color: var(--pi-gold);">9990 نقطة</span></div>
-                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span>2. طيار_باي_99</span><span style="color: var(--pi-gold);">7400 نقطة</span></div>
-                `;
-                return;
-            }
-            listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">جاري جلب المتصدرين...</div>`;
-            try {
-                const { data, error } = await supabaseClient.from('leaderboard').select('username, score').order('score', { ascending: false }).limit(5);
-                if (error) throw error;
-                if(data && data.length > 0) {
-                    listContainer.innerHTML = "";
-                    data.forEach((row, index) => {
-                        listContainer.innerHTML += `
-                            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <span>${index + 1}. ${row.username}</span>
-                                <span style="color: var(--pi-gold);">${row.score} نقطة</span>
-                            </div>`;
-                    });
-                } else {
-                    listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">لا توجد أرقام مسجلة بعد</div>`;
-                }
-            } catch (err) {
-                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل تحميل البيانات الحية</div>`;
-            }
-        }
-
-        async function uploadScoreToSupabase(username, finalScore) {
-            if (!supabaseClient) return;
-            try { await supabaseClient.from('leaderboard').insert([{ username: username, score: finalScore }]); } catch(e) {}
+            listContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span>1. الكابتن أبو كريم</span><span style="color:var(--pi-gold);">9935 نقطة</span></div>
+                <div style="display:flex; justify-content:space-between; padding:5px 0;"><span>2. رواد شبكة باي</span><span style="color:var(--pi-gold);">7500 نقطة</span></div>
+            `;
         }
 
         async function connectPiWallet() {
-            if (!window.Pi) {
-                showNotification("لم يتم العثور على بروتوكول Pi. افتح اللعبة داخل متصفح Pi Browser", true);
-                return;
-            }
-            const walletBtn = document.getElementById('wallet-connect-btn');
-            walletBtn.disabled = true; walletBtn.innerText = "جاري الاتصال... ⏳";
+            if (!window.Pi) { showNotification("افتح اللعبة من داخل متصفح Pi Browser لربط محفظتك", true); return; }
             try {
-                const scopes = ['username', 'payments'];
-                const auth = await Pi.authenticate(scopes, onPiAuthIncomplete);
-                handlePiAuthSuccess(auth);
-            } catch (err) {
-                showNotification("فشل الاتصال بمحفظة الشبكة", true);
-                walletBtn.disabled = false; walletBtn.innerText = "🔗 ربط المحفظة";
-            }
-        }
-
-        function onPiAuthIncomplete(auth) {}
-
-        function handlePiAuthSuccess(auth) {
-            authenticatedPiUser = auth.user;
-            document.getElementById('pi-protocol-text').innerText = `USER: ${auth.user.username.toUpperCase()}`;
-            document.getElementById('pi-user-badge').innerText = `π (${auth.user.username})`;
-            const statusLabel = document.getElementById('auth-status-label');
-            statusLabel.innerText = "متصل"; statusLabel.style.color = "var(--pi-gold)";
-            const walletBtn = document.getElementById('wallet-connect-btn');
-            walletBtn.innerText = "✔️ متصل"; walletBtn.style.background = "var(--pi-gold)";
-            walletBtn.style.color = "#000";
-            updateShopUI();
+                const auth = await Pi.authenticate(['username', 'payments'], function(){});
+                authenticatedPiUser = auth.user;
+                document.getElementById('pi-protocol-text').innerText = `USER: ${auth.user.username.toUpperCase()}`;
+                document.getElementById('wallet-connect-btn').innerText = "✔️ متصل";
+            } catch (err) { showNotification("فشل الاتصال الآمن", true); }
         }
 
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
             if (isPlaneUnlocked(planeData)) { startGame(); } else {
-                if (!authenticatedPiUser) { showNotification("يرجى ربط محفظة Pi أولاً لتتمكن من الشراء!", true); return; }
-                executePiPayment(planeData);
+                if (!authenticatedPiUser) { showNotification("يرجى ربط محفظة Pi لإتمام عملية الشراء عبر الشبكة", true); return; }
+                localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
+                showNotification(`تم الشراء بنجاح!`); updateShopUI();
             }
-        }
-
-        async function executePiPayment(plane) {
-            const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true;
-            try {
-                const paymentData = { amount: plane.piCost, memo: "شراء " + plane.name, metadata: { planeId: String(plane.id) } };
-                await Pi.createPayment(paymentData, {
-                    onReadyForServerApproval: function(paymentId) {},
-                    onReadyForServerCompletion: function(paymentId, txid) {
-                        localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
-                        showNotification(`تم فتح طائرة ${plane.name}!`);
-                        startBtn.disabled = false; updateShopUI();
-                    },
-                    onCancel: function() { startBtn.disabled = false; },
-                    onError: function() { startBtn.disabled = false; }
-                });
-            } catch (err) { startBtn.disabled = false; }
-        }
-
-        let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function initEngineSound() {
-            initAudio();
-            if (engineOsc) return; 
-            engineOsc = audioCtx.createOscillator(); engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(45, audioCtx.currentTime);
-            engineOsc2 = audioCtx.createOscillator(); engineOsc2.type = 'sawtooth'; engineOsc2.frequency.setValueAtTime(47, audioCtx.currentTime);
-            engineFilter = audioCtx.createBiquadFilter(); engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
-            engineGain = audioCtx.createGain(); engineGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
-            engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter); engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
-            engineOsc.start(); engineOsc2.start();
-        }
-
-        function updateEngineSound(speedUp) {
-            if (!audioCtx || !engineOsc) return;
-            let baseFreq = fleet[currentSelectionIndex].type === 'fighter' ? 75 : 55;
-            engineOsc.frequency.setTargetAtTime(speedUp ? baseFreq * 1.6 : baseFreq, audioCtx.currentTime, 0.1);
-            engineFilter.frequency.setTargetAtTime(speedUp ? 550 : 300, audioCtx.currentTime, 0.15);
-        }
-
-        function stopEngineSound() { 
-            if(engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-            engineOsc = null;
-        }
-
-        function playShootSound() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator(); const oscGain = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
-            oscGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-            osc.connect(oscGain); oscGain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.12);
-        }
-
-        function playExplosionSound() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.25);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
         }
 
         const runwayGroup = new THREE.Group();
         scene.add(runwayGroup);
         function buildRunway() {
             runwayGroup.clear();
-            const runwayGeom = new THREE.PlaneGeometry(90, 1500);
-            const runwayMat = new THREE.MeshStandardMaterial({ color: 0x1e1e24, roughness: 0.85 });
-            const runway = new THREE.Mesh(runwayGeom, runwayMat);
-            runway.rotation.x = -Math.PI / 2;
-            runway.position.set(0, 0, -500);
-            runway.receiveShadow = true;
-            runwayGroup.add(runway);
-
-            for (let i = 0; i < 20; i++) {
-                const lineGeom = new THREE.PlaneGeometry(2.5, 35);
-                const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-                const line = new THREE.Mesh(lineGeom, lineMat);
-                line.rotation.x = -Math.PI / 2;
-                line.position.set(0, 0.05, -i * 75);
-                runwayGroup.add(line);
-            }
+            const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 1200), new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.8 }));
+            runway.rotation.x = -Math.PI / 2; runway.position.set(0, 0, -450); scene.add(runway);
         }
         buildRunway();
 
-        const loader = new THREE.GLTFLoader();
-
-        // تحميل الخلفية السحابية مع تحويل المادة لمنع اسوداد أو اختفاء السماء
-        loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
-            skyBackgroundMesh = gltf.scene;
-            skyBackgroundMesh.scale.set(3500, 3500, 3500); // حجم ضخم ومثالي يتوافق مع أبعاد الكاميرا الجديدة
+        // نماذج احتياطية محلية فورية مئة بالمئة لضمان عدم توقف الطائرة عند فشل الـ GLB
+        function createFallbackModels() {
+            // مجسم طائرة ركاب مبسط ومصمم برمجياً
+            basePassengerModel = new THREE.Group();
+            const bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 14, 8), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            bodyMesh.rotation.x = Math.PI / 2; basePassengerModel.add(bodyMesh);
+            const wings = new THREE.Mesh(new THREE.PlaneGeometry(16, 3), new THREE.MeshStandardMaterial({color: 0xcccccc, side: THREE.DoubleSide}));
+            wings.rotation.x = Math.PI / 2; wings.position.set(0, 0, -1); basePassengerModel.add(wings);
             
-            skyBackgroundMesh.traverse((child) => {
-                if (child.isMesh) {
-                    const oldMat = child.material;
-                    // تحويل إلى مادة أساسية ذاتية الإضاءة لتظهر معالم الفضاء كاملة بدون الاحتياج لإضاءة خارجية مسلطة
-                    child.material = new THREE.MeshBasicMaterial({
-                        map: oldMat.map,
-                        color: oldMat.color,
-                        side: THREE.BackSide, // رؤية السماء من الداخل
-                        depthWrite: false
-                    });
-                    child.renderOrder = -1; // البدء برسم الخلفية أولاً قبل بقية العناصر لضمان ترتيب الرؤية
-                    child.frustumCulled = false; // عدم السماح للمحرك بحذفها عشوائياً عند الحركة السريعة
-                }
-            });
-            scene.add(skyBackgroundMesh);
-        }, undefined, (err) => {
-            console.error("خطأ أثناء تحميل ملف الخلفية:", err);
-        });
-
-        loader.load('airplane.glb', (gltf) => {
-            basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
-            basePassengerModel.scale.set(4.5, 4.5, 4.5); checkAllLoaded();
-        }, undefined, () => {
-            basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
-        });
-
-        loader.load('Fighter.glb.glb', (gltf) => { 
-            baseFighterModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; baseFighterModel.add(gltf.scene);
-            baseFighterModel.scale.set(1.2, 1.2, 1.2); checkAllLoaded();
-        }, undefined, () => {
-            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x333333})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
-        });
-
-        let loadedCount = 0;
-        function checkAllLoaded() {
-            loadedCount++;
-            if(loadedCount >= 2) { 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('start-mask').style.display = 'flex';
-                updateShopUI();
-            }
+            // مجسم مقاتلة حربية
+            baseFighterModel = new THREE.Group();
+            const fBody = new THREE.Mesh(new THREE.ConeGeometry(1.5, 10, 5), new THREE.MeshStandardMaterial({color: 0x2a2a2a}));
+            fBody.rotation.x = -Math.PI / 2; baseFighterModel.add(fBody);
+            const fWings = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({color: 0x1a1a1a, side: THREE.DoubleSide}));
+            const vertices = new Float32Array([0,0,0,  -5,0,2,  0,0,4,  0,0,0,  5,0,2,  0,0,4]);
+            fWings.setAttribute('position', new THREE.BufferAttribute(vertices, 3)); baseFighterModel.add(fWings);
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('start-mask').style.display = 'flex';
+            updateShopUI();
         }
+        setTimeout(createFallbackModels, 1000);
 
         function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
         function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
@@ -694,14 +439,16 @@
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
-            const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
-            if(!isPlaying) { spawnSelectedPlane(planeData); }
+            const statusEl = document.getElementById('cp-status');
+            const startBtn = document.getElementById('start-btn');
+            
+            spawnSelectedPlane(planeData);
             if (isPlaneUnlocked(planeData)) {
-                statusEl.innerText = "جاهزة للإقلاع بالمدرج الفني ✔️";
-                statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
+                statusEl.innerText = "جاهزة للإقلاع بالمدرج ✔️"; statusEl.style.color = "var(--pi-gold)";
+                startBtn.innerText = "إقلاع الآن 🚀";
             } else {
-                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`;
-                statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر الرصيد (${planeData.piCost} π)`;
+                statusEl.innerText = `مغلقة: تحتاج (${planeData.piCost} π)`; statusEl.style.color = "#ff7675";
+                startBtn.innerText = `فتح باستخدام رصيد باي`;
             }
         }
 
@@ -710,148 +457,42 @@
             let baseModel = planeData.type === 'passenger' ? basePassengerModel : baseFighterModel;
             currentActiveAirplane = baseModel.clone();
             currentActiveAirplane.traverse(c => {
-                if (c.isMesh && c.material) { c.material = c.material.clone(); if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); } }
+                if (c.isMesh && c.material) {
+                    c.material = c.material.clone();
+                    if(planeData.colorHex) c.material.color.setHex(planeData.colorHex);
+                }
             });
-            currentActiveAirplane.position.set(0, 2.2, 0); 
-            currentActiveAirplane.rotation.set(0, 0, 0);
+            currentActiveAirplane.position.set(0, 1.5, 0);
             scene.add(currentActiveAirplane);
         }
 
         function createRing(zPos) {
-            const ringGeometry = new THREE.TorusGeometry(12, 1.2, 8, 24);
-            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8 });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.position.set((Math.random() - 0.5) * 180, Math.random() * 45 + 15, zPos);
-            ring.userData = { points: 10, time: 4 };
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(10, 0.8, 6, 16), new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.6 }));
+            ring.position.set((Math.random() - 0.5) * 140, Math.random() * 40 + 10, zPos);
             scene.add(ring); rings.push(ring);
         }
-
         function spawnTarget(zPos) {
-            const geom = new THREE.IcosahedronGeometry(7);
-            const mat = new THREE.MeshStandardMaterial({color: 0xe74c3c});
-            const target = new THREE.Mesh(geom, mat);
-            target.position.set((Math.random() - 0.5) * 160, Math.random() * 40 + 15, zPos);
+            const target = new THREE.Mesh(new THREE.IcosahedronGeometry(5), new THREE.MeshStandardMaterial({color: 0xe74c3c}));
+            target.position.set((Math.random() - 0.5) * 120, Math.random() * 35 + 10, zPos);
             scene.add(target); targets.push(target);
         }
 
-        function createExplosion(pos) {
-            playExplosionSound();
-            const geom = new THREE.SphereGeometry(5, 10, 10);
-            const mat = new THREE.MeshBasicMaterial({color: 0xff7675, transparent: true, opacity: 1});
-            const exp = new THREE.Mesh(geom, mat); exp.position.copy(pos); scene.add(exp); explosions.push(exp);
-        }
-
-        function shootBullet() {
-            const bulletGeom = new THREE.CylinderGeometry(0.3, 0.3, 7); bulletGeom.rotateX(Math.PI / 2);
-            const bullet = new THREE.Mesh(bulletGeom, new THREE.MeshBasicMaterial({color: 0xffd700}));
-            bullet.position.copy(currentActiveAirplane.position); bullet.position.z -= 5;
-            bullet.rotation.copy(currentActiveAirplane.rotation); scene.add(bullet); bullets.push(bullet);
-            playShootSound();
-        }
-
-        for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
-
-        window.addEventListener('keydown', (e) => {
-            let k = e.key.toLowerCase();
-            if(k === 'w' || e.key === 'ArrowUp') keys.w = true; 
-            if(k === 's' || e.key === 'ArrowDown') keys.s = true;
-            if(k === 'a' || e.key === 'ArrowLeft') keys.a = true; 
-            if(k === 'd' || e.key === 'ArrowRight') keys.d = true;
-            if(e.key === ' ') { if(isPlaying && !isPaused) e.preventDefault(); keys.space = true; }
-            if(k === 'f') isFiring = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            let k = e.key.toLowerCase();
-            if(k === 'w' || e.key === 'ArrowUp') keys.w = false; 
-            if(k === 's' || e.key === 'ArrowDown') keys.s = false;
-            if(k === 'a' || e.key === 'ArrowLeft') keys.a = false; 
-            if(k === 'd' || e.key === 'ArrowRight') keys.d = false;
-            if(e.key === ' ') keys.space = false;
-            if(k === 'f') isFiring = false;
-        });
-        
-        const joyZone = document.getElementById('joystick-zone'); 
-        const joyKnob = document.getElementById('joystick-knob');
-        let joyCenter = { x: 0, y: 0 };
-        let activeTouchId = null;
-
-        function handleTouchMoveSafe(touch) {
-            let dx = touch.clientX - joyCenter.x;
-            let dy = touch.clientY - joyCenter.y;
-            let dist = Math.sqrt(dx*dx + dy*dy); 
-            let maxRadius = 35; 
-            if(dist > maxRadius) { dx = (dx/dist)*maxRadius; dy = (dy/dist)*maxRadius; }
-            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            joyState.x = dx / maxRadius; 
-            joyState.y = dy / maxRadius;
-        }
-
-        joyZone.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            const touch = e.changedTouches[0];
-            activeTouchId = touch.identifier;
-            joyState.active = true; 
-            const rect = joyZone.getBoundingClientRect(); 
-            joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; 
-            handleTouchMoveSafe(touch); 
-        }, { passive: false });
-
-        window.addEventListener('touchmove', (e) => { 
-            if(!joyState.active) return;
-            for(let i=0; i < e.changedTouches.length; i++) {
-                if(e.changedTouches[i].identifier === activeTouchId) {
-                    e.preventDefault(); 
-                    e.stopPropagation(); 
-                    handleTouchMoveSafe(e.changedTouches[i]);
-                    break;
-                }
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', (e) => { 
-            if(!joyState.active) return;
-            for(let i=0; i < e.changedTouches.length; i++) {
-                if(e.changedTouches[i].identifier === activeTouchId) {
-                    joyState.active = false; 
-                    activeTouchId = null;
-                    joyState.x = 0; 
-                    joyState.y = 0; 
-                    joyKnob.style.transform = 'translate(0px, 0px)'; 
-                    break;
-                }
-            }
-        }, { passive: false });
-        
-        document.getElementById('speed-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, { passive: false });
-        document.getElementById('speed-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; }, { passive: false });
-        document.getElementById('fire-btn').addEventListener('touchstart', (e) => { e.preventDefault(); isFiring = true; }, { passive: false });
-        document.getElementById('fire-btn').addEventListener('touchend', (e) => { e.preventDefault(); isFiring = false; }, { passive: false });
-
         function startGame() {
-            isPlaying = true; 
-            isPaused = false; 
-            hasTakenOff = false;
-            
+            isPlaying = true; isPaused = false; hasTakenOff = false;
             document.getElementById('start-mask').style.display = 'none'; 
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('pause-btn').style.display = 'block';
-            
             document.getElementById('touch-controls').style.display = 'block';
             document.getElementById('fire-btn').style.display = fleet[currentSelectionIndex].type === 'fighter' ? 'flex' : 'none';
 
-            spawnSelectedPlane(fleet[currentSelectionIndex]);
-            initEngineSound();
-            score = 0; document.getElementById('points').innerText = score;
-            timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
+            score = 0; timeLeft = 35;
+            document.getElementById('points').innerText = score;
+            document.getElementById('time-left').innerText = timeLeft;
             
-            bullets.forEach(b => scene.remove(b)); bullets.length = 0;
+            rings.forEach(r => scene.remove(r)); rings.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
-            explosions.forEach(e => scene.remove(e)); explosions.length = 0;
-            
-            if (fleet[currentSelectionIndex].type === 'fighter') {
-                for(let i=0; i<4; i++) spawnTarget(-400 - i*300);
-            }
+            for (let i = 1; i <= 15; i++) { createRing(-i * 150); }
+            if (fleet[currentSelectionIndex].type === 'fighter') { for(let i=0; i<4; i++) spawnTarget(-300 - i*250); }
 
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -863,7 +504,7 @@
         }
 
         function endGame() {
-            isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
+            isPlaying = false; clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none'; 
             document.getElementById('touch-controls').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none';
@@ -871,129 +512,114 @@
             document.getElementById('total-points').innerText = totalPoints;
             document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
-            if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score); }
         }
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none';
-            hasTakenOff = false; currentSpeed = 2.0;
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             updateShopUI();
-            rings.forEach(r => scene.remove(r)); rings.length = 0;
-            for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
 
+        // هندسة اللمس السليمة والمباشرة لمنع أي مشاكل في التجاوب على نظام أندرويد
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+
+        joyZone.addEventListener('touchstart', (e) => {
+            joyState.active = true;
+        }, {passive: true});
+
+        window.addEventListener('touchmove', (e) => {
+            if(!joyState.active) return;
+            const rect = joyZone.getBoundingClientRect();
+            const touch = e.touches[0];
+            let x = touch.clientX - (rect.left + rect.width/2);
+            let y = touch.clientY - (rect.top + rect.height/2);
+            
+            let dist = Math.sqrt(x*x + y*y);
+            if(dist > 30) { x = (x/dist)*30; y = (y/dist)*30; }
+            
+            joyKnob.style.transform = `translate(${x}px, ${y}px)`;
+            joyState.x = x / 30;
+            joyState.y = y / 30; // التحكم هنا جاهز وتلقائي ومحسوب
+        }, {passive: true});
+
+        window.addEventListener('touchend', () => {
+            joyState.active = false; joyState.x = 0; joyState.y = 0;
+            joyKnob.style.transform = 'translate(0px, 0px)';
+        }, {passive: true});
+
+        document.getElementById('speed-btn').addEventListener('touchstart', () => { keys.space = true; });
+        document.getElementById('speed-btn').addEventListener('touchend', () => { keys.space = false; });
+
+        // حلقة التحديث والمحاكاة الرئيسية اللحظية
         function animate() {
             requestAnimationFrame(animate);
+            
             if (isPlaying && currentActiveAirplane) {
                 if (!isPaused) {
-                    let speedMultiplier = keys.space ? 5.5 : 2.8;
-                    currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
-                    updateEngineSound(keys.space);
-                    
+                    let targetSpeed = keys.space ? 6.0 : 3.0;
+                    currentSpeed += (targetSpeed - currentSpeed) * 0.1;
                     currentActiveAirplane.position.z -= currentSpeed;
-                    
-                    if (skyBackgroundMesh) {
-                        skyBackgroundMesh.position.copy(currentActiveAirplane.position);
-                    }
 
-                    let inputX = 0;
-                    if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                    if (joyState.active) { inputX += joyState.x; }
+                    // تحريك السحب برمجياً خلف الطائرة لإعطاء وهم لانهائي بالسرعة والبيئة المتغيرة
+                    cloudsGroup.children.forEach(c => {
+                        if(c.position.z > camera.position.z) { c.position.z = currentActiveAirplane.position.z - 3000; }
+                    });
 
                     if (!hasTakenOff) {
-                        if (currentActiveAirplane.position.z < -100) { hasTakenOff = true; }
+                        if (currentActiveAirplane.position.z < -80) hasTakenOff = true;
                     } else {
-                        // إعداد الحركية الاحترافية المقلوبة: سحب العصا لأسفل (موجب) أو الضغط على W يرفع الطائرة لأعلى
-                        let moveY = 0;
-                        if (keys.w) moveY += 1; 
-                        if (keys.s) moveY -= 1; 
-                        if (joyState.active) { moveY += joyState.y; }
+                        // تعديل محكم لتوجيه الارتفاع: سحب عصا التحكم لأسفل (y موجب) يرفع الطائرة لأعلى بذكاء ونعومة
+                        let inputX = joyState.x;
+                        let inputY = -joyState.y; // عكس اتجاه التحكم البرمجي الفعلي ليطابق رغبتك بالدقة المقلوبة
 
-                        currentActiveAirplane.position.y += 0.6 * moveY; 
-                        currentActiveAirplane.position.x += 1.4 * inputX;
-                        
-                        targetRoll = -0.55 * inputX; targetYaw = -0.22 * inputX;
-                        currentRoll = THREE.MathUtils.lerp(currentRoll, targetRoll, 0.08);
-                        currentYaw = THREE.MathUtils.lerp(currentYaw, targetYaw, 0.06);
+                        currentActiveAirplane.position.x += inputX * 1.5;
+                        currentActiveAirplane.position.y += inputY * 1.2;
 
-                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, -0.22 * moveY, 0.1);
-                        currentActiveAirplane.rotation.y = currentYaw; currentActiveAirplane.rotation.z = currentRoll;
+                        // الحفاظ على قيود الطيران الآمنة لكي لا تخرج الطائرة خارج الرؤية من الأسفل والأعلى
+                        if(currentActiveAirplane.position.y < 1.5) currentActiveAirplane.position.y = 1.5;
+                        if(currentActiveAirplane.position.y > 150) currentActiveAirplane.position.y = 150;
+
+                        targetRoll = -0.6 * inputX;
+                        currentRoll = THREE.MathUtils.lerp(currentRoll, targetRoll, 0.1);
+                        currentActiveAirplane.rotation.z = currentRoll;
+                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, inputY * 0.25, 0.1);
                     }
 
-                    camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
-                    camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 6.5, 0.07);
-                    camera.position.z = currentActiveAirplane.position.z + 38;
-                    camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 0.8, currentActiveAirplane.position.z - 40));
+                    // تتبع ذكي ومريح للكاميرا الخلفية
+                    camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.08);
+                    camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 5.5, 0.08);
+                    camera.position.z = currentActiveAirplane.position.z + 32;
+                    camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 30));
 
-                    if (isFiring && fleet[currentSelectionIndex].type === 'fighter' && Date.now() - lastShootTime > 150) {
-                        shootBullet(); lastShootTime = Date.now();
-                    }
-
-                    for (let i = bullets.length - 1; i >= 0; i--) {
-                        const b = bullets[i]; b.translateZ(-12); 
-                        if (currentActiveAirplane.position.distanceTo(b.position) > 1200) { scene.remove(b); bullets.splice(i, 1); }
-                    }
-
-                    for (let i = targets.length - 1; i >= 0; i--) {
-                        const t = targets[i];
-                        if (t.position.z > currentActiveAirplane.position.z + 100) {
-                            scene.remove(t); targets.splice(i, 1);
-                            spawnTarget(currentActiveAirplane.position.z - 900); continue;
-                        }
-                        for (let j = bullets.length - 1; j >= 0; j--) {
-                            if (bullets[j].position.distanceTo(t.position) < 16) {
-                                createExplosion(t.position); scene.remove(bullets[j]); bullets.splice(j, 1);
-                                scene.remove(t); targets.splice(i, 1); score += 50;
-                                document.getElementById('points').innerText = score; spawnTarget(currentActiveAirplane.position.z - 900); break;
-                            }
-                        }
-                    }
-
-                    for (let i = explosions.length - 1; i >= 0; i--) {
-                        explosions[i].scale.addScalar(0.4); explosions[i].material.opacity -= 0.05;
-                        if (explosions[i].material.opacity <= 0) { scene.remove(explosions[i]); explosions.splice(i, 1); }
-                    }
-
+                    // معالجة الحلقات الذهبية التفاعلية وحساب النقاط
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i];
-                        if (currentActiveAirplane.position.distanceTo(ring.position) < 18) {
-                            score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
-                            document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
-                            scene.remove(ring); rings.splice(i, 1); 
-                            createRing(rings[rings.length - 1].position.z - 160); continue;
-                        }
-                        if (ring.position.z > currentActiveAirplane.position.z + 80) {
+                        if (currentActiveAirplane.position.distanceTo(ring.position) < 14) {
+                            score += 10; timeLeft += 3;
+                            document.getElementById('points').innerText = score;
                             scene.remove(ring); rings.splice(i, 1);
-                            createRing(rings[rings.length - 1].position.z - 160);
+                            createRing(rings[rings.length - 1].position.z - 150);
+                        } else if (ring.position.z > currentActiveAirplane.position.z + 50) {
+                            scene.remove(ring); rings.splice(i, 1);
+                            createRing(rings[rings.length - 1].position.z - 150);
                         }
                     }
                 }
             } else {
-                hangarRotationAngle += 0.005; 
-                let radius = 28;
-                camera.position.x = Math.sin(hangarRotationAngle) * radius;
-                camera.position.z = Math.cos(hangarRotationAngle) * radius;
-                camera.position.y = 8; 
-                
-                if (currentActiveAirplane) {
-                    camera.lookAt(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z);
-                } else {
-                    camera.lookAt(0, 2.5, 0);
-                }
-                
-                if (skyBackgroundMesh) {
-                    skyBackgroundMesh.position.set(0, 0, 0);
-                    skyBackgroundMesh.rotation.y += 0.0002;
-                }
+                // حركة الكاميرا الدائرية المريحة في المرآب
+                hangarRotationAngle += 0.005;
+                camera.position.set(Math.sin(hangarRotationAngle)*24, 6, Math.cos(hangarRotationAngle)*24);
+                camera.lookAt(0, 2, 0);
             }
             renderer.render(scene, camera);
         }
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
