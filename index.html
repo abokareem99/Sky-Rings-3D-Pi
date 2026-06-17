@@ -688,29 +688,33 @@
             baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
         });
 
-        // 🌟 تعديل منطق معالجة خامة مجسم السماء ثلاثي الأبعاد وإلغاء تأثير الضباب عليه
-        loader.load('skybox_skydays_3.glb', (gltf) => {
+        // 🌟 تعديل منطق معالجة خامة مجسم السماء ثلاثي الأبعاد وإلغاء تأثير الضباب عليه بشكل احترافي مع دعم الـ Case-Sensitivity
+        loader.load('Skybox_skydays_3.glb', (gltf) => {
             skyboxMesh = gltf.scene;
-            skyboxMesh.scale.set(1500, 1500, 1500); // حجم مثالي ومتناسق مع مدى الكاميرا الجديد
+            skyboxMesh.scale.set(3000, 3000, 3000); // حجم ممتاز وموزون بالكامل مع مدى الكاميرا الجديد
             skyboxMesh.traverse(child => {
                 if (child.isMesh) {
-                    child.material.side = THREE.BackSide; // تفعيل العرض الداخلي المحيطي باللاعب
-                    child.material.depthWrite = false;    // تأكيد بقائها دائماً خلف المجسمات الأخرى
-                    child.material.fog = false;           // حظر الضباب الأزرق من إخفاء أو تغطية غيوم السماء
-                    
-                    // تحفيز ألوان الغيوم على الإضاءة الذاتية لتبرز بوضوح فائق على الهواتف
-                    if (child.material.map) {
-                        child.material.emissive = new THREE.Color(0xffffff);
-                        child.material.emissiveMap = child.material.map;
-                        child.material.emissiveIntensity = 1.0; 
-                    }
+                    // معالجة الأسطح حتى لو كانت تحتوي على مصفوفة خامات متعددة (Multi-Material)
+                    const materials = Array.isArray(child.material) ? child.material : [child.material];
+                    materials.forEach(mat => {
+                        mat.side = THREE.BackSide; // تفعيل العرض الداخلي المحيطي باللاعب لرؤية الأفق من الداخل
+                        mat.depthWrite = false;    // تأكيد بقائها دائماً خلف المجسمات الأخرى كخلفية مطلقة وعميقة
+                        mat.fog = false;           // حظر الضباب الأزرق من إخفاء أو تغطية تفاصيل غيوم السماء
+                        
+                        // تحفيز ألوان الغيوم على الإضاءة الذاتية لتبرز بوضوح فائق ومشرق على شاشات الهواتف
+                        if (mat.map) {
+                            mat.emissive = new THREE.Color(0xffffff);
+                            mat.emissiveMap = mat.map;
+                            mat.emissiveIntensity = 1.0; 
+                        }
+                    });
                 }
             });
             scene.add(skyboxMesh);
             checkAllLoaded();
             console.log("✅ تم إطلاق غيوم السماء وإلغاء تأثيرات الضباب عنها بنجاح!");
         }, undefined, (error) => {
-            console.error("لم يتم العثور على ملف skybox_skydays_3.glb في المسار الحالي، سيتم الاعتماد على الأفق الافتراضي", error);
+            console.error("لم يتم العثور على ملف Skybox_skydays_3.glb في المسار الحالي، سيتم الاعتماد على الأفق الافتراضي", error);
             checkAllLoaded(); // الاستمرار لحماية المحرك من الانهيار عند الفشل
         });
         
