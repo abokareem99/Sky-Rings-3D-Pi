@@ -228,22 +228,22 @@
         .loading-bar { width: 100%; height: 100%; background: var(--pi-gold); }
 
         /* تعديل طبقة أزرار وعصا التحكم لتكون أعلى من الـ Canvas وقابلة للمس برقم z-index مرتفع */
-        #touch-controls { display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; pointer-events: none; z-index: 110; }
+        #touch-controls { display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; pointer-events: none; z-index: 150; }
         #joystick-zone {
             position: absolute;
-            bottom: 40px; left: 25px; width: 100px; height: 100px;
+            bottom: 40px; left: 25px; width: 110px; height: 110px;
             background: rgba(255,255,255,0.1); border: 2px solid var(--pi-gold); border-radius: 50%;
             touch-action: none; pointer-events: auto;
         }
         #joystick-knob {
             position: absolute;
-            top: 25px; left: 25px; width: 50px; height: 50px;
+            top: 30px; left: 30px; width: 50px; height: 50px;
             background: rgba(138, 43, 226, 0.85); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
         }
         #speed-btn {
             position: absolute;
-            bottom: 130px; right: 25px; width: 70px; height: 70px;
+            bottom: 140px; right: 25px; width: 75px; height: 75px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
             color: var(--pi-purple-dark);
             font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center;
@@ -252,7 +252,7 @@
         }
         #fire-btn {
             position: absolute;
-            bottom: 40px; right: 25px; width: 70px; height: 70px;
+            bottom: 40px; right: 25px; width: 75px; height: 75px;
             background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; border: 2px solid #fff;
             color: #fff;
             font-weight: 900; font-size: 14px; display: none; justify-content: center; align-items: center;
@@ -641,17 +641,16 @@
 
         const loader = new THREE.GLTFLoader();
 
-        // تحميل ملف السحاب المخصص مع ضبط أبعاد العرض والعمق لتفادي ملاحقة الكاميرا وحجب الطائرة
         loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
             skyBackgroundMesh = gltf.scene;
-            skyBackgroundMesh.scale.set(1200, 1200, 1200); // زيادة مقياس الخلفية لتبقى في الأفق البعيد
+            skyBackgroundMesh.scale.set(1200, 1200, 1200);
             skyBackgroundMesh.position.set(0, 0, 0);
             
             skyBackgroundMesh.traverse((child) => {
                 if (child.isMesh) {
                     if(child.material) {
                         child.material.side = THREE.DoubleSide;
-                        child.material.depthWrite = false; // تعطيل حجب العمق حتى تظهر الطائرة والأطواق دائماً أمام السحاب
+                        child.material.depthWrite = false;
                     }
                 }
             });
@@ -766,21 +765,61 @@
             if(k === 'f') isFiring = false;
         });
         
-        const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob');
+        /* -------- إصلاح نظام اللمس بالكامل (Multi-touch Support) -------- */
+        const joyZone = document.getElementById('joystick-zone'); 
+        const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
-        function handleTouchMove(e) {
-            e.preventDefault(); if(!joyState.active) return;
-            const touch = e.targetTouches[0]; if(!touch) return;
-            let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
+        let activeTouchId = null;
+
+        function handleTouchMoveSafe(touch) {
+            let dx = touch.clientX - joyCenter.x;
+            let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            if(dist > 25) { dx = (dx/dist)*25; dy = (dy/dist)*25; }
+            let maxRadius = 35; // تم زيادة النطاق قليلاً لحركة أكثر نعومة
+            if(dist > maxRadius) { dx = (dx/dist)*maxRadius; dy = (dy/dist)*maxRadius; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            joyState.x = dx / 25; joyState.y = dy / 25;
+            joyState.x = dx / maxRadius; 
+            joyState.y = dy / maxRadius;
         }
-        
-        joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = true; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e); }, { passive: false });
-        joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); handleTouchMove(e); }, { passive: false });
-        joyZone.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; }, { passive: false });
+
+        // تم ربط أحداث اللمس بعنصر الـ Window لحل مشكلة توقف العصا عند الخروج من حدودها
+        joyZone.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            const touch = e.changedTouches[0];
+            activeTouchId = touch.identifier;
+            joyState.active = true; 
+            const rect = joyZone.getBoundingClientRect(); 
+            joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; 
+            handleTouchMoveSafe(touch); 
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => { 
+            if(!joyState.active) return;
+            for(let i=0; i < e.changedTouches.length; i++) {
+                if(e.changedTouches[i].identifier === activeTouchId) {
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    handleTouchMoveSafe(e.changedTouches[i]);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => { 
+            if(!joyState.active) return;
+            for(let i=0; i < e.changedTouches.length; i++) {
+                if(e.changedTouches[i].identifier === activeTouchId) {
+                    joyState.active = false; 
+                    activeTouchId = null;
+                    joyState.x = 0; 
+                    joyState.y = 0; 
+                    joyKnob.style.transform = 'translate(0px, 0px)'; 
+                    break;
+                }
+            }
+        }, { passive: false });
+        /* ------------------------------------------------------------------- */
         
         document.getElementById('speed-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, { passive: false });
         document.getElementById('speed-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; }, { passive: false });
@@ -796,7 +835,6 @@
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('pause-btn').style.display = 'block';
             
-            // تفعيل عناصر اللمس للموبايل فوراً عند البدء
             document.getElementById('touch-controls').style.display = 'block';
             document.getElementById('fire-btn').style.display = fleet[currentSelectionIndex].type === 'fighter' ? 'flex' : 'none';
 
@@ -862,7 +900,6 @@
                     if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                     if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
                     
-                    // تصحيح الاتجاه المعكوس لعصا التحكم (جعل سحب العصا لليمين يحرك الطائرة لليمين والأعلى للأعلى)
                     if (joyState.active) { 
                         inputX += joyState.x; 
                         inputY += joyState.y; 
@@ -871,8 +908,7 @@
                     if (!hasTakenOff) {
                         if (currentActiveAirplane.position.z < -100) { hasTakenOff = true; }
                     } else {
-                        // إزالة الإشارات السالبة لتصحيح التوجيه المنعكس تماماً
-                        currentActiveAirplane.position.y += 0.6 * -inputY; // توجيه الطيران القياسي (العصا للخلف/لأسفل ترفع الطائرة)
+                        currentActiveAirplane.position.y += 0.6 * -inputY; 
                         currentActiveAirplane.position.x += 1.4 * inputX;
                         
                         targetRoll = -0.55 * inputX; targetYaw = -0.22 * inputX;
