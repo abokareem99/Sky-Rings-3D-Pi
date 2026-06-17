@@ -35,7 +35,6 @@
             touch-action: none;
         }
 
-        /* ضبطcanvas اللعبة ليكون خلف واجهات المستخدم دائماً */
         canvas {
             position: absolute;
             top: 0;
@@ -227,7 +226,6 @@
         }
         .loading-bar { width: 100%; height: 100%; background: var(--pi-gold); }
 
-        /* تعديل طبقة أزرار وعصا التحكم لتكون أعلى من الـ Canvas وقابلة للمس برقم z-index مرتفع */
         #touch-controls { display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; pointer-events: none; z-index: 150; }
         #joystick-zone {
             position: absolute;
@@ -641,22 +639,22 @@
 
         const loader = new THREE.GLTFLoader();
 
+        // [تم تحديث هذا الجزء] - تحميل الخلفية السحابية بإعدادات احترافية
         loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
             skyBackgroundMesh = gltf.scene;
-            skyBackgroundMesh.scale.set(1200, 1200, 1200);
-            skyBackgroundMesh.position.set(0, 0, 0);
+            skyBackgroundMesh.scale.set(2000, 2000, 2000); // تكبير الخلفية لتكون عملاقة
             
             skyBackgroundMesh.traverse((child) => {
                 if (child.isMesh) {
-                    if(child.material) {
-                        child.material.side = THREE.DoubleSide;
-                        child.material.depthWrite = false;
-                    }
+                    child.material.side = THREE.BackSide; // للرؤية من الداخل
+                    child.material.depthWrite = false;    // عدم التأثير على عمق المشهد
+                    child.renderOrder = -1;               // رسم الخلفية أولاً
+                    child.frustumCulled = false;          // منع الاختفاء عند التحرك
                 }
             });
             scene.add(skyBackgroundMesh);
         }, undefined, (err) => {
-            console.error("خطأ أثناء تحميل ملف الخلفية السحابية:", err);
+            console.error("خطأ أثناء تحميل ملف الخلفية:", err);
         });
 
         loader.load('airplane.glb', (gltf) => {
@@ -765,7 +763,6 @@
             if(k === 'f') isFiring = false;
         });
         
-        /* -------- إصلاح نظام اللمس بالكامل (Multi-touch Support) -------- */
         const joyZone = document.getElementById('joystick-zone'); 
         const joyKnob = document.getElementById('joystick-knob');
         let joyCenter = { x: 0, y: 0 };
@@ -775,14 +772,13 @@
             let dx = touch.clientX - joyCenter.x;
             let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            let maxRadius = 35; // تم زيادة النطاق قليلاً لحركة أكثر نعومة
+            let maxRadius = 35; 
             if(dist > maxRadius) { dx = (dx/dist)*maxRadius; dy = (dy/dist)*maxRadius; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
             joyState.x = dx / maxRadius; 
             joyState.y = dy / maxRadius;
         }
 
-        // تم ربط أحداث اللمس بعنصر الـ Window لحل مشكلة توقف العصا عند الخروج من حدودها
         joyZone.addEventListener('touchstart', (e) => { 
             e.preventDefault(); 
             e.stopPropagation(); 
@@ -819,7 +815,6 @@
                 }
             }
         }, { passive: false });
-        /* ------------------------------------------------------------------- */
         
         document.getElementById('speed-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.space = true; }, { passive: false });
         document.getElementById('speed-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.space = false; }, { passive: false });
@@ -892,6 +887,7 @@
                     
                     currentActiveAirplane.position.z -= currentSpeed;
                     
+                    // تحديث موقع الخلفية لتتبع الطائرة
                     if (skyBackgroundMesh) {
                         skyBackgroundMesh.position.copy(currentActiveAirplane.position);
                     }
