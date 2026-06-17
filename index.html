@@ -35,11 +35,24 @@
             touch-action: none;
         }
 
+        /* ضبطcanvas اللعبة ليكون خلف واجهات المستخدم دائماً */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
         #hud-container {
             position: absolute;
             top: 75px; left: 15px; right: 15px;
             display: flex; justify-content: space-between;
             z-index: 10; pointer-events: none;
+        }
+        
+        #hud-container * {
+            pointer-events: auto;
         }
 
         .glass-panel {
@@ -214,34 +227,36 @@
         }
         .loading-bar { width: 100%; height: 100%; background: var(--pi-gold); }
 
-        #touch-controls { display: none; }
+        /* تعديل طبقة أزرار وعصا التحكم لتكون أعلى من الـ Canvas وقابلة للمس برقم z-index مرتفع */
+        #touch-controls { display: none; position: absolute; top:0; left:0; width:100vw; height:100vh; pointer-events: none; z-index: 110; }
         #joystick-zone {
             position: absolute;
-            bottom: 25px; left: 25px; width: 90px; height: 90px;
-            background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
-            touch-action: none;
+            bottom: 40px; left: 25px; width: 100px; height: 100px;
+            background: rgba(255,255,255,0.1); border: 2px solid var(--pi-gold); border-radius: 50%;
+            touch-action: none; pointer-events: auto;
         }
         #joystick-knob {
             position: absolute;
-            top: 22.5px; left: 22.5px; width: 45px; height: 45px;
-            background: rgba(138, 43, 226, 0.7); border: 2px solid var(--pi-gold); border-radius: 50%;
+            top: 25px; left: 25px; width: 50px; height: 50px;
+            background: rgba(138, 43, 226, 0.85); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
         }
         #speed-btn {
             position: absolute;
-            bottom: 110px; right: 25px; width: 65px; height: 65px;
+            bottom: 130px; right: 25px; width: 70px; height: 70px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
             color: var(--pi-purple-dark);
-            font-weight: 900; font-size: 14px; z-index: 100; display: flex; justify-content: center; align-items: center;
-            touch-action: none; text-align: center;
+            font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center;
+            touch-action: none; text-align: center; pointer-events: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         #fire-btn {
             position: absolute;
-            bottom: 25px; right: 25px; width: 65px; height: 65px;
+            bottom: 40px; right: 25px; width: 70px; height: 70px;
             background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 50%; border: 2px solid #fff;
             color: #fff;
-            font-weight: 900; font-size: 14px; z-index: 100; display: none; justify-content: center; align-items: center;
-            touch-action: none;
+            font-weight: 900; font-size: 14px; display: none; justify-content: center; align-items: center;
+            touch-action: none; pointer-events: auto;
             box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); text-align: center;
         }
     </style>
@@ -626,16 +641,17 @@
 
         const loader = new THREE.GLTFLoader();
 
-        // تم استبدال الكود بملف الخلفية الحية المطلوب من مستودع GitHub الخاص بك مباشرة
+        // تحميل ملف السحاب المخصص مع ضبط أبعاد العرض والعمق لتفادي ملاحقة الكاميرا وحجب الطائرة
         loader.load('https://raw.githubusercontent.com/abokareem99/Sky-Rings-3D-Pi/main/sd_sky_230315a.glb', (gltf) => {
             skyBackgroundMesh = gltf.scene;
-            skyBackgroundMesh.scale.set(700, 700, 700);
+            skyBackgroundMesh.scale.set(1200, 1200, 1200); // زيادة مقياس الخلفية لتبقى في الأفق البعيد
             skyBackgroundMesh.position.set(0, 0, 0);
             
             skyBackgroundMesh.traverse((child) => {
                 if (child.isMesh) {
                     if(child.material) {
                         child.material.side = THREE.DoubleSide;
+                        child.material.depthWrite = false; // تعطيل حجب العمق حتى تظهر الطائرة والأطواق دائماً أمام السحاب
                     }
                 }
             });
@@ -757,9 +773,9 @@
             const touch = e.targetTouches[0]; if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
+            if(dist > 25) { dx = (dx/dist)*25; dy = (dy/dist)*25; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            joyState.x = dx / 22.5; joyState.y = dy / 22.5;
+            joyState.x = dx / 25; joyState.y = dy / 25;
         }
         
         joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = true; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e); }, { passive: false });
@@ -780,10 +796,9 @@
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('pause-btn').style.display = 'block';
             
-            if (window.innerWidth <= 768) {
-                document.getElementById('touch-controls').style.display = 'block';
-                document.getElementById('fire-btn').style.display = fleet[currentSelectionIndex].type === 'fighter' ? 'flex' : 'none';
-            }
+            // تفعيل عناصر اللمس للموبايل فوراً عند البدء
+            document.getElementById('touch-controls').style.display = 'block';
+            document.getElementById('fire-btn').style.display = fleet[currentSelectionIndex].type === 'fighter' ? 'flex' : 'none';
 
             spawnSelectedPlane(fleet[currentSelectionIndex]);
             initEngineSound();
@@ -846,13 +861,19 @@
                     let inputY = 0; let inputX = 0;
                     if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                     if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                    if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
+                    
+                    // تصحيح الاتجاه المعكوس لعصا التحكم (جعل سحب العصا لليمين يحرك الطائرة لليمين والأعلى للأعلى)
+                    if (joyState.active) { 
+                        inputX += joyState.x; 
+                        inputY += joyState.y; 
+                    }
 
                     if (!hasTakenOff) {
                         if (currentActiveAirplane.position.z < -100) { hasTakenOff = true; }
                     } else {
-                        currentActiveAirplane.position.y += 0.6 * -inputY;
-                        currentActiveAirplane.position.x += 1.4 * -inputX;
+                        // إزالة الإشارات السالبة لتصحيح التوجيه المنعكس تماماً
+                        currentActiveAirplane.position.y += 0.6 * -inputY; // توجيه الطيران القياسي (العصا للخلف/لأسفل ترفع الطائرة)
+                        currentActiveAirplane.position.x += 1.4 * inputX;
                         
                         targetRoll = -0.55 * inputX; targetYaw = -0.22 * inputX;
                         currentRoll = THREE.MathUtils.lerp(currentRoll, targetRoll, 0.08);
