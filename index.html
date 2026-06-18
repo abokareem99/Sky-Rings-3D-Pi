@@ -340,7 +340,8 @@
         const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
         scene.fog = fog;
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+        // **التعديل 1: زيادة الـ far للكاميرا**
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
@@ -356,16 +357,12 @@
         let skyboxMesh = null; 
         const loader = new THREE.GLTFLoader();
         
+        // **التعديل 2: تحديث إعدادات تحميل وعرض الـ Skybox**
         loader.load('skybox_skydays_3.glb', (gltf) => {
             skyboxMesh = gltf.scene;
 
-            const box = new THREE.Box3().setFromObject(skyboxMesh);
-            const size = new THREE.Vector3();
-            box.getSize(size);
-            const maxDim = Math.max(size.x, size.y, size.z);
-
-            const scaleFactor = 4000 / maxDim;
-            skyboxMesh.scale.set(scaleFactor, scaleFactor, scaleFactor); 
+            // إجبار مقياس ثابت وكبير للتأكد من إحاطته بالكاميرا
+            skyboxMesh.scale.set(5000, 5000, 5000); 
 
             skyboxMesh.traverse((node) => {
                 if (node.isMesh) {
@@ -950,6 +947,7 @@
         }
 
         let lastTerrainZ = -2000;
+        // **التعديل 3: مزامنة موقع الـ Skybox مع الكاميرا**
         function animate() {
             requestAnimationFrame(animate);
 
