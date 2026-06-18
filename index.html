@@ -29,7 +29,6 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            /* خلفية متدرجة تعطي مظهر السماء الاحترافي */
             background: linear-gradient(180deg, #0f172a 0%, #1e3c72 40%, #7fc8f8 100%); 
             user-select: none;
             -webkit-user-select: none;
@@ -185,7 +184,7 @@
         }
 
         #pause-btn {
-            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             background: rgba(15, 23, 42, 0.65); border: 2px solid var(--pi-gold);
             color: var(--pi-gold); font-family: 'Cairo', sans-serif; font-weight: 700;
             padding: 6px 16px; border-radius: 20px; cursor: pointer; z-index: 100;
@@ -208,12 +207,13 @@
             bottom: 25px; left: 25px; width: 90px; height: 90px;
             background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
             touch-action: none;
+            display: flex; justify-content: center; align-items: center;
         }
         #joystick-knob {
-            position: absolute;
-            top: 22.5px; left: 22.5px; width: 45px; height: 45px;
+            width: 45px; height: 45px;
             background: rgba(138, 43, 226, 0.7); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
+            transform: translate(0px, 0px);
         }
         #speed-btn {
             position: absolute;
@@ -336,7 +336,6 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // إعداد المشهد
         const scene = new THREE.Scene();
         const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
         scene.fog = fog;
@@ -348,24 +347,23 @@
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // إضاءة المشهد
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
-        // تحميل الـ Skybox من ملف GLB
+        let skyboxMesh = null; // متغير عام لتتبع السماء
         const loader = new THREE.GLTFLoader();
         loader.load('skybox_skydays_3.glb', (gltf) => {
-            const skybox = gltf.scene;
-            skybox.scale.set(1000, 1000, 1000); // تكبير الملف ليحيط بالكامل
-            skybox.traverse((node) => {
+            skyboxMesh = gltf.scene;
+            skyboxMesh.scale.set(1000, 1000, 1000); 
+            skyboxMesh.traverse((node) => {
                 if (node.isMesh) {
-                    node.material.side = THREE.BackSide; // عرض المادة من الداخل
-                    node.material.depthWrite = false; // تظهر دائما في الخلفية
+                    node.material.side = THREE.BackSide; 
+                    node.material.depthWrite = false; 
                 }
             });
-            scene.add(skybox);
+            scene.add(skyboxMesh);
         }, undefined, (error) => {
             console.error('خطأ في تحميل الـ Skybox:', error);
         });
@@ -846,7 +844,6 @@
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
             
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
-            // تعديل دقيق: عكس استجابة الطائرة بحيث السحب للأسفل يرفعها للأعلى والعكس
             joyState.x = dx / 22.5; joyState.y = dy / 22.5; 
         }
         
@@ -939,6 +936,12 @@
         let lastTerrainZ = -2000;
         function animate() {
             requestAnimationFrame(animate);
+
+            // تتبع الـ Skybox للكاميرا حتى لا تخرج الطائرة من حدوده أبداً
+            if (skyboxMesh) {
+                skyboxMesh.position.copy(camera.position);
+            }
+
             if (isPlaying && currentActiveAirplane) {
                 if (!isPaused) {
                     let speedMultiplier = keys.space ? 4.5 : 2.2;
