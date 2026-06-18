@@ -352,15 +352,34 @@
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
-        let skyboxMesh = null; // متغير عام لتتبع السماء
+        // --- نظام تحميل ومعالجة الـ Skybox المطور تلقائياً ---
+        let skyboxMesh = null; 
         const loader = new THREE.GLTFLoader();
+        
         loader.load('skybox_skydays_3.glb', (gltf) => {
             skyboxMesh = gltf.scene;
-            skyboxMesh.scale.set(1000, 1000, 1000); 
+
+            // قياس الأبعاد الكلية بشكل ديناميكي لتفادي الاختفاء المفاجئ أو الـ Frustum Culling
+            const box = new THREE.Box3().setFromObject(skyboxMesh);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            // تعديل الحجم برمجياً ليصبح 4000 وحدة (ليقع كلياً ضمن مدى رؤية الكاميرا 5000)
+            const scaleFactor = 4000 / maxDim;
+            skyboxMesh.scale.set(scaleFactor, scaleFactor, scaleFactor); 
+
             skyboxMesh.traverse((node) => {
                 if (node.isMesh) {
-                    node.material.side = THREE.BackSide; 
-                    node.material.depthWrite = false; 
+                    node.material.side = THREE.BackSide; // تصيير الأسطح الداخلية فقط
+                    node.material.depthWrite = false;    // السماح للحلقات والرصاص بالظهور أمام الغيوم بدون حجب دلالي
+                    node.material.fog = false;           // إلغاء تأثير الضباب البيئي على السماء لجعلها مشرقة وواضحة
+                    
+                    // تحويل ألوان المادة الأصلية إلى إشعاع ذاتي متزن
+                    if (node.material.emissive) {
+                        node.material.emissive = node.material.color;
+                        node.material.emissiveIntensity = 1.0;
+                    }
                 }
             });
             scene.add(skyboxMesh);
@@ -937,7 +956,7 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // تتبع الـ Skybox للكاميرا حتى لا تخرج الطائرة من حدوده أبداً
+            // تتبع الـ Skybox المحدث لموقع الكاميرا للحفاظ على أبعاد المشهد اللانهائية اللحظية
             if (skyboxMesh) {
                 skyboxMesh.position.copy(camera.position);
             }
