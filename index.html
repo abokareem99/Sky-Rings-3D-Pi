@@ -336,25 +336,39 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
+        // إعداد المشهد
         const scene = new THREE.Scene();
-        // إزالة اللون الثابت للخلفية للسماح لـ CSS بالظهور خلف المشهد
-        // scene.background = new THREE.Color(0x7fc8f8); 
         const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
         scene.fog = fog;
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
-   
-        // تفعيل الشفافية alpha: true لظهور خلفية المتصفح المخصصة
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
+        // إضاءة المشهد
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
+
+        // تحميل الـ Skybox من ملف GLB
+        const loader = new THREE.GLTFLoader();
+        loader.load('skybox_skydays_3.glb', (gltf) => {
+            const skybox = gltf.scene;
+            skybox.scale.set(1000, 1000, 1000); // تكبير الملف ليحيط بالكامل
+            skybox.traverse((node) => {
+                if (node.isMesh) {
+                    node.material.side = THREE.BackSide; // عرض المادة من الداخل
+                    node.material.depthWrite = false; // تظهر دائما في الخلفية
+                }
+            });
+            scene.add(skybox);
+        }, undefined, (error) => {
+            console.error('خطأ في تحميل الـ Skybox:', error);
+        });
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -696,7 +710,6 @@
         createTerrainSegment(-1000, rockColor); 
         createTerrainSegment(-2000, rockColor);
 
-        const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
             basePassengerModel.scale.set(4.55, 4.55, 4.55); checkAllLoaded();
