@@ -84,7 +84,7 @@
             z-index: 20;
         }
 
-        .pi-top-banner .left-text {
+        .pi-top-banner .pi-protocol-text {
             color: var(--pi-purple);
             font-family: monospace; font-size: 12px;
             text-shadow: 0 0 5px var(--pi-purple);
@@ -148,7 +148,7 @@
             flex: 1;
             background: rgba(74, 20, 140, 0.7); border: 1px solid var(--pi-gold);
             color: var(--pi-gold); padding: 10px 10px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: all 0.2;
+            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: 0.2s;
         }
         .feature-icon-btn:disabled { background: rgba(100,100,100,0.3); border-color: #555; color: #aaa; cursor: not-allowed; }
 
@@ -170,7 +170,7 @@
         #leaderboard-modal {
             display: none;
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 300px; padding: 20px; z-index: 30; text-align: center;
+            width: 300px; padding: 20px; z-index: 1030; text-align: center;
             border: 2px solid var(--pi-gold);
         }
 
@@ -359,23 +359,20 @@
         loader.load('skybox_skydays_3.glb', (gltf) => {
             skyboxMesh = gltf.scene;
 
-            // قياس الأبعاد الكلية بشكل ديناميكي لتفادي الاختفاء المفاجئ أو الـ Frustum Culling
             const box = new THREE.Box3().setFromObject(skyboxMesh);
             const size = new THREE.Vector3();
             box.getSize(size);
             const maxDim = Math.max(size.x, size.y, size.z);
 
-            // تعديل الحجم برمجياً ليكون قطره الكلي 4000 وحدة (ليقع كلياً ضمن مدى رؤية الكاميرا 5000)
             const scaleFactor = 4000 / maxDim;
             skyboxMesh.scale.set(scaleFactor, scaleFactor, scaleFactor); 
 
             skyboxMesh.traverse((node) => {
                 if (node.isMesh) {
-                    node.material.side = THREE.BackSide; // تصيير الأسطح الداخلية فقط (مهم جداً للرؤية من الداخل)
-                    node.material.depthWrite = false;    // السماح للحلقات والرصاص بالظهور أمام الغيوم بدون حجب دلالي
-                    node.material.fog = false;           // إلغاء تأثير الضباب البيئي على السماء لجعلها مشرقة وواضحة
+                    node.material.side = THREE.BackSide; 
+                    node.material.depthWrite = false;    
+                    node.material.fog = false;           
                     
-                    // تأمين المادة الأصلية وتحويلها إلى إشعاع ذاتي متزن ومستقل عن الإضاءة المحيطة
                     if (node.material.emissive && typeof node.material.emissive.copy === 'function') {
                         node.material.emissive.copy(node.material.color);
                         node.material.emissiveIntensity = 1.0;
@@ -956,7 +953,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // تتبع الـ Skybox المحدث لموقع الكاميرا للحفاظ على أبعاد المشهد اللانهائية اللحظية
             if (skyboxMesh) {
                 skyboxMesh.position.copy(camera.position);
             }
@@ -1038,16 +1034,23 @@
                                 continue;
                             }
 
+                            let targetHit = false;
                             for (let j = bullets.length - 1; j >= 0; j--) {
                                 const b = bullets[j];
                                 if (b.position.distanceTo(t.position) < 16) {
                                     createExplosion(t.position);
-                                    t.material.color.setHex(0xffcc00); 
                                     scene.remove(b); bullets.splice(j, 1);
-                                    score += 50; 
-                                    document.getElementById('points').innerText = score;
+                                    targetHit = true;
                                     break;
                                 }
+                            }
+
+                            if (targetHit) {
+                                scene.remove(t); targets.splice(i, 1);
+                                score += 50; 
+                                document.getElementById('points').innerText = score;
+                                let lastTargetZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
+                                spawnTarget(lastTargetZ - 300);
                             }
                         }
                     }
