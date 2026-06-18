@@ -532,7 +532,9 @@
 
         async function executePiPayment(plane) {
             const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
+            startBtn.disabled = true; 
+            startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
+            
             try {
                 const paymentData = {
                     amount: plane.piCost,
@@ -541,16 +543,52 @@
                 };
                 
                 await Pi.createPayment(paymentData, {
-                    onReadyForServerApproval: function(paymentId) { /* server side logic */ },
-                    onReadyForServerCompletion: function(paymentId, txid) {
-                        localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
-                        showNotification(`تم شراء طائرة ${plane.name} بنجاح! 🚀`);
-                        startBtn.disabled = false; updateShopUI();
+                    onReadyForServerApproval: function(paymentId) {
+                        // استدعاء ملف الموافقة في Vercel
+                        fetch('/api/approve-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId: paymentId })
+                        }).catch(err => {
+                            console.error("خطأ في الاتصال بخادم الموافقة:", err);
+                        });
                     },
-                    onCancel: function() { startBtn.disabled = false; updateShopUI(); },
-                    onError: function(error) { startBtn.disabled = false; updateShopUI(); }
+                    onReadyForServerCompletion: function(paymentId, txid) {
+                        // استدعاء ملف الإكمال في Vercel بعد تأكيد العملية
+                        fetch('/api/complete-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId: paymentId, txid: txid })
+                        }).then(response => {
+                            if (response.ok) {
+                                localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
+                                showNotification(`تم شراء طائرة ${plane.name} بنجاح! 🚀`);
+                            } else {
+                                showNotification("حدث خطأ أثناء إكمال الدفع الخادم.", true);
+                            }
+                        }).catch(err => {
+                            console.error("خطأ في الاتصال بخادم الإكمال:", err);
+                        }).finally(() => {
+                            startBtn.disabled = false; 
+                            updateShopUI();
+                        });
+                    },
+                    onCancel: function(paymentId) { 
+                        startBtn.disabled = false; 
+                        updateShopUI(); 
+                    },
+                    onError: function(error, payment) { 
+                        console.error("خطأ الدفع:", error);
+                        startBtn.disabled = false; 
+                        updateShopUI(); 
+                        showNotification("فشلت عملية الدفع", true);
+                    }
                 });
-            } catch (err) { startBtn.disabled = false; updateShopUI(); }
+            } catch (err) { 
+                console.error("خطأ في الإنشاء:", err);
+                startBtn.disabled = false; 
+                updateShopUI(); 
+            }
         }
 
         // --- نظام الصوت الديناميكي المحسّن ---
@@ -583,11 +621,9 @@
             engineOsc = null;
         }
 
-        // دالة إطلاق النار بواقعية عسكرية عالية (دمج طرقة معدنية + تفريغ هواء وموجة صوتية عريضة)
         function playShootSound() {
             if(!audioCtx) return;
             
-            // 1. ضربة المقذوف الحادة (The Punch)
             const osc = audioCtx.createOscillator();
             const oscGain = audioCtx.createGain();
             osc.type = 'sawtooth';
@@ -597,8 +633,7 @@
             oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
             
-            // 2. صدى البارود وتفريغ الغاز (Noise Echo Effect)
-            const bufferSize = audioCtx.sampleRate * 0.25; // ربع ثانية صدى
+            const bufferSize = audioCtx.sampleRate * 0.25; 
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -617,7 +652,6 @@
             noiseGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
             noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
             
-            // ربط القنوات بالخرج الرئيسي
             osc.connect(oscGain);
             oscGain.connect(audioCtx.destination);
             
@@ -745,12 +779,10 @@
             scene.add(ring); rings.push(ring);
         }
 
-        // نظام إنشاء الأهداف الجوية لتكون معلقة في خط الطيران بدلاً من السقوط الأرضي
         function spawnTarget(zPos) {
             const geom = new THREE.IcosahedronGeometry(8);
             const mat = new THREE.MeshStandardMaterial({color: 0xe74c3c, metalness: 0.6, roughness: 0.4});
             const target = new THREE.Mesh(geom, mat);
-            // تحديد موقع مناسب لمرور الطائرة والحلقات
             target.position.set((Math.random() - 0.5) * 180, Math.random() * 40 + 15, zPos);
             scene.add(target);
             targets.push(target);
@@ -811,8 +843,10 @@
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
+            
+            // إضافة التعديل الذي طلبته لقلب التحكم (سحب للأسفل = ارتفاع)
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
-            joyState.x = dx / 22.5; joyState.y = dy / 22.5; 
+            joyState.x = dx / 22.5; joyState.y = -dy / 22.5; 
         }
         
         joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = true; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e); }, { passive: false });
@@ -967,7 +1001,6 @@
                         }
                     }
 
-                    // --- تحديث الأهداف والانفجارات المستمر (دون إخفاء الأهداف عند الإصابة) ---
                     if (fleet[currentSelectionIndex].type === 'fighter') {
                         if(targets.length < 4) spawnTarget(currentActiveAirplane.position.z - 1000 - Math.random() * 500);
 
@@ -975,7 +1008,6 @@
                             const t = targets[i];
                             t.rotation.x += 0.02; t.rotation.y += 0.02;
 
-                            // محاكاة حركة الحلقات: إعادة توليد الهدف في الأمام عند تجاوزه
                             if (t.position.z > currentActiveAirplane.position.z + 100) {
                                 scene.remove(t); targets.splice(i, 1);
                                 let lastTargetZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
@@ -983,16 +1015,11 @@
                                 continue;
                             }
 
-                            // التحقق من تصادم الرصاص بالهدف
                             for (let j = bullets.length - 1; j >= 0; j--) {
                                 const b = bullets[j];
                                 if (b.position.distanceTo(t.position) < 16) {
                                     createExplosion(t.position);
-                                    
-                                    // تم إلغاء أسطر حذف الهدف هنا ليستمر في طريقه!
-                                    // تغيير لون الهدف المصاب ليعطي تلميحاً بصرياً ممتعاً للبطل
                                     t.material.color.setHex(0xffcc00); 
-                                    
                                     scene.remove(b); bullets.splice(j, 1);
                                     score += 50; 
                                     document.getElementById('points').innerText = score;
