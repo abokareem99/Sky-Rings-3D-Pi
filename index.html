@@ -148,7 +148,7 @@
             flex: 1;
             background: rgba(74, 20, 140, 0.7); border: 1px solid var(--pi-gold);
             color: var(--pi-gold); padding: 10px 10px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: all 0.2s;
+            cursor: pointer; font-family: 'Cairo', sans-serif; text-align: center; transition: all 0.2;
         }
         .feature-icon-btn:disabled { background: rgba(100,100,100,0.3); border-color: #555; color: #aaa; cursor: not-allowed; }
 
@@ -365,19 +365,19 @@
             box.getSize(size);
             const maxDim = Math.max(size.x, size.y, size.z);
 
-            // تعديل الحجم برمجياً ليصبح 4000 وحدة (ليقع كلياً ضمن مدى رؤية الكاميرا 5000)
+            // تعديل الحجم برمجياً ليكون قطره الكلي 4000 وحدة (ليقع كلياً ضمن مدى رؤية الكاميرا 5000)
             const scaleFactor = 4000 / maxDim;
             skyboxMesh.scale.set(scaleFactor, scaleFactor, scaleFactor); 
 
             skyboxMesh.traverse((node) => {
                 if (node.isMesh) {
-                    node.material.side = THREE.BackSide; // تصيير الأسطح الداخلية فقط
+                    node.material.side = THREE.BackSide; // تصيير الأسطح الداخلية فقط (مهم جداً للرؤية من الداخل)
                     node.material.depthWrite = false;    // السماح للحلقات والرصاص بالظهور أمام الغيوم بدون حجب دلالي
                     node.material.fog = false;           // إلغاء تأثير الضباب البيئي على السماء لجعلها مشرقة وواضحة
                     
-                    // تحويل ألوان المادة الأصلية إلى إشعاع ذاتي متزن
-                    if (node.material.emissive) {
-                        node.material.emissive = node.material.color;
+                    // تأمين المادة الأصلية وتحويلها إلى إشعاع ذاتي متزن ومستقل عن الإضاءة المحيطة
+                    if (node.material.emissive && typeof node.material.emissive.copy === 'function') {
+                        node.material.emissive.copy(node.material.color);
                         node.material.emissiveIntensity = 1.0;
                     }
                 }
