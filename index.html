@@ -29,7 +29,8 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #7fc8f8; 
+            /* خلفية متدرجة تعطي مظهر السماء الاحترافي */
+            background: linear-gradient(180deg, #0f172a 0%, #1e3c72 40%, #7fc8f8 100%); 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -336,13 +337,15 @@
         }
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x7fc8f8);
+        // إزالة اللون الثابت للخلفية للسماح لـ CSS بالظهور خلف المشهد
+        // scene.background = new THREE.Color(0x7fc8f8); 
         const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
    
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        // تفعيل الشفافية alpha: true لظهور خلفية المتصفح المخصصة
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.shadowMap.enabled = true;
@@ -544,7 +547,6 @@
                 
                 await Pi.createPayment(paymentData, {
                     onReadyForServerApproval: function(paymentId) {
-                        // استدعاء ملف الموافقة في Vercel
                         fetch('/api/approve-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -554,7 +556,6 @@
                         });
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // استدعاء ملف الإكمال في Vercel بعد تأكيد العملية
                         fetch('/api/complete-payment', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -591,7 +592,6 @@
             }
         }
 
-        // --- نظام الصوت الديناميكي المحسّن ---
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -623,46 +623,34 @@
 
         function playShootSound() {
             if(!audioCtx) return;
-            
             const osc = audioCtx.createOscillator();
             const oscGain = audioCtx.createGain();
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(320, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.14);
-            
             oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
             
             const bufferSize = audioCtx.sampleRate * 0.25; 
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
             
             const noise = audioCtx.createBufferSource();
             noise.buffer = buffer;
-            
             const noiseFilter = audioCtx.createBiquadFilter();
             noiseFilter.type = 'bandpass';
             noiseFilter.frequency.setValueAtTime(900, audioCtx.currentTime);
             noiseFilter.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.18);
-            
             const noiseGain = audioCtx.createGain();
             noiseGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
             noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
             
-            osc.connect(oscGain);
-            oscGain.connect(audioCtx.destination);
+            osc.connect(oscGain); oscGain.connect(audioCtx.destination);
+            noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
             
-            noise.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.14);
-            noise.start();
-            noise.stop(audioCtx.currentTime + 0.22);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.14);
+            noise.start(); noise.stop(audioCtx.currentTime + 0.22);
         }
 
         function playExplosionSound() {
@@ -844,9 +832,9 @@
             let dist = Math.sqrt(dx*dx + dy*dy); 
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
             
-            // إضافة التعديل الذي طلبته لقلب التحكم (سحب للأسفل = ارتفاع)
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
-            joyState.x = dx / 22.5; joyState.y = -dy / 22.5; 
+            // تعديل دقيق: عكس استجابة الطائرة بحيث السحب للأسفل يرفعها للأعلى والعكس
+            joyState.x = dx / 22.5; joyState.y = dy / 22.5; 
         }
         
         joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = true; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; handleTouchMove(e); }, { passive: false });
