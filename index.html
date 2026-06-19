@@ -352,38 +352,21 @@
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
-        // --- نظام تحميل ومعالجة الـ Skybox المطور تلقائياً ---
-        let skyboxMesh = null; 
-        const loader = new THREE.GLTFLoader();
-        
-        loader.load('skybox_skydays_3.glb', (gltf) => {
-            skyboxMesh = gltf.scene;
-
-            // مقياس ضخم، لكنه آمن داخل نطاق رؤية الكاميرا (20000)
-            skyboxMesh.scale.set(800, 800, 800); 
-
-            skyboxMesh.traverse((node) => {
-                if (node.isMesh) {
-                    // استبدال الخامة بالكامل بخامة أساسية تضمن ظهور السماء مهما كانت ظروف المشهد
-                    const oldMat = node.material;
-                    node.material = new THREE.MeshBasicMaterial({
-                        map: oldMat.map || null, // الاحتفاظ بصورة السماء
-                        color: oldMat.color || 0xffffff,
-                        side: THREE.BackSide,    // العرض من الداخل فقط
-                        depthWrite: false,       // منع إخفاء الطائرة والجبال
-                        fog: false               // إلغاء تأثير الضباب تماماً
-                    });
-                    
-                    node.renderOrder = -100;     // إجبار المتصفح على رسم السماء كأول شيء
-                }
-            });
-            
-            scene.add(skyboxMesh);
+        // --- نظام تحميل ومعالجة صورة الخلفية الجديد ---
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('3d_snow_winter.png', (texture) => {
+            texture.encoding = THREE.sRGBEncoding; // للحفاظ على الألوان الأصلية غير باهتة
+            texture.generateMipmaps = false; // لمنع التشويش أو التكسر
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.mapping = THREE.EquirectangularReflectionMapping; // لتغطية المشهد بشكل محيطي كخلفية
+            scene.background = texture;
         }, undefined, (error) => {
-            console.error('خطأ في تحميل الـ Skybox:', error);
-            // تنبيه يظهر لك على الشاشة إذا لم يعثر Vercel على الملف
-            alert('تنبيه للمطور: لم يتم العثور على ملف skybox_skydays_3.glb! تأكد من رفع الملف وتطابق حالة الأحرف.');
+            console.error('خطأ في تحميل صورة الخلفية:', error);
+            alert('تنبيه للمطور: لم يتم العثور على ملف 3d_snow_winter.png!');
         });
+
+        const loader = new THREE.GLTFLoader();
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -953,10 +936,6 @@
         let lastTerrainZ = -2000;
         function animate() {
             requestAnimationFrame(animate);
-
-            if (skyboxMesh) {
-                skyboxMesh.position.copy(camera.position);
-            }
 
             if (isPlaying && currentActiveAirplane) {
                 if (!isPaused) {
