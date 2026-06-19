@@ -29,7 +29,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background: linear-gradient(180deg, #0f172a 0%, #1e3c72 40%, #7fc8f8 100%); 
+            background: #0f172a; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -337,14 +337,14 @@
         }
 
         const scene = new THREE.Scene();
-        const fog = new THREE.FogExp2(0x7fc8f8, 0.0006);
-        scene.fog = fog;
+        // تم إزالة الضباب لأنه لم يعد هناك تضاريس ممتدة لتغطيته
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.shadowMap.enabled = true;
+        // تم تعطيل الظلال لأنها لم تعد هناك تضاريس تسقط عليها الظلال
+        renderer.shadowMap.enabled = false;
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -352,14 +352,14 @@
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
-        // --- نظام تحميل ومعالجة صورة الخلفية الجديد ---
+        // --- نظام تحميل ومعالجة صورة الخلفية (الصحراء/السماء) ---
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load('3d_snow_winter.png', (texture) => {
-            texture.encoding = THREE.sRGBEncoding; // للحفاظ على الألوان الأصلية غير باهتة
-            texture.generateMipmaps = false; // لمنع التشويش أو التكسر
+            texture.encoding = THREE.sRGBEncoding; 
+            texture.generateMipmaps = false; 
             texture.minFilter = THREE.LinearFilter;
             texture.magFilter = THREE.LinearFilter;
-            texture.mapping = THREE.EquirectangularReflectionMapping; // لتغطية المشهد بشكل محيطي كخلفية
+            texture.mapping = THREE.EquirectangularReflectionMapping; 
             scene.background = texture;
         }, undefined, (error) => {
             console.error('خطأ في تحميل صورة الخلفية:', error);
@@ -678,35 +678,7 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const rockColor = 0x5a4d41;
-
-        function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const geometry = new THREE.PlaneGeometry(1600, 1000, 60, 50);
-            const pos = geometry.attributes.position;
-            for (let i = 0; i < pos.count; i++) {
-                const x = pos.getX(i); const y = pos.getY(i);
-                let zHeight = Math.sin(x * 0.02) * Math.cos(y * 0.02) * 95;
-                zHeight += Math.abs(Math.sin(x * 0.07)) * 30; 
-                zHeight += Math.cos(y * 0.05) * 15;
-                if (Math.abs(x) < 180) { let factor = Math.abs(x) / 180; zHeight *= (factor * factor); }
-                pos.setZ(i, zHeight);
-            }
-            pos.needsUpdate = true; geometry.computeVertexNormals();
-            const terrainMaterial = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.98, metalness: 0.1, flatShading: true });
-            const terrain = new THREE.Mesh(geometry, terrainMaterial);
-            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -22, zPos); terrain.receiveShadow = true; terrain.castShadow = true;
-            terrainGroup.add(terrain);
-
-            if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(80, 800), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -21.6, zPos + 100); runway.receiveShadow = true; scene.add(runway);
-            }
-        }
-
-        createTerrainSegment(0, rockColor, true); 
-        createTerrainSegment(-1000, rockColor); 
-        createTerrainSegment(-2000, rockColor);
+        // تم حذف مجموعة التضاريس ودوال توليد التضاريس بالكامل
 
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
@@ -933,7 +905,6 @@
             document.getElementById('start-mask').style.display = 'flex';
         }
 
-        let lastTerrainZ = -2000;
         function animate() {
             requestAnimationFrame(animate);
 
@@ -985,8 +956,6 @@
 
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 0.8, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
-
-                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, rockColor); }
 
                     if (isFiring && fleet[currentSelectionIndex].type === 'fighter' && Date.now() - lastShootTime > 150) {
                         shootBullet(); lastShootTime = Date.now();
