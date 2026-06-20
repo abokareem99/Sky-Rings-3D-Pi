@@ -273,6 +273,10 @@
 
         <div class="btn-area-bottom">
             <div class="pi-features-bar">
+                <button class="feature-icon-btn" onclick="buyExtraTime()">⏱️ شراء وقت (200 نقطة)</button>
+            </div>
+            
+            <div class="pi-features-bar">
                 <button id="wallet-connect-btn" class="feature-icon-btn" onclick="connectPiWallet()">🔗 ربط المحفظة</button>
                 <button class="feature-icon-btn" onclick="showLeaderboard()">🏆 لوحة الصدارة</button>
             </div>
@@ -321,6 +325,7 @@
         window.addEventListener('load', () => {
             if (window.Pi) {
                 try {
+                    // الاعتماد الصارم على شبكة الاختبار (Testnet)
                     Pi.init({ version: "2.0", sandbox: true });
                 } catch (e) {
                     console.error("Error configuration during Pi initialization:", e);
@@ -365,7 +370,7 @@
         sunLight.shadow.camera.right = 500;
         sunLight.shadow.camera.top = 500;
         sunLight.shadow.camera.bottom = -500;
-        sunLight.shadow.bias = -0.0005; // لمنع التشوهات على التضاريس المعقدة
+        sunLight.shadow.bias = -0.0005; 
         scene.add(sunLight);
 
         // -- توليد التضاريس الواقعية --
@@ -379,23 +384,16 @@
             let x = pos.getX(i);
             let z = pos.getZ(i);
             
-            // تداخل موجي لإنشاء جبال وتفاصيل أكثر واقعية
             let y = Math.sin(x * 0.004) * 40 + Math.cos(z * 0.003) * 50;
-            y += Math.sin(x * 0.015) * 12 + Math.sin(z * 0.012) * 12; // تفاصيل متوسطة
-            y += Math.sin(x * 0.05) * 3; // تفاصيل دقيقة (صخور)
+            y += Math.sin(x * 0.015) * 12 + Math.sin(z * 0.012) * 12; 
+            y += Math.sin(x * 0.05) * 3; 
             
             pos.setY(i, y);
 
-            // تلوين التضاريس استناداً للارتفاع
-            if (y > 60) {
-                color.setHex(0xe0e0e0); // ثلج/صخور عليا
-            } else if (y > 30) {
-                color.setHex(0x5a4d41); // صخور/تربة
-            } else if (y > -10) {
-                color.setHex(0x2d5a27); // عشب مرتفع
-            } else {
-                color.setHex(0x1e461b); // عشب أعمق/وديان
-            }
+            if (y > 60) { color.setHex(0xe0e0e0); } 
+            else if (y > 30) { color.setHex(0x5a4d41); } 
+            else if (y > -10) { color.setHex(0x2d5a27); } 
+            else { color.setHex(0x1e461b); }
             colors.push(color.r, color.g, color.b);
         }
         
@@ -406,7 +404,7 @@
             vertexColors: true, 
             roughness: 0.8, 
             metalness: 0.02,
-            flatShading: true // إعطاء طابع فني مجسم وواقعي مع الإضاءة
+            flatShading: true 
         });
         const terrain = new THREE.Mesh(terrainGeo, terrainMat);
         terrain.position.set(0, -60, -7000); 
@@ -415,7 +413,6 @@
 
         // -- الغابات والأشجار الواقعية --
         const treeCount = 3500;
-        // تصميم شجرة صنوبر من 3 طبقات للحصول على حجم وشكل أفضل
         const trunkGeo = new THREE.CylinderGeometry(1.5, 2.5, 10, 6);
         const leavesGeo1 = new THREE.ConeGeometry(8, 16, 7);
         const leavesGeo2 = new THREE.ConeGeometry(6, 12, 7);
@@ -445,15 +442,13 @@
         for (let i = 0; i < treeCount; i++) {
             let tx = (Math.random() - 0.5) * 6000;
             let tz = - (Math.random() * 23000) + 500;
-            if (Math.abs(tx) < 70) continue; // مسار الطيران
+            if (Math.abs(tx) < 70) continue; 
             
-            // حساب نفس ارتفاع التضاريس الجديد لضمان التصاق الشجرة بالأرض
             let ty = Math.sin(tx * 0.004) * 40 + Math.cos((tz-7000) * 0.003) * 50;
             ty += Math.sin(tx * 0.015) * 12 + Math.sin((tz-7000) * 0.012) * 12;
             ty += Math.sin(tx * 0.05) * 3;
-            ty -= 60; // تعويض موقع التضاريس الرئيسي (-60)
+            ty -= 60; 
             
-            // لا تزرع أشجار في القمم الصخرية جداً
             if (ty > 20) continue;
 
             dummy.position.set(tx, ty, tz);
@@ -467,7 +462,6 @@
             leavesMesh2.setMatrixAt(i, dummy.matrix);
             leavesMesh3.setMatrixAt(i, dummy.matrix);
             
-            // تنويع خفيف في ألوان أوراق الشجر
             let shade = 0.8 + Math.random() * 0.4;
             colorVar.setRGB(0.09 * shade, 0.22 * shade, 0.08 * shade);
             leavesMesh1.setColorAt(i, colorVar);
@@ -514,11 +508,11 @@
             cloudGroup.add(sprite);
         }
         scene.add(cloudGroup);
-        // ---------------------------------------------
 
         const loader = new THREE.GLTFLoader();
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
+        let extraFlightTime = parseInt(localStorage.getItem('flight_extraTime')) || 0; // وقت الطيران الإضافي المكتسب
         document.getElementById('total-points').innerText = totalPoints;
 
         let basePassengerModel = null; 
@@ -573,6 +567,20 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
+        // --- شراء الوقت باستخدام النقاط ---
+        function buyExtraTime() {
+            if (totalPoints >= 200) {
+                totalPoints -= 200;
+                extraFlightTime += 5;
+                localStorage.setItem('flight_totalPoints', totalPoints);
+                localStorage.setItem('flight_extraTime', extraFlightTime);
+                document.getElementById('total-points').innerText = totalPoints;
+                showNotification(`تمت زيادة وقت الطيران الأساسي بنجاح! (+5 ثوانٍ)`, false);
+            } else {
+                showNotification("نقاطك غير كافية! تحتاج إلى 200 نقطة على الأقل.", true);
+            }
+        }
+
         function togglePause() {
             if(!isPlaying) return;
             isPaused = !isPaused;
@@ -595,16 +603,16 @@
         }
 
         function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true;
+            if (plane.id === 0) return true; // الطائرة الوحيدة المفتوحة مجاناً
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
         }
 
         function toggleHangar() {
             const carousel = document.getElementById('shop-carousel');
-            const features = document.querySelector('.pi-features-bar');
+            const features = document.querySelectorAll('.pi-features-bar');
             const displayStatus = (carousel.style.visibility === 'hidden') ? 'visible' : 'hidden';
             carousel.style.visibility = displayStatus;
-            features.style.visibility = displayStatus;
+            features.forEach(f => f.style.visibility = displayStatus);
             document.getElementById('hangar-btn').innerText = displayStatus === 'hidden' ? "إظهار الواجهة 👁️" : "إخفاء الواجهة 👁️";
         }
 
@@ -873,7 +881,7 @@
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%)";
                 startBtn.style.color = "var(--pi-gold)"; startBtn.style.borderColor = "var(--pi-gold)";
             } else {
-                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`; statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
+                statusEl.innerText = `مغلقة (تحتاج دفع بـ Test-Pi)`; statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Test-Pi (${planeData.piCost} π) ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
                 startBtn.style.color = "var(--pi-purple-dark)"; startBtn.style.borderColor = "var(--pi-purple-dark)";
             }
@@ -1021,7 +1029,10 @@
 
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
             score = 0; document.getElementById('points').innerText = score;
-            timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
+            
+            // إضافة وقت الطيران المكتسب إلى الوقت الأساسي
+            timeLeft = 35 + extraFlightTime; 
+            document.getElementById('time-left').innerText = timeLeft;
             
             targetRoll = 0; currentRoll = 0; targetYaw = 0; currentYaw = 0;
 
@@ -1176,39 +1187,4 @@
 
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
-                        if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
-
-                        if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
-                            score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
-                            if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
-                            else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقه خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
-                            else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
-                            document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
-                            
-                            scene.remove(ring); rings.splice(i, 1); 
-                            let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
-                            createRing(lastSpawnZ - 160);
-                            continue;
-                        }
-
-                        if (ring.position.z > currentActiveAirplane.position.z + 80) {
-                            scene.remove(ring); rings.splice(i, 1);
-                            let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
-                            createRing(lastSpawnZ - 160);
-                        }
-                    }
-                }
-            } else {
-                if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
-                camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
-            }
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+                        if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(
