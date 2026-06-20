@@ -338,25 +338,22 @@
 
         const scene = new THREE.Scene();
         
-        // --- تعديل 1: تخفيف كثافة الضباب لزيادة عمق الرؤية المريحة ---
         scene.background = new THREE.Color(0x87CEEB); 
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.0003); // تم التخفيف من 0.0012 إلى 0.0003
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.0003); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20000);
         
-        // --- تعديل 2: تفعيل الظلال في محرك الرندر ---
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.shadowMap.enabled = true; // تفعيل الظلال
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // ظلال ناعمة
+        renderer.shadowMap.enabled = true; 
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
         document.body.appendChild(renderer.domElement);
 
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x2d4c1e, 0.6); 
         hemiLight.position.set(0, 500, 0);
         scene.add(hemiLight);
 
-        // --- تعديل 3: جعل الشمس تصدر ظلالاً تغطي المنطقة ---
         const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
         sunLight.position.set(150, 350, 100);
         sunLight.castShadow = true; 
@@ -368,66 +365,120 @@
         sunLight.shadow.camera.right = 500;
         sunLight.shadow.camera.top = 500;
         sunLight.shadow.camera.bottom = -500;
+        sunLight.shadow.bias = -0.0005; // لمنع التشوهات على التضاريس المعقدة
         scene.add(sunLight);
 
-        // -- توليد التضاريس --
-        const terrainGeo = new THREE.PlaneGeometry(4000, 16000, 64, 128);
+        // -- توليد التضاريس الواقعية --
+        const terrainGeo = new THREE.PlaneGeometry(8000, 24000, 128, 256);
         terrainGeo.rotateX(-Math.PI / 2);
         const pos = terrainGeo.attributes.position;
+        const colors = [];
+        const color = new THREE.Color();
+
         for (let i = 0; i < pos.count; i++) {
             let x = pos.getX(i);
             let z = pos.getZ(i);
-            let y = Math.sin(x * 0.004) * 30 + Math.cos(z * 0.003) * 40;
+            
+            // تداخل موجي لإنشاء جبال وتفاصيل أكثر واقعية
+            let y = Math.sin(x * 0.004) * 40 + Math.cos(z * 0.003) * 50;
+            y += Math.sin(x * 0.015) * 12 + Math.sin(z * 0.012) * 12; // تفاصيل متوسطة
+            y += Math.sin(x * 0.05) * 3; // تفاصيل دقيقة (صخور)
+            
             pos.setY(i, y);
+
+            // تلوين التضاريس استناداً للارتفاع
+            if (y > 60) {
+                color.setHex(0xe0e0e0); // ثلج/صخور عليا
+            } else if (y > 30) {
+                color.setHex(0x5a4d41); // صخور/تربة
+            } else if (y > -10) {
+                color.setHex(0x2d5a27); // عشب مرتفع
+            } else {
+                color.setHex(0x1e461b); // عشب أعمق/وديان
+            }
+            colors.push(color.r, color.g, color.b);
         }
+        
+        terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         terrainGeo.computeVertexNormals();
+        
         const terrainMat = new THREE.MeshStandardMaterial({ 
-            color: 0x2d5a27, 
-            roughness: 0.9, 
-            metalness: 0.05 
+            vertexColors: true, 
+            roughness: 0.8, 
+            metalness: 0.02,
+            flatShading: true // إعطاء طابع فني مجسم وواقعي مع الإضاءة
         });
         const terrain = new THREE.Mesh(terrainGeo, terrainMat);
         terrain.position.set(0, -60, -7000); 
-        terrain.receiveShadow = true; // الأرض تستقبل الظلال
+        terrain.receiveShadow = true; 
         scene.add(terrain);
 
-        // --- تعديل 4: تفعيل الظلال للأشجار وتحسين التجسيم ---
-        const treeCount = 2500;
-        const trunkGeo = new THREE.CylinderGeometry(1.5, 2, 8, 5);
-        const leavesGeo = new THREE.ConeGeometry(6, 16, 6);
-        trunkGeo.translate(0, 4, 0);
-        leavesGeo.translate(0, 14, 0);
+        // -- الغابات والأشجار الواقعية --
+        const treeCount = 3500;
+        // تصميم شجرة صنوبر من 3 طبقات للحصول على حجم وشكل أفضل
+        const trunkGeo = new THREE.CylinderGeometry(1.5, 2.5, 10, 6);
+        const leavesGeo1 = new THREE.ConeGeometry(8, 16, 7);
+        const leavesGeo2 = new THREE.ConeGeometry(6, 12, 7);
+        const leavesGeo3 = new THREE.ConeGeometry(4, 10, 7);
+        
+        trunkGeo.translate(0, 5, 0);
+        leavesGeo1.translate(0, 13, 0);
+        leavesGeo2.translate(0, 19, 0);
+        leavesGeo3.translate(0, 25, 0);
 
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a2e15 }); 
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x1e461b }); 
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 1.0 }); 
+        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x183814, roughness: 0.9, flatShading: true }); 
 
         const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
-        const leavesMesh = new THREE.InstancedMesh(leavesGeo, leavesMat, treeCount);
+        const leavesMesh1 = new THREE.InstancedMesh(leavesGeo1, leavesMat, treeCount);
+        const leavesMesh2 = new THREE.InstancedMesh(leavesGeo2, leavesMat, treeCount);
+        const leavesMesh3 = new THREE.InstancedMesh(leavesGeo3, leavesMat, treeCount);
         
         trunkMesh.castShadow = true; trunkMesh.receiveShadow = true;
-        leavesMesh.castShadow = true; leavesMesh.receiveShadow = true;
+        leavesMesh1.castShadow = true; leavesMesh1.receiveShadow = true;
+        leavesMesh2.castShadow = true; leavesMesh2.receiveShadow = true;
+        leavesMesh3.castShadow = true; leavesMesh3.receiveShadow = true;
 
         const dummy = new THREE.Object3D();
+        const colorVar = new THREE.Color();
+
         for (let i = 0; i < treeCount; i++) {
-            let tx = (Math.random() - 0.5) * 3600;
-            let tz = - (Math.random() * 15500) + 500;
-            if (Math.abs(tx) < 60) continue; 
+            let tx = (Math.random() - 0.5) * 6000;
+            let tz = - (Math.random() * 23000) + 500;
+            if (Math.abs(tx) < 70) continue; // مسار الطيران
             
-            let ty = Math.sin(tx * 0.004) * 30 + Math.cos((tz-7000) * 0.003) * 40 - 60;
+            // حساب نفس ارتفاع التضاريس الجديد لضمان التصاق الشجرة بالأرض
+            let ty = Math.sin(tx * 0.004) * 40 + Math.cos((tz-7000) * 0.003) * 50;
+            ty += Math.sin(tx * 0.015) * 12 + Math.sin((tz-7000) * 0.012) * 12;
+            ty += Math.sin(tx * 0.05) * 3;
+            ty -= 60; // تعويض موقع التضاريس الرئيسي (-60)
             
+            // لا تزرع أشجار في القمم الصخرية جداً
+            if (ty > 20) continue;
+
             dummy.position.set(tx, ty, tz);
-            let scale = 0.8 + Math.random() * 1.5;
+            let scale = 0.7 + Math.random() * 1.3;
             dummy.scale.set(scale, scale, scale);
             dummy.rotation.y = Math.random() * Math.PI;
             dummy.updateMatrix();
 
             trunkMesh.setMatrixAt(i, dummy.matrix);
-            leavesMesh.setMatrixAt(i, dummy.matrix);
+            leavesMesh1.setMatrixAt(i, dummy.matrix);
+            leavesMesh2.setMatrixAt(i, dummy.matrix);
+            leavesMesh3.setMatrixAt(i, dummy.matrix);
+            
+            // تنويع خفيف في ألوان أوراق الشجر
+            let shade = 0.8 + Math.random() * 0.4;
+            colorVar.setRGB(0.09 * shade, 0.22 * shade, 0.08 * shade);
+            leavesMesh1.setColorAt(i, colorVar);
+            leavesMesh2.setColorAt(i, colorVar);
+            leavesMesh3.setColorAt(i, colorVar);
         }
         scene.add(trunkMesh);
-        scene.add(leavesMesh);
+        scene.add(leavesMesh1);
+        scene.add(leavesMesh2);
+        scene.add(leavesMesh3);
 
-        // --- تعديل 5: غيوم واقعية (Sprites) ناعمة بدلاً من الكرات المصمتة ---
         function createRealisticCloudTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
@@ -447,17 +498,17 @@
             color: 0xffffff,
             transparent: true,
             opacity: 0.7,
-            depthWrite: false // لمنع تقطيع الغيوم لبعضها البعض
+            depthWrite: false
         });
 
         const cloudGroup = new THREE.Group();
         for(let i=0; i<300; i++) {
             let cx = (Math.random() - 0.5) * 6000;
             let cz = (Math.random() - 0.5) * 16000 - 3000;
-            let cy = 180 + Math.random() * 300; // تم رفع الغيوم قليلاً
+            let cy = 180 + Math.random() * 300; 
             
             const sprite = new THREE.Sprite(cloudMaterial);
-            let scale = 150 + Math.random() * 250; // أحجام كبيرة ومختلفة
+            let scale = 150 + Math.random() * 250; 
             sprite.scale.set(scale, scale * 0.6, 1);
             sprite.position.set(cx, cy, cz);
             cloudGroup.add(sprite);
@@ -780,7 +831,6 @@
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
             basePassengerModel.scale.set(4.55, 4.55, 4.55); 
-            // جعل الطائرة تلقي وتستقبل ظلال
             basePassengerModel.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
             checkAllLoaded();
         }, undefined, () => {
@@ -1026,7 +1076,6 @@
 
                     currentActiveAirplane.position.z -= currentSpeed;
                     
-                    // تحريك الكاميرا للحفاظ على الشمس قريبة وتجنب قطع الظلال
                     sunLight.position.set(currentActiveAirplane.position.x + 150, currentActiveAirplane.position.y + 350, currentActiveAirplane.position.z + 100);
                     sunLight.target.position.copy(currentActiveAirplane.position);
                     sunLight.target.updateMatrixWorld();
