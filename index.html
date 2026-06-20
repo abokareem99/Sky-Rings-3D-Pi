@@ -228,7 +228,6 @@
 <body>
 
     <div id="game-toast" class="glass-panel"></div>
-
     <button id="pause-btn" onclick="togglePause()">⏸️ إيقاف مؤقت</button>
 
     <div id="hud-container" style="display: none;">
@@ -330,7 +329,6 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // --- إعداد بيئة 3D المتقدمة (الخلفية العبقرية) ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB); 
         scene.fog = new THREE.FogExp2(0x87CEEB, 0.0003); 
@@ -362,7 +360,6 @@
         sunLight.shadow.bias = -0.0005; 
         scene.add(sunLight);
 
-        // -- توليد التضاريس الواقعية --
         const terrainGeo = new THREE.PlaneGeometry(8000, 24000, 128, 256);
         terrainGeo.rotateX(-Math.PI / 2);
         const pos = terrainGeo.attributes.position;
@@ -377,7 +374,6 @@
             y += Math.sin(x * 0.015) * 12 + Math.sin(z * 0.012) * 12; 
             y += Math.sin(x * 0.05) * 3; 
             
-            // تمهيد مسار الطيران (Runway Path)
             if (Math.abs(x) < 200) {
                 let factor = Math.abs(x) / 200;
                 y *= (factor * factor);
@@ -406,7 +402,6 @@
         terrain.receiveShadow = true; 
         scene.add(terrain);
 
-        // -- الغابات والأشجار الواقعية --
         const treeCount = 3500;
         const trunkGeo = new THREE.CylinderGeometry(1.5, 2.5, 10, 6);
         const leavesGeo1 = new THREE.ConeGeometry(8, 16, 7);
@@ -437,7 +432,6 @@
         for (let i = 0; i < treeCount; i++) {
             let tx = (Math.random() - 0.5) * 6000;
             let tz = - (Math.random() * 23000) + 500;
-            // منع الأشجار من الظهور في مسار الطيران والواجهة
             if (Math.abs(tx) < 150) continue; 
             
             let ty = Math.sin(tx * 0.004) * 40 + Math.cos((tz-7000) * 0.003) * 50;
@@ -469,7 +463,6 @@
         scene.add(leavesMesh2);
         scene.add(leavesMesh3);
 
-        // -- السحب --
         function createRealisticCloudTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
@@ -505,7 +498,6 @@
             cloudGroup.add(sprite);
         }
         scene.add(cloudGroup);
-        // --- نهاية إعداد البيئة ---
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
         document.getElementById('total-points').innerText = totalPoints;
@@ -535,7 +527,6 @@
         let targetYaw = 0; let currentYaw = 0;
         let cameraShakeIntensity = 0;
         
-        // الأسطول (الطائرة الأولى فقط ستكون مجانية بناءً على الدالة isPlaneUnlocked)
         const fleet = [
             { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
@@ -583,7 +574,7 @@
             endGame();
         }
 
-        // دالة فحص القفل: تفتح الطائرة ذات الرقم 0 فقط بشكل افتراضي
+        // إبقاء الطائرة الأولى فقط مفتوحة بشكل قاطع
         function isPlaneUnlocked(plane) {
             if (plane.id === 0) return true;
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
@@ -645,6 +636,12 @@
             }
         }
 
+        // معالجة الدفعات المعلقة أو المنتهية لتفادي فتح الطائرة بالخطأ
+        function onIncompletePaymentFound(payment) { 
+            console.warn("يوجد دفع معلق أو منتهي الصلاحية.", payment);
+            showNotification("تنبيه: يوجد دفع سابق غير مكتمل أو منتهي الصلاحية.", true); 
+        }
+
         async function connectPiWallet() {
             if (!window.Pi) {
                 showNotification("لم يتم العثور على بروتوكول Pi. افتح اللعبة داخل متصفح Pi Browser", true);
@@ -655,15 +652,14 @@
             walletBtn.innerText = "جاري الاتصال... ⏳";
             try {
                 const scopes = ['username', 'payments'];
-                const auth = await Pi.authenticate(scopes, onPiAuthIncomplete);
+                // تم تصحيح الـ Callback الخاص بالدفعات غير المكتملة
+                const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
                 handlePiAuthSuccess(auth);
             } catch (err) {
                 showNotification("فشل الاتصال. تأكد من استقرار الشبكة ومنح الصلاحيات المطلوبة", true);
                 walletBtn.disabled = false; walletBtn.innerText = "🔗 ربط المحفظة";
             }
         }
-
-        function onPiAuthIncomplete(auth) { showNotification("المصادقة معلقة، الرجاء منح الأذونات", false); }
 
         function handlePiAuthSuccess(auth) {
             authenticatedPiUser = auth.user;
@@ -688,6 +684,7 @@
             }
         }
 
+        // تأمين كامل لدورة الدفع لمنع اكتمالها عند الإلغاء أو انتهاء الصلاحية (Expired)
         async function executePiPayment(plane) {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
@@ -699,16 +696,29 @@
                 };
                 
                 await Pi.createPayment(paymentData, {
-                    onReadyForServerApproval: function(paymentId) { /* server side logic */ },
+                    onReadyForServerApproval: function(paymentId) { 
+                        // يمكن وضع منطق السيرفر هنا مستقبلاً
+                    },
                     onReadyForServerCompletion: function(paymentId, txid) {
                         localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
                         showNotification(`تم شراء طائرة ${plane.name} بنجاح! 🚀`);
                         startBtn.disabled = false; updateShopUI();
                     },
-                    onCancel: function() { startBtn.disabled = false; updateShopUI(); },
-                    onError: function(error) { startBtn.disabled = false; updateShopUI(); }
+                    onCancel: function(paymentId) { 
+                        showNotification("تم إلغاء عملية الدفع.", true);
+                        startBtn.disabled = false; updateShopUI(); 
+                    },
+                    onError: function(error, payment) { 
+                        // هذا الجزء يضمن عدم منح الطائرة إذا انتهت صلاحية الدفع
+                        console.error("خطأ أو انتهاء صلاحية في الدفع:", error);
+                        showNotification("فشلت العملية أو انتهت صلاحية الدفع.", true);
+                        startBtn.disabled = false; updateShopUI(); 
+                    }
                 });
-            } catch (err) { startBtn.disabled = false; updateShopUI(); }
+            } catch (err) { 
+                showNotification("تعذر فتح بوابة الدفع.", true);
+                startBtn.disabled = false; updateShopUI(); 
+            }
         }
 
         let audioCtx, engineOsc, engineOsc2, engineFilter, engineGain;
