@@ -29,7 +29,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background: #0f172a; 
+            background: #87CEEB; /* لون مبدئي للسماء */
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -337,34 +337,105 @@
         }
 
         const scene = new THREE.Scene();
-        // تم إزالة الضباب لأنه لم يعد هناك تضاريس ممتدة لتغطيته
+        
+        // --- إعدادات البيئة (سماء، غيوم، غابات) ---
+        scene.background = new THREE.Color(0x87CEEB); // لون السماء الزرقاء
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.0012); // ضباب لدمج الأفق
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        // تم تعطيل الظلال لأنها لم تعد هناك تضاريس تسقط عليها الظلال
-        renderer.shadowMap.enabled = false;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
+        // إضاءة واقعية للشمس ولون السماء وانعكاس الأرض
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x2d4c1e, 0.6); 
+        hemiLight.position.set(0, 500, 0);
+        scene.add(hemiLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
         sunLight.position.set(150, 350, 100);
         scene.add(sunLight);
 
-        // --- نظام تحميل ومعالجة صورة الخلفية (الصحراء/السماء) ---
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.load('3d_snow_winter.png', (texture) => {
-            texture.encoding = THREE.sRGBEncoding; 
-            texture.generateMipmaps = false; 
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.mapping = THREE.EquirectangularReflectionMapping; 
-            scene.background = texture;
-        }, undefined, (error) => {
-            console.error('خطأ في تحميل صورة الخلفية:', error);
-            alert('تنبيه للمطور: لم يتم العثور على ملف 3d_snow_winter.png!');
+        // -- توليد التضاريس (الأرض الخضراء) --
+        const terrainGeo = new THREE.PlaneGeometry(4000, 16000, 64, 128);
+        terrainGeo.rotateX(-Math.PI / 2);
+        const pos = terrainGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            let x = pos.getX(i);
+            let z = pos.getZ(i);
+            // موجات بسيطة لصنع تلال
+            let y = Math.sin(x * 0.004) * 30 + Math.cos(z * 0.003) * 40;
+            pos.setY(i, y);
+        }
+        terrainGeo.computeVertexNormals();
+        const terrainMat = new THREE.MeshStandardMaterial({ 
+            color: 0x2d5a27, // لون أخضر غامق للغابة
+            roughness: 0.9, 
+            metalness: 0.05 
         });
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+        terrain.position.set(0, -60, -7000); // وضع الأرض تحت مسار الطيران
+        scene.add(terrain);
+
+        // -- توليد الغابات (الأشجار) باستخدام InstancedMesh للأداء العالي --
+        const treeCount = 2500;
+        const trunkGeo = new THREE.CylinderGeometry(1.5, 2, 8, 5);
+        const leavesGeo = new THREE.ConeGeometry(6, 16, 6);
+        trunkGeo.translate(0, 4, 0);
+        leavesGeo.translate(0, 14, 0);
+
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a2e15 }); // لون الجذع
+        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x1e461b }); // لون الأوراق
+
+        const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+        const leavesMesh = new THREE.InstancedMesh(leavesGeo, leavesMat, treeCount);
+        
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < treeCount; i++) {
+            let tx = (Math.random() - 0.5) * 3600;
+            let tz = - (Math.random() * 15500) + 500;
+            // تجنب وضع الأشجار في مسار الطيران المباشر
+            if (Math.abs(tx) < 60) continue; 
+            
+            // حساب ارتفاع الشجرة لتكون على سطح التلال
+            let ty = Math.sin(tx * 0.004) * 30 + Math.cos((tz-7000) * 0.003) * 40 - 60;
+            
+            dummy.position.set(tx, ty, tz);
+            let scale = 0.8 + Math.random() * 1.5;
+            dummy.scale.set(scale, scale, scale);
+            dummy.rotation.y = Math.random() * Math.PI;
+            dummy.updateMatrix();
+
+            trunkMesh.setMatrixAt(i, dummy.matrix);
+            leavesMesh.setMatrixAt(i, dummy.matrix);
+        }
+        scene.add(trunkMesh);
+        scene.add(leavesMesh);
+
+        // -- توليد الغيوم --
+        const cloudGeo = new THREE.SphereGeometry(25, 7, 7);
+        const cloudMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff, 
+            transparent: true, 
+            opacity: 0.9,
+            flatShading: true
+        });
+        const cloudMesh = new THREE.InstancedMesh(cloudGeo, cloudMat, 250);
+        for(let i=0; i<250; i++) {
+            let cx = (Math.random() - 0.5) * 4000;
+            let cz = (Math.random() - 0.5) * 16000 - 3000;
+            let cy = 120 + Math.random() * 200; // ارتفاع الغيوم
+            
+            dummy.position.set(cx, cy, cz);
+            dummy.scale.set(1.5 + Math.random()*3, 0.6 + Math.random()*0.4, 1.5 + Math.random()*3);
+            dummy.rotation.y = Math.random() * Math.PI;
+            dummy.updateMatrix();
+            
+            cloudMesh.setMatrixAt(i, dummy.matrix);
+        }
+        scene.add(cloudMesh);
+        // ---------------------------------------------
 
         const loader = new THREE.GLTFLoader();
 
@@ -677,8 +748,6 @@
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
-
-        // تم حذف مجموعة التضاريس ودوال توليد التضاريس بالكامل
 
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
