@@ -512,7 +512,7 @@
         const loader = new THREE.GLTFLoader();
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
-        let extraFlightTime = parseInt(localStorage.getItem('flight_extraTime')) || 0; // وقت الطيران الإضافي المكتسب
+        let extraFlightTime = parseInt(localStorage.getItem('flight_extraTime')) || 0; 
         document.getElementById('total-points').innerText = totalPoints;
 
         let basePassengerModel = null; 
@@ -1030,7 +1030,6 @@
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
             score = 0; document.getElementById('points').innerText = score;
             
-            // إضافة وقت الطيران المكتسب إلى الوقت الأساسي
             timeLeft = 35 + extraFlightTime; 
             document.getElementById('time-left').innerText = timeLeft;
             
@@ -1185,6 +1184,50 @@
                         }
                     }
 
+                    // --- الجزء الذي تم إكماله وتصحيحه ---
                     for (let i = rings.length - 1; i >= 0; i--) {
-                        const ring = rings[i]; ring.rotation.y += 0.01;
-                        if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(
+                        const ring = rings[i]; 
+                        ring.rotation.y += 0.01;
+                        if (ring.userData.type === 'bonus') { 
+                            ring.position.x += Math.sin(Date.now() * 0.002) * ring.userData.oscillationSpeed * 100;
+                        }
+
+                        // التحقق من التصادم مع الحلقة
+                        if (Math.abs(currentActiveAirplane.position.z - ring.position.z) < 15) {
+                            let dist = currentActiveAirplane.position.distanceTo(ring.position);
+                            if (dist < 18 * ring.userData.scale) {
+                                score += ring.userData.points;
+                                if(score < 0) score = 0;
+                                document.getElementById('points').innerText = score;
+                                
+                                timeLeft += ring.userData.time;
+                                document.getElementById('time-left').innerText = timeLeft;
+                                
+                                scene.remove(ring);
+                                rings.splice(i, 1);
+                                
+                                // إنشاء حلقة جديدة في الأمام
+                                let minZ = rings.length > 0 ? Math.min(...rings.map(r => r.position.z)) : currentActiveAirplane.position.z;
+                                createRing(minZ - 160);
+                                continue;
+                            }
+                        }
+
+                        // في حال تجاوز اللاعب للحلقة دون العبور من خلالها
+                        if (ring.position.z > currentActiveAirplane.position.z + 50) {
+                            scene.remove(ring);
+                            rings.splice(i, 1);
+                            let minZ = rings.length > 0 ? Math.min(...rings.map(r => r.position.z)) : currentActiveAirplane.position.z;
+                            createRing(minZ - 160);
+                        }
+                    }
+                }
+            }
+            renderer.render(scene, camera);
+        }
+
+        // تشغيل حلقة التحريك
+        animate();
+    </script>
+</body>
+</html>
