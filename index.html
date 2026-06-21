@@ -574,7 +574,7 @@
             endGame();
         }
 
-        // إبقاء الطائرة الأولى فقط مفتوحة بشكل قاطع
+        // تم التعديل: التأكد الصارم من أن الطائرة الأولى فقط هي المجانية
         function isPlaneUnlocked(plane) {
             if (plane.id === 0) return true;
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
@@ -636,10 +636,17 @@
             }
         }
 
-        // معالجة الدفعات المعلقة أو المنتهية لتفادي فتح الطائرة بالخطأ
+        // تم التعديل: معالجة الدفعات المعلقة لعدم تجميد الواجهة عند إلغائها أو انتهاء الصلاحية
         function onIncompletePaymentFound(payment) { 
             console.warn("يوجد دفع معلق أو منتهي الصلاحية.", payment);
-            showNotification("تنبيه: يوجد دفع سابق غير مكتمل أو منتهي الصلاحية.", true); 
+            showNotification("تنبيه: تم العثور على معاملة سابقة غير مكتملة أو منتهية. يرجى الانتظار...", true); 
+            // في حالة وجود خادم (Backend)، يتم التحقق من الدفعة هنا وإما إكمالها أو إلغاؤها.
+            // نعيد تفعيل الزر لتفادي بقائه معطلاً
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                updateShopUI();
+            }
         }
 
         async function connectPiWallet() {
@@ -652,7 +659,6 @@
             walletBtn.innerText = "جاري الاتصال... ⏳";
             try {
                 const scopes = ['username', 'payments'];
-                // تم تصحيح الـ Callback الخاص بالدفعات غير المكتملة
                 const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
                 handlePiAuthSuccess(auth);
             } catch (err) {
@@ -677,17 +683,22 @@
 
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
-            if (isPlaneUnlocked(planeData)) { startGame(); } else {
-                if (!authenticatedPiUser) { showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true);
-                return; }
+            if (isPlaneUnlocked(planeData)) { 
+                startGame(); 
+            } else {
+                if (!authenticatedPiUser) { 
+                    showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true);
+                    return; 
+                }
                 executePiPayment(planeData);
             }
         }
 
-        // تأمين كامل لدورة الدفع لمنع اكتمالها عند الإلغاء أو انتهاء الصلاحية (Expired)
+        // تم التعديل: معالجة شاملة لأخطاء وانتهاء مهلة الدفع لتفادي فتح الطائرة بشكل خاطئ
         async function executePiPayment(plane) {
             const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
+            startBtn.disabled = true; 
+            startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
             try {
                 const paymentData = {
                     amount: plane.piCost,
@@ -697,27 +708,33 @@
                 
                 await Pi.createPayment(paymentData, {
                     onReadyForServerApproval: function(paymentId) { 
-                        // يمكن وضع منطق السيرفر هنا مستقبلاً
+                        console.log("الدفعة قيد الموافقة (Approval)", paymentId);
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
+                        // إكمال عملية الدفع وفتح الطائرة حصرياً عند النجاح المؤكد
+                        console.log("الدفعة مكتملة (Completion)", paymentId, txid);
                         localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
                         showNotification(`تم شراء طائرة ${plane.name} بنجاح! 🚀`);
-                        startBtn.disabled = false; updateShopUI();
+                        startBtn.disabled = false; 
+                        updateShopUI();
                     },
                     onCancel: function(paymentId) { 
                         showNotification("تم إلغاء عملية الدفع.", true);
-                        startBtn.disabled = false; updateShopUI(); 
+                        startBtn.disabled = false; 
+                        updateShopUI(); 
                     },
                     onError: function(error, payment) { 
-                        // هذا الجزء يضمن عدم منح الطائرة إذا انتهت صلاحية الدفع
-                        console.error("خطأ أو انتهاء صلاحية في الدفع:", error);
-                        showNotification("فشلت العملية أو انتهت صلاحية الدفع.", true);
-                        startBtn.disabled = false; updateShopUI(); 
+                        // معالجة الانتهاء (Timeout) والأخطاء
+                        console.error("خطأ أو انتهاء مهلة في الدفع:", error);
+                        showNotification("فشلت العملية أو انتهت مهلة الدفع المحددة.", true);
+                        startBtn.disabled = false; 
+                        updateShopUI(); 
                     }
                 });
             } catch (err) { 
                 showNotification("تعذر فتح بوابة الدفع.", true);
-                startBtn.disabled = false; updateShopUI(); 
+                startBtn.disabled = false; 
+                updateShopUI(); 
             }
         }
 
@@ -829,28 +846,31 @@
             }
         }
 
-        function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length;
-        updateShopUI(); }
-        function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length;
-        updateShopUI(); }
+        function nextPlane() { currentSelectionIndex = (currentSelectionIndex + 1) % fleet.length; updateShopUI(); }
+        function prevPlane() { currentSelectionIndex = (currentSelectionIndex - 1 + fleet.length) % fleet.length; updateShopUI(); }
 
         function updateShopUI() {
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
-            const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
-            if(!isPlaying) { spawnSelectedPlane(planeData);
+            const statusEl = document.getElementById('cp-status'); 
+            const startBtn = document.getElementById('start-btn');
+            if(!isPlaying) { 
+                spawnSelectedPlane(planeData);
             }
             if (isPlaneUnlocked(planeData)) {
                 statusEl.innerText = "متاحة في الحظيرة ✔️";
-                statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
+                statusEl.style.color = "var(--pi-gold)"; 
+                startBtn.innerText = "إقلاع الآن 🚀";
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%)";
                 startBtn.style.color = "var(--pi-gold)";
                 startBtn.style.borderColor = "var(--pi-gold)";
             } else {
                 statusEl.innerText = `مغلقة (تحتاج دفع بـ Pi)`;
-                statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
+                statusEl.style.color = "#ff7675"; 
+                startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
-                startBtn.style.color = "var(--pi-purple-dark)"; startBtn.style.borderColor = "var(--pi-purple-dark)";
+                startBtn.style.color = "var(--pi-purple-dark)"; 
+                startBtn.style.borderColor = "var(--pi-purple-dark)";
             }
         }
 
@@ -862,8 +882,7 @@
                 if (c.isMesh && c.material) { c.material = c.material.clone(); if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); } }
             });
             if (isPlaying) { currentActiveAirplane.position.set(0, -9.8, 300); currentActiveAirplane.rotation.set(0, 0, 0); } 
-            else { currentActiveAirplane.position.set(0, 2.8, 0);
-            currentActiveAirplane.rotation.set(0.1, 0.5, 0); }
+            else { currentActiveAirplane.position.set(0, 2.8, 0); currentActiveAirplane.rotation.set(0.1, 0.5, 0); }
             scene.add(currentActiveAirplane);
         }
 
@@ -918,15 +937,13 @@
             playShootSound();
         }
 
-        for (let i = 1; i <= 20; i++) { createRing(-i * 160);
-        }
+        for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
         window.addEventListener('keydown', (e) => {
             let k = e.key.toLowerCase();
             if(k === 'w' || k === 'ص' || e.key === 'ArrowUp') keys.w = true; 
             if(k === 's' || k === 'س' || e.key === 'ArrowDown') keys.s = true;
-            if(k === 'a' || k === 'ش' || e.key === 'ArrowLeft') 
-            keys.a = true; 
+            if(k === 'a' || k === 'ش' || e.key === 'ArrowLeft') keys.a = true; 
             if(k === 'd' || k === 'ي' || e.key === 'ArrowRight') keys.d = true;
             if(e.key === ' ') { if(isPlaying && !isPaused) e.preventDefault(); keys.space = true; }
             if(k === 'f' || k === 'ب') isFiring = true;
@@ -976,6 +993,7 @@
             screenTouchState.x = dx / maxDrag; screenTouchState.y = dy / maxDrag; 
         }, { passive: false });
         renderer.domElement.addEventListener('touchend', () => { screenTouchState.active = false; screenTouchState.x = 0; screenTouchState.y = 0; });
+        
         function startGame() {
             isPlaying = true; isPaused = false;
             document.getElementById('start-mask').style.display = 'none'; 
@@ -1026,8 +1044,7 @@
             document.getElementById('total-points').innerText = totalPoints;
             document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
-            if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score);
-            }
+            if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score); }
         }
 
         function restartGame() {
@@ -1037,8 +1054,7 @@
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             updateShopUI();
             rings.forEach(r => scene.remove(r)); rings.length = 0;
-            for (let i = 1; i <= 20; i++) { createRing(-i * 160);
-            }
+            for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
 
@@ -1046,24 +1062,20 @@
             requestAnimationFrame(animate);
             if (isPlaying && currentActiveAirplane) {
                 if (!isPaused) {
-                    let speedMultiplier = keys.space ?
-                    4.5 : 2.2;
+                    let speedMultiplier = keys.space ? 4.5 : 2.2;
                     currentSpeed += (speedMultiplier - currentSpeed) * 0.1;
                     updateEngineSound(keys.space);
                     
                     let targetFov = keys.space ? 76 : 60;
-                    if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix();
-                    }
+                    if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix(); }
 
                     currentActiveAirplane.position.z -= currentSpeed;
                     let inputY = 0; let inputX = 0;
                     
                     if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                     if (keys.a) inputX -= 1; if (keys.d) inputX += 1;
-                    if (joyState.active) { inputX += joyState.x; inputY += joyState.y;
-                    }
-                    if (screenTouchState.active) { inputX += screenTouchState.x;
-                    inputY += screenTouchState.y; }
+                    if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
+                    if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
                     if (!hasTakenOff) {
                         if (inputY > 0) { 
@@ -1090,8 +1102,7 @@
                     camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.07);
                     camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 6.5, 0.07);
                     camera.position.z = currentActiveAirplane.position.z + 38;
-                    if (cameraShakeIntensity > 0) { camera.position.x += (Math.random() - 0.5) * cameraShakeIntensity; camera.position.y += (Math.random() - 0.5) * cameraShakeIntensity;
-                    cameraShakeIntensity *= 0.9; }
+                    if (cameraShakeIntensity > 0) { camera.position.x += (Math.random() - 0.5) * cameraShakeIntensity; camera.position.y += (Math.random() - 0.5) * cameraShakeIntensity; cameraShakeIntensity *= 0.9; }
 
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 0.8, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
@@ -1151,48 +1162,10 @@
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i];
                         ring.rotation.y += 0.01;
-                        if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2;
-                        }
+                        if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
 
                         if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
                             score += ring.userData.points;
                             timeLeft += ring.userData.time; if (score < 0) score = 0;
-                            if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2;
-                            }
-                            else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقه خطر! تم خصم وقت ونقاط", true);
-                            currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
-                            else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false);
-                            currentSpeed *= 1.3; }
-                            document.getElementById('points').innerText = score;
-                            document.getElementById('time-left').innerText = timeLeft;
-                            
-                            scene.remove(ring); rings.splice(i, 1); 
-                            let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
-                            createRing(lastSpawnZ - 160);
-                            continue;
-                        }
-
-                        if (ring.position.z > currentActiveAirplane.position.z + 80) {
-                            scene.remove(ring);
-                            rings.splice(i, 1);
-                            let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z;
-                            createRing(lastSpawnZ - 160);
-                        }
-                    }
-                }
-            } else {
-                if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006;
-                currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
-                camera.position.set(0, 3.5, 18);
-                camera.lookAt(0, 2.8, 0); 
-            }
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+                            if (ring.userData.type === 'golden') { showNotification("🌟 خاتم ذهبي! نقاط وسرعة مضاعفة!", false); currentSpeed *= 2; }
+                            else if (ring.userData.type === 'danger') { showNotification("⚠️ منطقه خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; }
