@@ -31,7 +31,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #87CEEB; /* لون السماء الأزرق */
+            background-color: #87CEEB;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -223,6 +223,13 @@
             color: var(--pi-purple-dark); font-weight: 900; font-size: 15px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none;
         }
+        #shoot-btn {
+            position: absolute;
+            bottom: 115px; right: 25px; width: 65px; height: 65px;
+            background: linear-gradient(135deg, var(--danger), #c0392b); border-radius: 50%; border: 2px solid #fff;
+            color: #fff; font-weight: 900; font-size: 15px; z-index: 100; display: flex; justify-content: center; align-items: center;
+            touch-action: none;
+        }
     </style>
 </head>
 <body>
@@ -242,6 +249,7 @@
     <div id="touch-controls">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="speed-btn">🚀 تيربو</div>
+        <div id="shoot-btn">💥 إطلاق</div>
     </div>
 
     <div id="loading">
@@ -311,7 +319,7 @@
     </div>
 
     <script>
-        // --- إعدادات سوبابيس (Supabase configuration) ---
+        // --- إعدادات سوبابيس ---
         const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
         let supabaseClient = null;
@@ -321,7 +329,6 @@
         }
 
         const scene = new THREE.Scene();
-        // تغيير لون الخلفية للسماء
         scene.background = new THREE.Color(0x87CEEB);
         const fog = new THREE.FogExp2(0x87CEEB, 0.0012);
         scene.fog = fog;
@@ -354,7 +361,10 @@
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
-        const keys = { w: false, s: false, a: false, d: false, space: false };
+        const projectiles = [];
+        const targets = [];
+        let lastShootTime = 0;
+        const keys = { w: false, s: false, a: false, d: false, space: false, f: false };
         const joyState = { x: 0, y: 0, active: false };
         let screenTouchState = { active: false, x: 0, y: 0 };
         let screenTouchCenter = { x: 0, y: 0 };
@@ -407,10 +417,9 @@
             endGame(); 
         }
 
-        // الدالة التي تقفل جميع الطائرات باستثناء الأولى وتعتمد على الشراء
         function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true; // الطائرة الأولى فقط مفتوحة
-            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true'; // الباقي مقفول ويتطلب الشراء بـ Pi
+            if (plane.id === 0) return true; 
+            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
         }
 
         function toggleHangar() {
@@ -560,9 +569,9 @@
         }
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { forest: 0x2d5a27 }; // لون الغابة
+        const envColors = { forest: 0x2d5a27 };
 
-        // دالة إنشاء البيئة مع الغابات والغيوم
+        // دالة إنشاء البيئة والأشجار والغيوم الواقعية
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const segmentGroup = new THREE.Group();
 
@@ -577,41 +586,48 @@
                 segmentGroup.add(runway);
             }
 
-            // إضافة الأشجار (غابة كثيفة)
-            const treeCount = isRunway ? 40 : 120; // تقليل الأشجار قرب المدرج
-            const trunkGeo = new THREE.CylinderGeometry(1.5, 1.5, 8, 5);
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a2f1d });
-            const leafGeo = new THREE.ConeGeometry(6, 18, 5);
-            const leafMat = new THREE.MeshStandardMaterial({ color: 0x1e4d2b }); // أخضر داكن
+            const treeCount = isRunway ? 40 : 120;
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 1 });
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x1e4d2b, roughness: 0.9 }); 
             
-            for(let i=0; i<treeCount; i++) {
+            for(let i = 0; i < treeCount; i++) {
                 let x = (Math.random() - 0.5) * 1000;
                 let z = zPos + (Math.random() - 0.5) * 1000;
-                
-                // إبعاد الأشجار عن مسار الطيران في المنتصف
-                if (Math.abs(x) < 60) continue;
+                if (Math.abs(x) < 60) continue; 
 
                 const tree = new THREE.Group();
-                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.8, 8, 5), trunkMat);
                 trunk.position.y = -6; 
-                const leaf = new THREE.Mesh(leafGeo, leafMat);
-                leaf.position.y = 2;
-                tree.add(trunk); tree.add(leaf);
+                tree.add(trunk);
+
+                for(let j = 0; j < 3; j++) {
+                    const leaf = new THREE.Mesh(new THREE.ConeGeometry(6 - (j * 1.5), 10, 5), leafMat);
+                    leaf.position.y = -2 + (j * 4);
+                    tree.add(leaf);
+                }
+                
                 tree.position.set(x, 0, z);
                 segmentGroup.add(tree);
             }
 
-            // إضافة الغيوم في السماء
-            const cloudGeo = new THREE.DodecahedronGeometry(15, 1);
-            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, transparent: true, opacity: 0.85 });
-            for(let i=0; i<12; i++) {
-                const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, roughness: 1 });
+            for(let i = 0; i < 15; i++) {
+                const cloud = new THREE.Group();
+                const puffCount = 4 + Math.floor(Math.random() * 3);
+                
+                for(let p = 0; p < puffCount; p++) {
+                    const puff = new THREE.Mesh(new THREE.SphereGeometry(8 + Math.random() * 6, 8, 8), cloudMat);
+                    puff.position.set((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 15);
+                    cloud.add(puff);
+                }
+
                 let cx = (Math.random() - 0.5) * 800;
-                let cy = 60 + Math.random() * 60; // ارتفاع الغيوم
+                let cy = 80 + Math.random() * 50; 
                 let cz = zPos + (Math.random() - 0.5) * 1000;
                 cloud.position.set(cx, cy, cz);
-                let scale = 1 + Math.random() * 2.5;
-                cloud.scale.set(scale, scale * 0.5, scale);
+                
+                let scale = 1 + Math.random() * 1.5;
+                cloud.scale.set(scale, scale * 0.6, scale);
                 segmentGroup.add(cloud);
             }
 
@@ -619,6 +635,45 @@
         }
 
         createTerrainSegment(0, envColors.forest, true); createTerrainSegment(-1000, envColors.forest); createTerrainSegment(-2000, envColors.forest);
+
+        function createTarget(zPos) {
+            const targetGeometry = new THREE.DodecahedronGeometry(8);
+            const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.5, roughness: 0.2 });
+            const target = new THREE.Mesh(targetGeometry, targetMaterial);
+            
+            target.position.set((Math.random() - 0.5) * 160, Math.random() * 40 + 20, zPos);
+            target.userData = { isTarget: true, points: 50 };
+            scene.add(target);
+            targets.push(target);
+        }
+
+        function shootLaser() {
+            if (!isPlaying || isPaused || !currentActiveAirplane) return;
+            const planeData = fleet[currentSelectionIndex];
+            if (planeData.type !== 'fighter') return;
+
+            const currentTime = Date.now();
+            if (currentTime - lastShootTime < 300) return; 
+            lastShootTime = currentTime;
+
+            const laserGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 8);
+            laserGeometry.rotateX(Math.PI / 2);
+            const laserMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            
+            const laser1 = new THREE.Mesh(laserGeometry, laserMaterial);
+            laser1.position.copy(currentActiveAirplane.position);
+            laser1.position.x -= 4; 
+            laser1.position.y -= 1;
+            
+            const laser2 = new THREE.Mesh(laserGeometry, laserMaterial);
+            laser2.position.copy(currentActiveAirplane.position);
+            laser2.position.x += 4; 
+            laser2.position.y -= 1;
+
+            scene.add(laser1);
+            scene.add(laser2);
+            projectiles.push(laser1, laser2);
+        }
 
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
@@ -651,6 +706,13 @@
             const planeData = fleet[currentSelectionIndex];
             document.getElementById('cp-name').innerText = planeData.name;
             const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
+            
+            // Show/Hide shoot button based on plane type (Touch UI)
+            const shootBtn = document.getElementById('shoot-btn');
+            if (shootBtn) {
+                shootBtn.style.display = (planeData.type === 'fighter') ? 'flex' : 'none';
+            }
+
             if(!isPlaying) { spawnSelectedPlane(planeData); }
             if (isPlaneUnlocked(planeData)) {
                 statusEl.innerText = "متاحة في الحظيرة ✔️"; statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
@@ -707,6 +769,7 @@
             if(k === 's' || k === 'س' || e.key === 'ArrowDown') keys.s = true;
             if(k === 'a' || k === 'ش' || e.key === 'ArrowLeft') keys.a = true; 
             if(k === 'd' || k === 'ي' || e.key === 'ArrowRight') keys.d = true;
+            if(k === 'f' || k === 'ب') { keys.f = true; shootLaser(); }
             if(e.key === ' ') { if(isPlaying && !isPaused) e.preventDefault(); keys.space = true; }
         });
         window.addEventListener('keyup', (e) => {
@@ -715,6 +778,7 @@
             if(k === 's' || k === 'س' || e.key === 'ArrowDown') keys.s = false;
             if(k === 'a' || k === 'ش' || e.key === 'ArrowLeft') keys.a = false; 
             if(k === 'd' || k === 'ي' || e.key === 'ArrowRight') keys.d = false;
+            if(k === 'f' || k === 'ب') keys.f = false;
             if(e.key === ' ') keys.space = false;
         });
 
@@ -735,41 +799,25 @@
         }
         
         joyZone.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             joyState.active = true; const rect = joyZone.getBoundingClientRect();
             joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; 
             handleTouchMove(e);
         }, { passive: false });
         
-        joyZone.addEventListener('touchmove', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            handleTouchMove(e); 
-        }, { passive: false });
-        
-        joyZone.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; 
-        }, { passive: false });
+        joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); handleTouchMove(e); }, { passive: false });
+        joyZone.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); joyState.active = false; joyState.x = 0; joyState.y = 0; joyKnob.style.transform = 'translate(0px, 0px)'; }, { passive: false });
         
         const speedButtonEl = document.getElementById('speed-btn');
-        speedButtonEl.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            keys.space = true; 
-        }, { passive: false });
+        speedButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; }, { passive: false });
+        speedButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = false; }, { passive: false });
         
-        speedButtonEl.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            e.stopPropagation(); 
-            keys.space = false; 
-        }, { passive: false });
-        
+        const shootButtonEl = document.getElementById('shoot-btn');
+        shootButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); shootLaser(); }, { passive: false });
+
         renderer.domElement.addEventListener('touchstart', (e) => {
             if (!isPlaying || isPaused) return;
-            if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl) return;
+            if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl || e.target === shootButtonEl) return;
             screenTouchState.active = true; screenTouchCenter = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: false });
         
@@ -818,7 +866,12 @@
             document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0;
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
-            updateShopUI(); rings.forEach(r => scene.remove(r)); rings.length = 0;
+            updateShopUI(); 
+            
+            rings.forEach(r => scene.remove(r)); rings.length = 0;
+            targets.forEach(t => scene.remove(t)); targets.length = 0;
+            projectiles.forEach(p => scene.remove(p)); projectiles.length = 0;
+            
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
         }
@@ -868,8 +921,14 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.forest); }
+                    // توليد البيئة والأهداف
+                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
+                        lastTerrainZ -= 1000; 
+                        createTerrainSegment(lastTerrainZ, envColors.forest);
+                        for(let t=0; t<3; t++) createTarget(lastTerrainZ + (Math.random() * 800)); 
+                    }
 
+                    // الخواتم
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
@@ -893,6 +952,39 @@
                             createRing(lastSpawnZ - 160);
                         }
                     }
+
+                    // حركة الأهداف
+                    for (let i = targets.length - 1; i >= 0; i--) {
+                        const target = targets[i];
+                        target.rotation.x += 0.02; target.rotation.y += 0.02;
+                        if (target.position.z > currentActiveAirplane.position.z + 80) {
+                            scene.remove(target); targets.splice(i, 1);
+                        }
+                    }
+
+                    // تحريك الرصاص والتحقق من التصادم
+                    for (let i = projectiles.length - 1; i >= 0; i--) {
+                        const proj = projectiles[i];
+                        proj.position.z -= (currentSpeed + 10);
+
+                        if (proj.position.z < currentActiveAirplane.position.z - 1000) {
+                            scene.remove(proj); projectiles.splice(i, 1); continue;
+                        }
+
+                        for (let j = targets.length - 1; j >= 0; j--) {
+                            const target = targets[j];
+                            if (proj.position.distanceTo(target.position) < 12) {
+                                score += target.userData.points;
+                                document.getElementById('points').innerText = score;
+                                showNotification("🎯 إصابة مباشرة! +50 نقطة", false);
+                                
+                                scene.remove(target); targets.splice(j, 1);
+                                scene.remove(proj); projectiles.splice(i, 1);
+                                break; 
+                            }
+                        }
+                    }
+
                 }
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
