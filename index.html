@@ -363,6 +363,7 @@
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
+        const targets = []; // إضافة مصفوفة الأهداف
         const projectiles = [];
         let lastShootTime = 0;
         const keys = { w: false, s: false, a: false, d: false, space: false, f: false };
@@ -568,6 +569,25 @@
         function stopEngineSound() { 
             if(engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
             engineOsc = null;
+        }
+
+        // دالة إنشاء صوت الانفجار للأهداف المعادية
+        function playExplosionSound() {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.5);
+            
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
         }
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
@@ -788,7 +808,23 @@
             scene.add(ring); rings.push(ring);
         }
 
-        for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
+        // إضافة دالة لإنشاء الأهداف المعادية
+        function createTarget(zPos) {
+            const targetGeo = new THREE.OctahedronGeometry(6);
+            const targetMat = new THREE.MeshStandardMaterial({ color: 0xcc0000, flatShading: true, metalness: 0.5, roughness: 0.5 });
+            const target = new THREE.Mesh(targetGeo, targetMat);
+            target.position.set((Math.random() - 0.5) * 200, Math.random() * 60 + 10, zPos);
+            scene.add(target);
+            targets.push(target);
+        }
+
+        for (let i = 1; i <= 20; i++) { 
+            createRing(-i * 160); 
+        }
+        
+        for (let i = 1; i <= 15; i++) { 
+            createTarget(-i * 250 - Math.random() * 100); 
+        }
 
         window.addEventListener('keydown', (e) => {
             let k = e.key.toLowerCase();
@@ -897,8 +933,11 @@
             
             rings.forEach(r => scene.remove(r)); rings.length = 0;
             projectiles.forEach(p => scene.remove(p)); projectiles.length = 0;
+            targets.forEach(t => scene.remove(t)); targets.length = 0; // تنظيف الأهداف
             
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
+            for (let i = 1; i <= 15; i++) { createTarget(-i * 250 - Math.random() * 100); } // إعادة توليد الأهداف
+            
             document.getElementById('start-mask').style.display = 'flex';
         }
 
@@ -963,10 +1002,25 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    // تم إيقاف توليد الأهداف بناءً على طلبك - طيران حر بالكامل
+                    // طيران حر بالكامل
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
                         lastTerrainZ -= 1000; 
                         createTerrainSegment(lastTerrainZ, envColors.forest);
+                    }
+
+                    // تحديث الأهداف (Targets) ودورانها وإعادة تدويرها
+                    for (let i = targets.length - 1; i >= 0; i--) {
+                        let target = targets[i];
+                        target.rotation.y += 0.02;
+                        target.rotation.x += 0.01;
+
+                        // إذا تجاوزت الطائرة الهدف نخرجه من المشهد وننشئ هدفاً جديداً في الأمام
+                        if (target.position.z > currentActiveAirplane.position.z + 100) {
+                            scene.remove(target);
+                            targets.splice(i, 1);
+                            let lastSpawnZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
+                            createTarget(lastSpawnZ - 200 - Math.random() * 100);
+                        }
                     }
 
                     for (let i = rings.length - 1; i >= 0; i--) {
@@ -993,12 +1047,35 @@
                         }
                     }
 
-                    // حركة سريعة جداً للمقذوفات لتشبه طلقات الطيران الحربي الواقعية
+                    // حركة سريعة جداً للمقذوفات لتشبه طلقات الطيران الحربي الواقعية واكتشاف التصادم مع الأهداف
                     for (let i = projectiles.length - 1; i >= 0; i--) {
                         const proj = projectiles[i];
                         proj.position.z -= (currentSpeed + 40); 
+                        
+                        let hitTarget = false;
 
-                        if (proj.position.z < currentActiveAirplane.position.z - 2000) {
+                        // فحص التصادم مع الأهداف
+                        for (let j = targets.length - 1; j >= 0; j--) {
+                            let target = targets[j];
+                            if (proj.position.distanceTo(target.position) < 12) { // مسافة التصادم
+                                playExplosionSound();
+                                showNotification("💥 تم تدمير هدف معادٍ! (+20 نقطة)", false);
+                                score += 20;
+                                document.getElementById('points').innerText = score;
+                                
+                                scene.remove(target);
+                                targets.splice(j, 1);
+                                hitTarget = true;
+                                
+                                // إعادة توليد الهدف المدمر في الأمام
+                                let lastSpawnZ = targets.length > 0 ? targets[targets.length - 1].position.z : currentActiveAirplane.position.z;
+                                createTarget(lastSpawnZ - 200 - Math.random() * 100);
+                                break;
+                            }
+                        }
+
+                        // تدمير القذيفة إذا اصطدمت بهدف أو ابتعدت كثيراً
+                        if (hitTarget || proj.position.z < currentActiveAirplane.position.z - 2000) {
                             scene.remove(proj); projectiles.splice(i, 1);
                         }
                     }
