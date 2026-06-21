@@ -363,6 +363,8 @@
         const rings = [];
         const projectiles = [];
         const targets = [];
+        const explosionParticles = [];
+        const shockwaves = [];
         let lastShootTime = 0;
         const keys = { w: false, s: false, a: false, d: false, space: false, f: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -371,8 +373,9 @@
 
         let cameraShakeIntensity = 0;
 
+        // التعديل: تعديل أسعار الطائرات الست الأولى لتبدأ من 0.05 باي لضمان قفلها وتفعيل الشراء
         const fleet = [
-            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
+            { id: 0, piCost: 0.05, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
             { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
             { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
@@ -417,9 +420,8 @@
             endGame(); 
         }
 
-        // التعديل: ضمان قفل جميع الطائرات باستثناء الطائرة الأولى
+        // التعديل: إزالة استثناء الطائرة الأولى لضمان قفل جميع الطائرات الست الأولى بالكامل
         function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true; 
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
         }
 
@@ -647,6 +649,7 @@
             targets.push(target);
         }
 
+        // التعديل: تغيير لون وشكل القذيفة لتشبه دفق اللهب المتوهج البلازمي
         function shootLaser() {
             if (!isPlaying || isPaused || !currentActiveAirplane) return;
             const planeData = fleet[currentSelectionIndex];
@@ -656,9 +659,10 @@
             if (currentTime - lastShootTime < 300) return; 
             lastShootTime = currentTime;
 
-            const laserGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 8);
+            const laserGeometry = new THREE.CylinderGeometry(0.7, 0.2, 12, 8);
             laserGeometry.rotateX(Math.PI / 2);
-            const laserMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            // استخدام مادة متوهجة بلون ناري ساطع (برتقالي محمر) لإعطاء تأثير قذيفة لهب واقعية
+            const laserMaterial = new THREE.MeshBasicMaterial({ color: 0xff5500 });
             
             const laser1 = new THREE.Mesh(laserGeometry, laserMaterial);
             laser1.position.copy(currentActiveAirplane.position);
@@ -673,6 +677,55 @@
             scene.add(laser1);
             scene.add(laser2);
             projectiles.push(laser1, laser2);
+        }
+
+        // التعديل: إضافة دالة توليد تأثير انفجار واقعي ومميز (كرة لهب متمددة + جزيئات متطايرة متغيرة الألوان)
+        function createExplosion(pos) {
+            // 1. جزيئات الشرارات النارية المتطايرة عشوائياً
+            const particleCount = 25;
+            const particleGeo = new THREE.SphereGeometry(0.5, 5, 5);
+            const flameColors = [0xff3300, 0xff6600, 0xffaa00, 0xffcc00];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const mat = new THREE.MeshBasicMaterial({
+                    color: flameColors[Math.floor(Math.random() * flameColors.length)],
+                    transparent: true,
+                    opacity: 1.0
+                });
+                const particle = new THREE.Mesh(particleGeo, mat);
+                particle.position.copy(pos);
+                
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                const speed = 1.5 + Math.random() * 4;
+                
+                particle.userData = {
+                    vx: Math.sin(phi) * Math.cos(theta) * speed,
+                    vy: Math.sin(phi) * Math.sin(theta) * speed,
+                    vz: Math.cos(phi) * speed,
+                    life: 1.0,
+                    decay: 0.02 + Math.random() * 0.03
+                };
+                scene.add(particle);
+                explosionParticles.push(particle);
+            }
+            
+            // 2. موجة الانفجار التوسعية (كرة اللهب الرئيسية المتمددة)
+            const sphereGeo = new THREE.SphereGeometry(2, 16, 16);
+            const sphereMat = new THREE.MeshBasicMaterial({
+                color: 0xff4500,
+                transparent: true,
+                opacity: 0.85
+            });
+            const fireball = new THREE.Mesh(sphereGeo, sphereMat);
+            fireball.position.copy(pos);
+            fireball.userData = {
+                scaleSpeed: 0.5,
+                life: 1.0,
+                decay: 0.04
+            };
+            scene.add(fireball);
+            shockwaves.push(fireball);
         }
 
         const loader = new THREE.GLTFLoader();
@@ -870,6 +923,8 @@
             rings.forEach(r => scene.remove(r)); rings.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
             projectiles.forEach(p => scene.remove(p)); projectiles.length = 0;
+            explosionParticles.forEach(p => scene.remove(p)); explosionParticles.length = 0;
+            shockwaves.forEach(s => scene.remove(s)); shockwaves.length = 0;
             
             for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
             document.getElementById('start-mask').style.display = 'flex';
@@ -920,12 +975,10 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    // التعديل: توليد البيئة والأهداف للطائرات الحربية فقط
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
                         lastTerrainZ -= 1000; 
                         createTerrainSegment(lastTerrainZ, envColors.forest);
                         
-                        // إضافة 10 أهداف فقط للطائرات الحربية
                         if (fleet[currentSelectionIndex].type === 'fighter') {
                             let targetCount = 10;
                             for(let t = 0; t < targetCount; t++) {
@@ -966,10 +1019,10 @@
                         }
                     }
 
-                    // التعديل: تحريك الرصاص والتحقق من التصادم وإخفاء الهدف
+                    // التعديل: تحريك القذائف مع معالجة تأثيرات الانفجار الحركي والبصري عند التصادم
                     for (let i = projectiles.length - 1; i >= 0; i--) {
                         const proj = projectiles[i];
-                        proj.position.z -= (currentSpeed + 10);
+                        proj.position.z -= (currentSpeed + 12);
 
                         if (proj.position.z < currentActiveAirplane.position.z - 1000) {
                             scene.remove(proj); projectiles.splice(i, 1); continue;
@@ -977,17 +1030,57 @@
 
                         for (let j = targets.length - 1; j >= 0; j--) {
                             const target = targets[j];
-                            if (proj.position.distanceTo(target.position) < 12) {
+                            if (proj.position.distanceTo(target.position) < 14) {
                                 score += target.userData.points;
                                 document.getElementById('points').innerText = score;
                                 showNotification("🎯 إصابة مباشرة! +50 نقطة", false);
+                                cameraShakeIntensity = 1.2; // اهتزاز خفيف للمحاكاة عند التفجير
                                 
+                                // تفعيل انفجار لهبي متطور في مكان الهدف المضروب
+                                createExplosion(target.position);
+
                                 scene.remove(target); 
                                 targets.splice(j, 1);
                                 scene.remove(proj); 
                                 projectiles.splice(i, 1);
                                 break; 
                             }
+                        }
+                    }
+
+                    // التعديل: تحديث جزيئات الانفجار المتطايرة تدريجياً وإخفائها برفق
+                    for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                        const p = explosionParticles[i];
+                        p.position.x += p.userData.vx;
+                        p.position.y += p.userData.vy;
+                        p.position.z += p.userData.vz;
+                        p.userData.life -= p.userData.decay;
+                        p.material.opacity = p.userData.life;
+                        p.scale.multiplyScalar(0.96); // انكماش حجم الشرارة أثناء التلاشي
+                        
+                        if (p.userData.life <= 0) {
+                            scene.remove(p);
+                            explosionParticles.splice(i, 1);
+                        }
+                    }
+
+                    // التعديل: تحديث تمدد كرة اللهب (Shockwave) وتغيير ألوانها من الأصفر الساطع للأسود المخمد
+                    for (let i = shockwaves.length - 1; i >= 0; i--) {
+                        const wave = shockwaves[i];
+                        wave.scale.addScalar(wave.userData.scaleSpeed);
+                        wave.userData.life -= wave.userData.decay;
+                        wave.material.opacity = wave.userData.life;
+                        
+                        // محاكاة تحول ألوان الانفجار الحقيقي من مركز متوهج إلى رماد مخمد
+                        if (wave.userData.life < 0.4) {
+                            wave.material.color.setHex(0x330500); // لون دخاني داكن
+                        } else if (wave.userData.life < 0.7) {
+                            wave.material.color.setHex(0xcc2200); // أحمر ناري متلاشي
+                        }
+                        
+                        if (wave.userData.life <= 0) {
+                            scene.remove(wave);
+                            shockwaves.splice(i, 1);
                         }
                     }
 
