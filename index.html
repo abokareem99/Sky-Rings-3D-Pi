@@ -417,6 +417,7 @@
             endGame(); 
         }
 
+        // التعديل: ضمان قفل جميع الطائرات باستثناء الطائرة الأولى
         function isPlaneUnlocked(plane) {
             if (plane.id === 0) return true; 
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
@@ -571,7 +572,6 @@
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { forest: 0x2d5a27 };
 
-        // دالة إنشاء البيئة والأشجار والغيوم الواقعية
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const segmentGroup = new THREE.Group();
 
@@ -707,7 +707,6 @@
             document.getElementById('cp-name').innerText = planeData.name;
             const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
             
-            // Show/Hide shoot button based on plane type (Touch UI)
             const shootBtn = document.getElementById('shoot-btn');
             if (shootBtn) {
                 shootBtn.style.display = (planeData.type === 'fighter') ? 'flex' : 'none';
@@ -921,14 +920,20 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    // توليد البيئة والأهداف
+                    // التعديل: توليد البيئة والأهداف للطائرات الحربية فقط
                     if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
                         lastTerrainZ -= 1000; 
                         createTerrainSegment(lastTerrainZ, envColors.forest);
-                        for(let t=0; t<3; t++) createTarget(lastTerrainZ + (Math.random() * 800)); 
+                        
+                        // إضافة 10 أهداف فقط للطائرات الحربية
+                        if (fleet[currentSelectionIndex].type === 'fighter') {
+                            let targetCount = 10;
+                            for(let t = 0; t < targetCount; t++) {
+                                createTarget(lastTerrainZ + (Math.random() * 800)); 
+                            }
+                        }
                     }
 
-                    // الخواتم
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
                         if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
@@ -953,7 +958,6 @@
                         }
                     }
 
-                    // حركة الأهداف
                     for (let i = targets.length - 1; i >= 0; i--) {
                         const target = targets[i];
                         target.rotation.x += 0.02; target.rotation.y += 0.02;
@@ -962,7 +966,7 @@
                         }
                     }
 
-                    // تحريك الرصاص والتحقق من التصادم
+                    // التعديل: تحريك الرصاص والتحقق من التصادم وإخفاء الهدف
                     for (let i = projectiles.length - 1; i >= 0; i--) {
                         const proj = projectiles[i];
                         proj.position.z -= (currentSpeed + 10);
@@ -978,8 +982,10 @@
                                 document.getElementById('points').innerText = score;
                                 showNotification("🎯 إصابة مباشرة! +50 نقطة", false);
                                 
-                                scene.remove(target); targets.splice(j, 1);
-                                scene.remove(proj); projectiles.splice(i, 1);
+                                scene.remove(target); 
+                                targets.splice(j, 1);
+                                scene.remove(proj); 
+                                projectiles.splice(i, 1);
                                 break; 
                             }
                         }
