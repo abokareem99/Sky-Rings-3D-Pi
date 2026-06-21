@@ -31,7 +31,7 @@
             margin: 0;
             overflow: hidden; 
             font-family: 'Cairo', sans-serif; 
-            background-color: #a3d2f7; 
+            background-color: #87CEEB; /* لون السماء الأزرق */
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
@@ -206,19 +206,19 @@
         #touch-controls { display: none; }
         #joystick-zone {
             position: absolute;
-            bottom: 25px; left: 25px; width: 90px; height: 90px; /* تصغير العصا */
+            bottom: 25px; left: 25px; width: 90px; height: 90px;
             background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
             touch-action: none;
         }
         #joystick-knob {
             position: absolute;
-            top: 22.5px; left: 22.5px; width: 45px; height: 45px; /* تصغير المؤشر */
+            top: 22.5px; left: 22.5px; width: 45px; height: 45px;
             background: rgba(138, 43, 226, 0.7); border: 2px solid var(--pi-gold); border-radius: 50%;
             pointer-events: none;
         }
         #speed-btn {
             position: absolute;
-            bottom: 40px; right: 25px; width: 65px; height: 65px; /* تصغير التيربو */
+            bottom: 40px; right: 25px; width: 65px; height: 65px;
             background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); border-radius: 50%; border: 2px solid var(--pi-purple-dark);
             color: var(--pi-purple-dark); font-weight: 900; font-size: 15px; z-index: 100; display: flex; justify-content: center; align-items: center;
             touch-action: none;
@@ -321,8 +321,9 @@
         }
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xa3d2f7);
-        const fog = new THREE.FogExp2(0xa3d2f7, 0.0008);
+        // تغيير لون الخلفية للسماء
+        scene.background = new THREE.Color(0x87CEEB);
+        const fog = new THREE.FogExp2(0x87CEEB, 0.0012);
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -406,9 +407,10 @@
             endGame(); 
         }
 
+        // الدالة التي تقفل جميع الطائرات باستثناء الأولى وتعتمد على الشراء
         function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true;
-            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
+            if (plane.id === 0) return true; // الطائرة الأولى فقط مفتوحة
+            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true'; // الباقي مقفول ويتطلب الشراء بـ Pi
         }
 
         function toggleHangar() {
@@ -558,19 +560,65 @@
         }
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { desert: 0xdfb175 };
+        const envColors = { forest: 0x2d5a27 }; // لون الغابة
 
+        // دالة إنشاء البيئة مع الغابات والغيوم
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
+            const segmentGroup = new THREE.Group();
+
             const geometry = new THREE.PlaneGeometry(1200, 1000, 10, 10);
             const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
-            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
+            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; 
+            segmentGroup.add(terrain);
+            
             if (isRunway) {
                 const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
+                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; 
+                segmentGroup.add(runway);
             }
+
+            // إضافة الأشجار (غابة كثيفة)
+            const treeCount = isRunway ? 40 : 120; // تقليل الأشجار قرب المدرج
+            const trunkGeo = new THREE.CylinderGeometry(1.5, 1.5, 8, 5);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a2f1d });
+            const leafGeo = new THREE.ConeGeometry(6, 18, 5);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x1e4d2b }); // أخضر داكن
+            
+            for(let i=0; i<treeCount; i++) {
+                let x = (Math.random() - 0.5) * 1000;
+                let z = zPos + (Math.random() - 0.5) * 1000;
+                
+                // إبعاد الأشجار عن مسار الطيران في المنتصف
+                if (Math.abs(x) < 60) continue;
+
+                const tree = new THREE.Group();
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = -6; 
+                const leaf = new THREE.Mesh(leafGeo, leafMat);
+                leaf.position.y = 2;
+                tree.add(trunk); tree.add(leaf);
+                tree.position.set(x, 0, z);
+                segmentGroup.add(tree);
+            }
+
+            // إضافة الغيوم في السماء
+            const cloudGeo = new THREE.DodecahedronGeometry(15, 1);
+            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, transparent: true, opacity: 0.85 });
+            for(let i=0; i<12; i++) {
+                const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+                let cx = (Math.random() - 0.5) * 800;
+                let cy = 60 + Math.random() * 60; // ارتفاع الغيوم
+                let cz = zPos + (Math.random() - 0.5) * 1000;
+                cloud.position.set(cx, cy, cz);
+                let scale = 1 + Math.random() * 2.5;
+                cloud.scale.set(scale, scale * 0.5, scale);
+                segmentGroup.add(cloud);
+            }
+
+            terrainGroup.add(segmentGroup);
         }
 
-        createTerrainSegment(0, envColors.desert, true); createTerrainSegment(-1000, envColors.desert); createTerrainSegment(-2000, envColors.desert);
+        createTerrainSegment(0, envColors.forest, true); createTerrainSegment(-1000, envColors.forest); createTerrainSegment(-2000, envColors.forest);
 
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
@@ -679,7 +727,6 @@
             if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            // تقليص مسافة السحب بناءً على حجم العصا الجديد
             if(dist > 22.5) { dx = (dx/dist)*22.5; dy = (dy/dist)*22.5; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
             
@@ -821,7 +868,7 @@
                     camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
                     sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
 
-                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
+                    if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.forest); }
 
                     for (let i = rings.length - 1; i >= 0; i--) {
                         const ring = rings[i]; ring.rotation.y += 0.01;
