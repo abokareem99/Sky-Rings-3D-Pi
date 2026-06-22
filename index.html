@@ -209,7 +209,6 @@
             touch-action: none;
         }
 
-        /* زر إطلاق قذائف الليزر المتطور للطائرات الحربية */
         #fire-btn {
             position: absolute;
             bottom: 145px; right: 35px; width: 70px; height: 70px;
@@ -299,7 +298,6 @@
     </div>
 
     <script>
-        // --- إعدادات سوبابيس (Supabase configuration) ---
         const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
         let supabaseClient = null;
@@ -341,11 +339,10 @@
         let timerInterval = null;
         const rings = [];
         
-        // مصفوفات تتبع المقذوفات والأهداف المتساقطة الجديدة
         const bullets = [];
         const targets = [];
         let lastFireTime = 0;
-        const fireRate = 180; // معدل إطلاق النار بالميلي ثانية
+        const fireRate = 180; 
 
         const keys = { w: false, s: false, a: false, d: false, space: false, fire: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -354,8 +351,9 @@
 
         let cameraShakeIntensity = 0;
 
+        // تعديل: تم وضع سعر للطائرة الأولى لتخضع لقفل الشراء الإجباري مثل باقي الأسطول
         const fleet = [
-            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
+            { id: 0, piCost: 0.05, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
             { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
             { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
@@ -379,8 +377,8 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
+        // تعديل: إزالة استثناء المعرّف (0) لضمان خضوع جميع الطائرات لنظام الفتح بالدفع
         function isPlaneUnlocked(plane) {
-            if (plane.id === 0) return true;
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
         }
 
@@ -530,7 +528,6 @@
             engineOsc = null;
         }
 
-        // دالة إنشاء صوت إطلاق نار عسكري واقعي ومحسّن للأسلحة المقاتلة
         function playWeaponShootSound() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -611,7 +608,6 @@
             updateFireButtonUI();
         }
 
-        // إدارة إظهار وإخفاء زر الهجوم حسب نوع الطائرة المحددة
         function updateFireButtonUI() {
             const fireBtn = document.getElementById('fire-btn');
             if (!fireBtn) return;
@@ -636,7 +632,7 @@
             scene.add(currentActiveAirplane);
         }
 
-        // إنتاج المقذوفات النارية الاحترافية (ليزر مشع وممدود)
+        // تعديل: دالة إنتاج القذائف من كلا الجناحين الأيمن والأيسر في نفس اللحظة
         function generateBullet() {
             const now = Date.now();
             if (now - lastFireTime < fireRate) return;
@@ -646,19 +642,29 @@
             playWeaponShootSound();
             
             const bGeo = new THREE.CylinderGeometry(0.18, 0.18, 3.5, 5);
-            bGeo.rotateX(Math.PI / 2); // توجيه المقذوف على محور السير Z
+            bGeo.rotateX(Math.PI / 2); 
             const bMat = new THREE.MeshBasicMaterial({ color: 0xff3300, toneMapped: false });
             
-            // محاكاة إطلاق مزدوج من الجناح الأيمن والأيسر بالتناوب لإضافة واقعية هائلة
-            const bMesh = new THREE.Mesh(bGeo, bMat);
-            bMesh.position.copy(currentActiveAirplane.position);
-            bMesh.position.z -= 8; 
+            const wingDistance = 5.5; // مسافة الإزاحة للطرفين للحصول على إطلاق مزدوج متناسق
             
-            scene.add(bMesh);
-            bullets.push(bMesh);
+            // قذيفة الجناح الأيسر
+            const bMeshLeft = new THREE.Mesh(bGeo, bMat);
+            bMeshLeft.position.copy(currentActiveAirplane.position);
+            bMeshLeft.position.z -= 8;
+            bMeshLeft.position.x -= wingDistance;
+            
+            // قذيفة الجناح الأيمن
+            const bMeshRight = new THREE.Mesh(bGeo, bMat);
+            bMeshRight.position.copy(currentActiveAirplane.position);
+            bMeshRight.position.z -= 8;
+            bMeshRight.position.x += wingDistance;
+            
+            scene.add(bMeshLeft);
+            scene.add(bMeshRight);
+            bullets.push(bMeshLeft, bMeshRight);
         }
 
-        // إنتاج الأهداف المتساقطة ذات التصميم الهندسي الرائع والمحايد للحلقات
+        // تعديل: خفض النطاق العشوائي لسرعة هبوط الأهداف العسكرية المتساقطة لتصبح أبطأ وأسهل
         function spawnFallingTarget(zPivot) {
             const tGeo = new THREE.IcosahedronGeometry(3.5, 0);
             const tMat = new THREE.MeshStandardMaterial({ 
@@ -670,7 +676,6 @@
             });
             const tMesh = new THREE.Mesh(tGeo, tMat);
             
-            // توزيع الأهداف في مدى رؤية اللاعب ومسار الطائرة الأمامي
             tMesh.position.set(
                 (Math.random() - 0.5) * 150,
                 Math.random() * 45 + 25,
@@ -678,7 +683,7 @@
             );
             
             tMesh.userData = {
-                fallSpeed: Math.random() * 0.25 + 0.15,
+                fallSpeed: Math.random() * 0.08 + 0.04, // تم إبطاؤها هنا لسهولة القنص
                 rotationX: Math.random() * 0.03,
                 rotationY: Math.random() * 0.03
             };
@@ -709,7 +714,7 @@
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
             if(e.key === 'a' || e.key === 'ArrowLeft') keys.a = true; if(e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
             if(e.key === ' ') { if(isPlaying) e.preventDefault(); keys.space = true; }
-            if(e.key.toLowerCase() === 'f' || e.key === 'Enter') keys.fire = true; // زر F أو Enter للوحة المفاتيح لإطلاق النار
+            if(e.key.toLowerCase() === 'f' || e.key === 'Enter') keys.fire = true; 
         });
         window.addEventListener('keyup', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = false; if(e.key === 's' || e.key === 'ArrowDown') keys.s = false;
@@ -748,7 +753,6 @@
         speedButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = true; }, { passive: false });
         speedButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.space = false; }, { passive: false });
         
-        // ربط أحداث زر الهجوم الناري لشاشات اللمس
         const fireButtonEl = document.getElementById('fire-btn');
         fireButtonEl.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.fire = true; }, { passive: false });
         fireButtonEl.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.fire = false; }, { passive: false });
@@ -792,7 +796,6 @@
             isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none'; document.getElementById('touch-controls').style.display = 'none';
             
-            // تنظيف المقذوفات والأهداف المتبقية بالساحة
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
 
@@ -849,30 +852,26 @@
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
                 }
 
-                // تنفيذ أمر هجوم المقذوفات عند الضغط المتواصل
                 if (keys.fire) {
                     generateBullet();
                 }
 
-                // محرك تحديث المقذوفات النارية وحساب الاصطدامات مع الأهداف العسكرية
                 for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
                     const b = bullets[bIdx];
-                    b.position.z -= 14; // سرعة مقذوف الليزر الفائقة
+                    b.position.z -= 14; 
                     
                     if (b.position.z < currentActiveAirplane.position.z - 650) {
                         scene.remove(b); bullets.splice(bIdx, 1);
                         continue;
                     }
                     
-                    // التحقق من اصطدام المقذوف بالأهداف
                     for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
                         const t = targets[tIdx];
                         if (b.position.distanceTo(t.position) < 6.5) {
-                            score += 15; // إضافة 15 نقطة لتدمير الهدف بنجاح
+                            score += 15; 
                             document.getElementById('points').innerText = score;
                             showNotification("🎯 تم تدمير هدف سكايروم عسكري! +15", false);
                             
-                            // هزة كاميرا خفيفة عند الانفجار
                             cameraShakeIntensity = 0.8;
 
                             scene.remove(t); targets.splice(tIdx, 1);
@@ -882,7 +881,6 @@
                     }
                 }
 
-                // محرك حركة وتحديث الأهداف المتساقطة
                 for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
                     const t = targets[tIdx];
                     t.position.y -= t.userData.fallSpeed;
@@ -894,7 +892,6 @@
                     }
                 }
 
-                // توليد أهداف جديدة بشكل عشوائي ومستمر أمام المقاتلة الحربية فقط
                 if (fleet[currentSelectionIndex].type === 'fighter' && targets.length < 5 && Math.random() < 0.02) {
                     spawnFallingTarget(currentActiveAirplane.position.z);
                 }
@@ -910,7 +907,6 @@
 
                 if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.desert); }
 
-                // [نظام الحلقات الأصلي المحمي من التعديل تماماً]
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i]; ring.rotation.y += 0.01;
                     if (ring.userData.type === 'bonus') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
