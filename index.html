@@ -306,7 +306,6 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // إعداد المشهد وخلفية سماء ناعمة ومشرقة مع ضباب متناسق
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
         const fog = new THREE.FogExp2(0xcdedfd, 0.001);
@@ -522,7 +521,6 @@
             engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
             
             engineGain = audioCtx.createGain(); 
-            // تم رفع مستوى الصوت هنا إلى 0.8 ليكون عالياً جداً وأكثر واقعية
             engineGain.gain.setValueAtTime(0.8, audioCtx.currentTime); 
             
             engineOsc.connect(engineFilter); 
@@ -567,14 +565,46 @@
             osc.stop(audioCtx.currentTime + 0.12);
         }
 
+        // دالة توليد تأثير صوت الانفجار عند تدمير الأهداف
+        function playExplosionSound() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const bufferSize = audioCtx.sampleRate * 0.6; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // توليد ضوضاء بيضاء عشوائية كأساس للانفجار
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            // فلتر لتخفيف الترددات الحادة وجعل الصوت ضخماً وعميقاً
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.6);
+            
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+            
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            noise.start();
+            noise.stop(audioCtx.currentTime + 0.6);
+        }
+
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { forestFloor: 0x22441f, runway: 0x222222 };
 
-        // دالة عبقرية لتوليد شجرة غابات كثيفة وواقعية (أوراق دائرية متراصة بدلاً من المثلثات)
         function createProceduralTree() {
             const treeGroup = new THREE.Group();
-            
-            // الجذع الطبيعي
             const trunkGeo = new THREE.CylinderGeometry(0.5, 0.9, 7, 6);
             const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3d28, roughness: 0.9 });
             const trunk = new THREE.Mesh(trunkGeo, trunkMat);
@@ -582,7 +612,6 @@
             trunk.castShadow = true;
             treeGroup.add(trunk);
 
-            // أوراق الشجر الكثيفة (مجموعة كرات متراصة توحي بالواقعية والتكتل)
             const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1b4d22, roughness: 0.7, flatShading: true });
             
             const mainFoliage = new THREE.Mesh(new THREE.SphereGeometry(3.5, 6, 6), foliageMat);
@@ -602,13 +631,11 @@
             cluster3.position.set(0, 9, -1.2);
             treeGroup.add(cluster3);
 
-            // اختلاف بسيط في الأحجام لكسر التكرار
             const scale = Math.random() * 0.6 + 0.8;
             treeGroup.scale.set(scale, scale, scale);
             return treeGroup;
         }
 
-        // دالة توليد سحب واقعية ناعمة ومنسابة في السماء (غيوم متراكمة من كرات شفافة متداخلة)
         function createProceduralCloud() {
             const cloudGroup = new THREE.Group();
             const cloudMat = new THREE.MeshStandardMaterial({
@@ -633,7 +660,6 @@
             return cloudGroup;
         }
 
-        // تعديل دالة توليد الأرض لتوليد الغابات الكثيفة والغيوم العلوية ديناميكياً بكل مقطع
         function createTerrainSegment(zPos, colorHex, isRunway = false) {
             const geometry = new THREE.PlaneGeometry(1400, 1000, 4, 4);
             const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
@@ -644,30 +670,27 @@
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             }
 
-            // توليد غابة كثيفة على الأطراف بعيداً عن مسار الطيران بـ 45 وحدة
             const totalTrees = 80; 
             for (let i = 0; i < totalTrees; i++) {
                 const tree = createProceduralTree();
                 const side = Math.random() > 0.5 ? 1 : -1;
-                const x = (Math.random() * 300 + 45) * side; // الحفاظ على الممر الأوسط آمناً ومفتوحاً للرؤية
+                const x = (Math.random() * 300 + 45) * side; 
                 const z = zPos + (Math.random() - 0.5) * 1000;
                 tree.position.set(x, -10, z);
                 terrainGroup.add(tree);
             }
 
-            // توليد الغيوم الذكية والواقعية بالأعلى
             const totalClouds = 10;
             for (let i = 0; i < totalClouds; i++) {
                 const cloud = createProceduralCloud();
                 const x = (Math.random() - 0.5) * 600;
-                const y = Math.random() * 60 + 110; // ارتفاع السحب الفعلي
+                const y = Math.random() * 60 + 110; 
                 const z = zPos + (Math.random() - 0.5) * 1000;
                 cloud.position.set(x, y, z);
                 terrainGroup.add(cloud);
             }
         }
 
-        // توليد المقاطع الابتدائية للغابة الكثيفة والسماء
         createTerrainSegment(0, envColors.forestFloor, true); 
         createTerrainSegment(-1000, envColors.forestFloor); 
         createTerrainSegment(-2000, envColors.forestFloor);
@@ -748,9 +771,17 @@
             
             playWeaponShootSound();
             
-            const bGeo = new THREE.CylinderGeometry(0.18, 0.18, 3.5, 5);
+            // تم زيادة حجم المقذوفات وجعل نصف القطر 0.45 والطول 5 ليصبح كبيراً ومميزاً
+            const bGeo = new THREE.CylinderGeometry(0.45, 0.45, 5, 8);
             bGeo.rotateX(Math.PI / 2); 
-            const bMat = new THREE.MeshBasicMaterial({ color: 0xff3300, toneMapped: false });
+            
+            // جعل اللون واقعياً ومضيئاً بتأثير توهج مشع (بلازما برتقالية متوهجة) لكسر المظهر البلاستيكي
+            const bMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffaa00, 
+                emissive: 0xff4500,
+                emissiveIntensity: 4.0,
+                roughness: 0.1
+            });
             
             const wingDistance = 5.5; 
             
@@ -971,10 +1002,14 @@
                     
                     for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
                         const t = targets[tIdx];
-                        if (b.position.distanceTo(t.position) < 6.5) {
+                        // تم تعديل مسافة الرصد إلى 7.5 لتتوافق تماماً مع الحجم الجديد الأكبر للطلقات
+                        if (b.position.distanceTo(t.position) < 7.5) {
                             score += 15; 
                             document.getElementById('points').innerText = score;
                             showNotification("🎯 تم تدمير هدف سكايروم عسكري! +15", false);
+                            
+                            // تشغيل صوت الانفجار عند التصادم
+                            playExplosionSound();
                             
                             cameraShakeIntensity = 0.8;
 
