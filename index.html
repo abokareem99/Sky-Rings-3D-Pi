@@ -351,7 +351,6 @@
 
         let cameraShakeIntensity = 0;
 
-        // تعديل: تم وضع سعر للطائرة الأولى لتخضع لقفل الشراء الإجباري مثل باقي الأسطول
         const fleet = [
             { id: 0, piCost: 0.05, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
@@ -377,7 +376,7 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
-        // تعديل: إزالة استثناء المعرّف (0) لضمان خضوع جميع الطائرات لنظام الفتح بالدفع
+        // تم تعديل الدالة: تعتمد حصرياً على تخزين الشراء المحلي بعد الدفع، ولا تفتح بأي عدد من النقاط
         function isPlaneUnlocked(plane) {
             return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
         }
@@ -632,7 +631,6 @@
             scene.add(currentActiveAirplane);
         }
 
-        // تعديل: دالة إنتاج القذائف من كلا الجناحين الأيمن والأيسر في نفس اللحظة
         function generateBullet() {
             const now = Date.now();
             if (now - lastFireTime < fireRate) return;
@@ -645,15 +643,13 @@
             bGeo.rotateX(Math.PI / 2); 
             const bMat = new THREE.MeshBasicMaterial({ color: 0xff3300, toneMapped: false });
             
-            const wingDistance = 5.5; // مسافة الإزاحة للطرفين للحصول على إطلاق مزدوج متناسق
+            const wingDistance = 5.5; 
             
-            // قذيفة الجناح الأيسر
             const bMeshLeft = new THREE.Mesh(bGeo, bMat);
             bMeshLeft.position.copy(currentActiveAirplane.position);
             bMeshLeft.position.z -= 8;
             bMeshLeft.position.x -= wingDistance;
             
-            // قذيفة الجناح الأيمن
             const bMeshRight = new THREE.Mesh(bGeo, bMat);
             bMeshRight.position.copy(currentActiveAirplane.position);
             bMeshRight.position.z -= 8;
@@ -664,7 +660,7 @@
             bullets.push(bMeshLeft, bMeshRight);
         }
 
-        // تعديل: خفض النطاق العشوائي لسرعة هبوط الأهداف العسكرية المتساقطة لتصبح أبطأ وأسهل
+        // تم تعديل الدالة لتقليل سرعة السقوط والدوران لتجعل استهداف العناصر سلالسة تامة وبسيطة
         function spawnFallingTarget(zPivot) {
             const tGeo = new THREE.IcosahedronGeometry(3.5, 0);
             const tMat = new THREE.MeshStandardMaterial({ 
@@ -682,10 +678,11 @@
                 zPivot - 350 - Math.random() * 200
             );
             
+            // تعديل السرعة هنا لتكون أبطأ بكثير (من 0.04 إلى 0.005 كحد أدنى)
             tMesh.userData = {
-                fallSpeed: Math.random() * 0.08 + 0.04, // تم إبطاؤها هنا لسهولة القنص
-                rotationX: Math.random() * 0.03,
-                rotationY: Math.random() * 0.03
+                fallSpeed: Math.random() * 0.015 + 0.005, 
+                rotationX: Math.random() * 0.01,
+                rotationY: Math.random() * 0.01
             };
             
             scene.add(tMesh);
