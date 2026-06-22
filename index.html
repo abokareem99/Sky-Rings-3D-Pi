@@ -352,7 +352,7 @@
         let cameraShakeIntensity = 0;
 
         const fleet = [
-            { id: 0, piCost: 0.05, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null },
+            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null }, // جعلتها مجانية كبداية
             { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
             { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
             { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
@@ -376,9 +376,10 @@
             setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
-        // تم تعديل الدالة: تعتمد حصرياً على تخزين الشراء المحلي بعد الدفع، ولا تفتح بأي عدد من النقاط
+        // تم التعديل الآمن هنا: الطائرة الأولى (id: 0) مفتوحة دائماً، وبقية الأسطول مغلق تماماً بمفتاح تخزين جديد لتنظيف التلوث القديم
         function isPlaneUnlocked(plane) {
-            return localStorage.getItem(`secure_plane_unlock_${plane.id}`) === 'true';
+            if (plane.id === 0) return true;
+            return localStorage.getItem(`pi_fleet_unlocked_${plane.id}`) === 'true';
         }
 
         function toggleHangar() {
@@ -490,7 +491,7 @@
                     onReadyForServerCompletion: function(paymentId, txid) {
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) })
                         .then(() => {
-                            localStorage.setItem(`secure_plane_unlock_${plane.id}`, 'true');
+                            localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true');
                             showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`);
                             startBtn.disabled = false; updateShopUI();
                         }).catch(() => { startBtn.disabled = false; updateShopUI(); });
@@ -660,7 +661,6 @@
             bullets.push(bMeshLeft, bMeshRight);
         }
 
-        // تم تعديل الدالة لتقليل سرعة السقوط والدوران لتجعل استهداف العناصر سلالسة تامة وبسيطة
         function spawnFallingTarget(zPivot) {
             const tGeo = new THREE.IcosahedronGeometry(3.5, 0);
             const tMat = new THREE.MeshStandardMaterial({ 
@@ -678,7 +678,6 @@
                 zPivot - 350 - Math.random() * 200
             );
             
-            // تعديل السرعة هنا لتكون أبطأ بكثير (من 0.04 إلى 0.005 كحد أدنى)
             tMesh.userData = {
                 fallSpeed: Math.random() * 0.015 + 0.005, 
                 rotationX: Math.random() * 0.01,
