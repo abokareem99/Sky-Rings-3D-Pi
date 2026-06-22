@@ -508,12 +508,30 @@
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (engineOsc) return; 
-            engineOsc = audioCtx.createOscillator(); engineOsc.type = 'sawtooth'; engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
-            engineOsc2 = audioCtx.createOscillator(); engineOsc2.type = 'sawtooth'; engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
-            engineFilter = audioCtx.createBiquadFilter(); engineFilter.type = 'lowpass'; engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
-            engineGain = audioCtx.createGain(); engineGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            engineOsc.connect(engineFilter); engineOsc2.connect(engineFilter); engineFilter.connect(engineGain); engineGain.connect(audioCtx.destination);
-            engineOsc.start(); engineOsc2.start();
+            
+            engineOsc = audioCtx.createOscillator(); 
+            engineOsc.type = 'sawtooth'; 
+            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            
+            engineOsc2 = audioCtx.createOscillator(); 
+            engineOsc2.type = 'sawtooth'; 
+            engineOsc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
+            
+            engineFilter = audioCtx.createBiquadFilter(); 
+            engineFilter.type = 'lowpass'; 
+            engineFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+            
+            engineGain = audioCtx.createGain(); 
+            // تم رفع مستوى الصوت هنا إلى 0.8 ليكون عالياً جداً وأكثر واقعية
+            engineGain.gain.setValueAtTime(0.8, audioCtx.currentTime); 
+            
+            engineOsc.connect(engineFilter); 
+            engineOsc2.connect(engineFilter); 
+            engineFilter.connect(engineGain); 
+            engineGain.connect(audioCtx.destination);
+            
+            engineOsc.start(); 
+            engineOsc2.start();
         }
 
         function updateEngineSound(speedUp) {
