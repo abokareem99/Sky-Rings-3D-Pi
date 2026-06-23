@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700;900&display=swap" rel="stylesheet">
     
@@ -53,12 +53,11 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
-            border-radius: 12px; /* تقليل الانحناء قليلاً لتوفير المساحة */
+            border-radius: 12px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
             color: #ffffff;
         }
 
-        /* تصغير حجم بطاقات البيانات لتناسب الموبايل */
         .hud-card {
             font-size: 13px !important;
             font-weight: 700; padding: 6px 10px !important; 
@@ -78,7 +77,9 @@
             z-index: 15; background: transparent;
             display: flex; flex-direction: column; justify-content: space-between; 
             align-items: center;
-            padding-bottom: 25px; box-sizing: border-box;
+            /* تم الرفع هنا لضمان عدم تغطية الأزرار السفلية للمرآب */
+            padding-bottom: calc(40px + env(safe-area-inset-bottom)); 
+            box-sizing: border-box;
         }
 
         .pi-top-banner {
@@ -171,9 +172,11 @@
 
         #touch-controls { display: none; }
         
-        /* تصغير عصا التحكم لتفادي حجب الرؤية */
+        /* --- تعديل الجيرسكوب السطحي ليكون مرفوعاً عن شريط المهام --- */
         #joystick-zone {
-            position: absolute; bottom: 20px; left: 20px; width: 90px; height: 90px;
+            position: absolute; 
+            bottom: calc(60px + env(safe-area-inset-bottom)); /* تم التعديل هنا للرفع */
+            left: 20px; width: 90px; height: 90px;
             background: rgba(255,255,255,0.05); border: 2px solid var(--pi-gold); border-radius: 50%; z-index: 100;
             touch-action: none;
         }
@@ -183,12 +186,14 @@
             pointer-events: none;
         }
 
+        /* --- تعديل أزرار الأكشن (النار والسرعة) لتكون مرفوعة --- */
         #action-buttons-container {
-            position: absolute; bottom: 25px; right: 20px;
+            position: absolute; 
+            bottom: calc(65px + env(safe-area-inset-bottom)); /* تم التعديل هنا للرفع */
+            right: 20px;
             display: flex; gap: 8px; z-index: 100; align-items: center;
         }
         
-        /* تصغير أزرار الإطلاق والسرعة */
         .ctrl-btn {
             width: 45px; height: 45px; border-radius: 50%;
             font-weight: 900; font-size: 16px; display: none;
@@ -219,7 +224,7 @@
         <div id="action-buttons-container">
             <div id="fire-btn" class="ctrl-btn">🔥</div>
             <div id="speed-btn" class="ctrl-btn">🚀</div>
-            </div>
+        </div>
     </div>
 
     <div id="loading">
@@ -693,7 +698,6 @@
             }
         }
 
-        // الدالة المفقودة: توليد الأهداف المتساقطة
         function spawnFallingTarget(currentZ) {
             const geo = new THREE.DodecahedronGeometry(3);
             const mat = new THREE.MeshStandardMaterial({ 
@@ -705,15 +709,14 @@
             });
             const target = new THREE.Mesh(geo, mat);
             
-            // ظهوره من أعلى أمام الطائرة بمسافة
             target.position.set(
-                (Math.random() - 0.5) * 80, // محور X عشوائي يمين/يسار
-                Math.random() * 20 + 20,    // محور Y عشوائي من الأعلى
-                currentZ - 300 - Math.random() * 200 // محور Z أمام الطائرة
+                (Math.random() - 0.5) * 80,
+                Math.random() * 20 + 20,    
+                currentZ - 300 - Math.random() * 200
             );
             
             target.userData = {
-                fallSpeed: Math.random() * 0.4 + 0.2, // سرعة السقوط
+                fallSpeed: Math.random() * 0.4 + 0.2, 
                 rotationX: Math.random() * 0.05,
                 rotationY: Math.random() * 0.05
             };
@@ -761,7 +764,7 @@
             const touch = e.targetTouches[0]; if(!touch) return;
             let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
             let dist = Math.sqrt(dx*dx + dy*dy); 
-            if(dist > 25) { dx = (dx/dist)*25; dy = (dy/dist)*25; } // تعديل الحساسية لتناسب العصا الأصغر
+            if(dist > 25) { dx = (dx/dist)*25; dy = (dy/dist)*25; }
             joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
             
             joyState.x = dx / 25; joyState.y = (dy / 25); 
