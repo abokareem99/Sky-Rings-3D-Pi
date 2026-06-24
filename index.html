@@ -37,11 +37,12 @@
             touch-action: none;
         }
         
+        /* التعديل: إجبار الواجهة على البقاء في صف واحد */
         #hud-container {
             position: absolute;
-            top: 15px; left: 10px; right: 10px;
-            display: flex; flex-direction: row; flex-wrap: wrap; 
-            justify-content: center; align-items: center; gap: 8px;
+            top: 15px; left: 5px; right: 5px;
+            display: flex; flex-direction: row; flex-wrap: nowrap; 
+            justify-content: center; align-items: center; gap: 6px;
             z-index: 100; pointer-events: none;
         }
 
@@ -60,7 +61,7 @@
         .hud-card {
             font-size: 13px !important;
             font-weight: 700; padding: 6px 10px !important; 
-            display: flex; align-items: center; gap: 5px;
+            display: flex; align-items: center; gap: 4px;
             white-space: nowrap; margin: 0 !important;
         }
         
@@ -209,7 +210,8 @@
     <div id="game-toast" class="glass-panel"></div>
 
     <div id="hud-container" style="display: none;">
-        <button id="pause-btn" class="glass-panel" onclick="togglePause()" style="font-size: 14px; padding: 6px 12px; cursor: pointer; border: 1px solid var(--pi-gold); background: linear-gradient(135deg, #7f8c8d 0%, #34495e 100%);">⏸️</button>
+        <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
+        <button id="pause-btn" class="glass-panel hud-card" onclick="togglePause()" style="cursor: pointer; border: 1px solid var(--pi-gold); background: rgba(52, 73, 94, 0.8);">⏸️</button>
         <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">30</span>ث</div>
         <div id="total-score-card" class="glass-panel hud-card">🏆 <span id="total-points">0</span></div>
         <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold);">🪙 <span id="points">0</span></div>
@@ -292,8 +294,7 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
-        const fog = new THREE.FogExp2(0xcdedfd, 0.001);
-        scene.fog = fog;
+        // تم إزالة الضباب للحفاظ على وضوح التضاريس بناءً على طلبك السابق.
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
    
@@ -328,7 +329,8 @@
         const targets = [];
         const explosionParticles = [];
         let lastFireTime = 0;
-        const fireRate = 180; 
+        // التعديل: تقليل وقت التأخير لجعل الطلقات كثيفة جداً
+        const fireRate = 60; 
 
         const keys = { w: false, s: false, a: false, d: false, space: false, fire: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -521,10 +523,32 @@
             }
         }
 
+        /* التعديل: زر العودة للمرآب */
+        function returnToHangar() {
+            isPlaying = false;
+            stopEngineSound();
+            clearInterval(timerInterval);
+            document.getElementById('hud-container').style.display = 'none';
+            document.getElementById('touch-controls').style.display = 'none';
+            document.getElementById('start-mask').style.display = 'flex';
+            
+            // إعادة تعيين موضع الطائرة للمرآب
+            if (currentActiveAirplane) {
+                currentActiveAirplane.position.set(0, 2.8, 0);
+                currentActiveAirplane.rotation.set(0.1, 0.5, 0);
+            }
+            camera.position.set(0, 3.5, 18);
+            camera.lookAt(0, 2.8, 0);
+
+            // تنظيف المشهد من أي طلقات أو أهداف
+            bullets.forEach(b => scene.remove(b)); bullets.length = 0;
+            targets.forEach(t => scene.remove(t)); targets.length = 0;
+            explosionParticles.forEach(p => scene.remove(p.mesh)); explosionParticles.length = 0;
+        }
+
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
         const envColors = { forestFloor: 0x22441f, runway: 0x222222 };
 
-        // --- التعديل 1: تحسين الأشجار ---
         function createProceduralTree() {
             const treeGroup = new THREE.Group();
             const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 4, 6);
@@ -545,7 +569,6 @@
             return treeGroup;
         }
 
-        // --- التعديل 2: تحسين الغيوم ---
         function createProceduralCloud() {
             const cloudGroup = new THREE.Group();
             const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, flatShading: true });
@@ -570,7 +593,6 @@
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
             }
 
-            // --- التعديل 3: زيادة كثافة الأشجار ---
             const totalTrees = 180; 
             for (let i = 0; i < totalTrees; i++) {
                 const tree = createProceduralTree(); const side = Math.random() > 0.5 ? 1 : -1;
@@ -659,8 +681,10 @@
             if (fleet[currentSelectionIndex].type !== 'fighter') return;
             lastFireTime = now;
             playWeaponShootSound();
-            const bGeo = new THREE.CylinderGeometry(0.15, 0.15, 4.5, 5); bGeo.rotateX(Math.PI / 2); 
-            const bMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xff4500, emissiveIntensity: 3.5, metalness: 0.2, roughness: 0.1 });
+            
+            // التعديل: طلقات بلون ناري مشع وكثافة أعلى
+            const bGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 5); bGeo.rotateX(Math.PI / 2); 
+            const bMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xff3300, emissiveIntensity: 5.0, metalness: 0.1, roughness: 0.1 });
             const wingDistance = 5.5; 
             const bMeshLeft = new THREE.Mesh(bGeo, bMat); bMeshLeft.position.copy(currentActiveAirplane.position); bMeshLeft.position.z -= 8; bMeshLeft.position.x -= wingDistance;
             const bMeshRight = new THREE.Mesh(bGeo, bMat); bMeshRight.position.copy(currentActiveAirplane.position); bMeshRight.position.z -= 8; bMeshRight.position.x += wingDistance;
@@ -668,16 +692,21 @@
         }
 
         function createExplosion(position) {
-            const particleCount = 35; const geo = new THREE.SphereGeometry(0.6, 5, 5);
+            // التعديل: زيادة الجزيئات وتخصيص ألوان نارية بحتة للانفجار
+            const particleCount = 50; const geo = new THREE.SphereGeometry(0.6, 5, 5);
             for (let i = 0; i < particleCount; i++) {
-                let colorHex = 0xff4500; let r = Math.random();
-                if (r > 0.7) colorHex = 0xffd700; else if (r > 0.4) colorHex = 0xff1100; else if (r > 0.2) colorHex = 0xffaa00;
+                let colorHex = 0xff2200; // برتقالي مائل للأحمر (لون أساسي)
+                let r = Math.random();
+                if (r > 0.7) colorHex = 0xffaa00; // برتقالي فاتح
+                else if (r > 0.4) colorHex = 0xff0000; // أحمر ناري
+                else if (r > 0.2) colorHex = 0xffff00; // أصفر مشع
+                
                 const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
                 const mesh = new THREE.Mesh(geo, mat); mesh.position.copy(position);
-                const theta = Math.random() * Math.PI * 2; const phi = Math.acos((Math.random() * 2) - 1); const speed = Math.random() * 3.5 + 1.5;
+                const theta = Math.random() * Math.PI * 2; const phi = Math.acos((Math.random() * 2) - 1); const speed = Math.random() * 4.0 + 1.5;
                 const velocity = new THREE.Vector3(Math.sin(phi) * Math.cos(theta) * speed, Math.sin(phi) * Math.sin(theta) * speed, Math.cos(phi) * speed);
                 scene.add(mesh);
-                explosionParticles.push({ mesh: mesh, velocity: velocity, life: 1.0, initialScale: Math.random() * 1.6 + 0.5, decay: Math.random() * 0.04 + 0.02 });
+                explosionParticles.push({ mesh: mesh, velocity: velocity, life: 1.0, initialScale: Math.random() * 1.8 + 0.5, decay: Math.random() * 0.04 + 0.02 });
             }
         }
 
@@ -751,7 +780,7 @@
 
         renderer.domElement.addEventListener('touchstart', (e) => {
             if (!isPlaying || isPaused) return;
-            if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl || e.target === fireButtonEl || e.target.id === 'pause-btn') return;
+            if (e.target === joyZone || joyZone.contains(e.target) || e.target === speedButtonEl || e.target === fireButtonEl || e.target.id === 'pause-btn' || e.target.id === 'back-btn') return;
             screenTouchState.active = true; screenTouchCenter = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: false });
         renderer.domElement.addEventListener('touchmove', (e) => {
@@ -769,7 +798,7 @@
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('touch-controls').style.display = 'block';
             const pauseBtn = document.getElementById('pause-btn');
-            if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "linear-gradient(135deg, #7f8c8d 0%, #34495e 100%)"; }
+            if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
             score = 0; document.getElementById('points').innerText = score;
             timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
@@ -818,12 +847,13 @@
                 currentActiveAirplane.position.z -= currentSpeed;
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
-                if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
+                if (joyState.active) { inputX += joyState.x; inputY += joyState.y; } // تم تطبيق عكس المحور الصادي (السحب لأسفل يرفع الطائرة)
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                // --- التعديل 4: التحكم المطور (الحساسية والسلاسة) ---
-                const sensitivityX = 2.2; 
-                const sensitivityY = 1.8;
+                // التعديل: تقليل الحساسية بشكل ملحوظ لجعل الطائرة أثقل في المناورات
+                const sensitivityX = 0.8; 
+                const sensitivityY = 0.6;
+                
                 if (!hasTakenOff) {
                     if (inputY > 0) { 
                         currentActiveAirplane.position.y += 0.3; 
