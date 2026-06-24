@@ -329,8 +329,8 @@
         const targets = [];
         const explosionParticles = [];
         let lastFireTime = 0;
-        // التعديل: تقليل وقت التأخير لجعل الطلقات كثيفة جداً
-        const fireRate = 60; 
+        // التعديل: إلغاء المهلة لجعل الطلقات مستمرة
+        const fireRate = 0; 
 
         const keys = { w: false, s: false, a: false, d: false, space: false, fire: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -682,18 +682,24 @@
             lastFireTime = now;
             playWeaponShootSound();
             
-            // التعديل: طلقات بلون ناري مشع وكثافة أعلى
+            // التعديل: طلقات بلون ناري مشع وكثافة أعلى مع تبعثر
             const bGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 5); bGeo.rotateX(Math.PI / 2); 
             const bMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xff3300, emissiveIntensity: 5.0, metalness: 0.1, roughness: 0.1 });
             const wingDistance = 5.5; 
+            const spread = 2.5; // قوة التبعثر
+
             const bMeshLeft = new THREE.Mesh(bGeo, bMat); bMeshLeft.position.copy(currentActiveAirplane.position); bMeshLeft.position.z -= 8; bMeshLeft.position.x -= wingDistance;
+            bMeshLeft.userData = { vx: (Math.random() - 0.5) * spread, vy: (Math.random() - 0.5) * spread };
+            
             const bMeshRight = new THREE.Mesh(bGeo, bMat); bMeshRight.position.copy(currentActiveAirplane.position); bMeshRight.position.z -= 8; bMeshRight.position.x += wingDistance;
+            bMeshRight.userData = { vx: (Math.random() - 0.5) * spread, vy: (Math.random() - 0.5) * spread };
+
             scene.add(bMeshLeft); scene.add(bMeshRight); bullets.push(bMeshLeft, bMeshRight);
         }
 
         function createExplosion(position) {
-            // التعديل: زيادة الجزيئات وتخصيص ألوان نارية بحتة للانفجار
-            const particleCount = 50; const geo = new THREE.SphereGeometry(0.6, 5, 5);
+            // التعديل: زيادة الجزيئات وتخصيص ألوان نارية بحتة للانفجار بقوة أكبر
+            const particleCount = 150; const geo = new THREE.SphereGeometry(0.6, 5, 5);
             for (let i = 0; i < particleCount; i++) {
                 let colorHex = 0xff2200; // برتقالي مائل للأحمر (لون أساسي)
                 let r = Math.random();
@@ -871,7 +877,11 @@
 
                 if (keys.fire) { generateBullet(); }
                 for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
-                    const b = bullets[bIdx]; b.position.z -= 14; 
+                    const b = bullets[bIdx]; 
+                    b.position.z -= 14; 
+                    b.position.x += b.userData.vx || 0; // تطبيق التبعثر الأفقي
+                    b.position.y += b.userData.vy || 0; // تطبيق التبعثر الرأسي
+
                     if (b.position.z < currentActiveAirplane.position.z - 650) { scene.remove(b); bullets.splice(bIdx, 1); continue; }
                     for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
                         const t = targets[tIdx];
