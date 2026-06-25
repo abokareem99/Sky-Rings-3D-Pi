@@ -9,7 +9,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>Pi.init({ version: "2.0" });</script>
     
@@ -296,13 +298,17 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL"; 
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-        let supabaseClient = null;
-        
-        if (SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL") {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        // إعداد Firebase
+        firebase.initializeApp({
+            apiKey: "AIzaSyCBkQLC5TC01bLAUnzk1OYO_Ig6qB3Skbs",
+            authDomain: "sky-rings-game.firebaseapp.com",
+            projectId: "sky-rings-game",
+            storageBucket: "sky-rings-game.firebasestorage.app",
+            messagingSenderId: "219790259103",
+            appId: "1:219790259103:web:0dd8095fb68f4e350083aa",
+            measurementId: "G-MPJSLYBPQG"
+        });
+        const db = firebase.firestore();
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
@@ -391,34 +397,41 @@
         async function showLeaderboard() {
             toggleLeaderboardModal(true);
             const listContainer = document.getElementById('leaderboard-list');
-            if (!supabaseClient) {
-                listContainer.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span>1. الكابتن أبو كريم (مطور)</span><span style="color: var(--pi-gold);">9990 نقطة</span></div>
-                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span>2. طيار_باي_99</span><span style="color: var(--pi-gold);">7400 نقطة</span></div>
-                    <div style="text-align:center; font-size:11px; color:#e67e22; margin-top:10px;">قم بتهيئة مفاتيح Supabase لتشغيل البيانات الحية!</div>
-                `;
-                return;
-            }
             listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">جاري جلب المتصدرين...</div>`;
+            
             try {
-                const { data, error } = await supabaseClient.from('leaderboard').select('username, score').order('score', { ascending: false }).limit(5);
-                if (error) throw error;
-                if(data && data.length > 0) {
+                const snapshot = await db.collection('leaderboard').orderBy('score', 'desc').limit(5).get();
+                if (snapshot.empty) {
+                    listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">لا توجد أرقام مسجلة بعد، كن الأول!</div>`;
+                } else {
                     listContainer.innerHTML = "";
-                    data.forEach((row, index) => {
+                    let index = 1;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
                         listContainer.innerHTML += `
                             <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <span>${index + 1}. ${row.username}</span>
-                                <span style="color: var(--pi-gold);">${row.score} نقطة</span>
+                                <span>${index}. ${data.username}</span>
+                                <span style="color: var(--pi-gold);">${data.score} نقطة</span>
                             </div>`;
+                        index++;
                     });
-                } else { listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">لا توجد أرقام مسجلة بعد، كن الأول!</div>`; }
-            } catch (err) { listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل في تحميل البيانات الحية</div>`; }
+                }
+            } catch (err) {
+                console.error("Firebase Error:", err);
+                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل في تحميل البيانات الحية</div>`;
+            }
         }
 
-        async function uploadScoreToSupabase(username, finalScore) {
-            if (!supabaseClient) return;
-            try { await supabaseClient.from('leaderboard').insert([{ username: username, score: finalScore }]); } catch(e) { console.error("خطأ أثناء رفع النتيجة:", e); }
+        async function uploadScoreToFirebase(username, finalScore) {
+            try {
+                await db.collection('leaderboard').add({
+                    username: username,
+                    score: finalScore,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch(e) {
+                console.error("خطأ أثناء رفع النتيجة:", e);
+            }
         }
 
         async function connectPiWallet() {
@@ -691,7 +704,6 @@
         }
 
         function generateBullet() {
-            // تم إزالة قيود الوقت لتصبح الطلقات مستمرة
             if (fleet[currentSelectionIndex].type !== 'fighter') return;
             playWeaponShootSound();
             
@@ -835,7 +847,7 @@
             totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
             document.getElementById('total-points').innerText = totalPoints; document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
-            if (authenticatedPiUser) { uploadScoreToSupabase(authenticatedPiUser.username, score); }
+            if (authenticatedPiUser) { uploadScoreToFirebase(authenticatedPiUser.username, score); }
         }
 
         function restartGame() {
