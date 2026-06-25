@@ -159,7 +159,6 @@
             width: 300px; padding: 20px; z-index: 30; text-align: center; border: 2px solid var(--pi-gold);
         }
 
-        /* نافذة النجاح الجديدة */
         #payment-success-modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 280px; padding: 25px; z-index: 2000; text-align: center; border: 2px solid var(--secondary);
@@ -313,6 +312,10 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
 
+        // متغيرات تتبع تدرج الألوان للطقس والبيئة السينمائية
+        let currentSkyColor = new THREE.Color(0xcdedfd);
+        let currentSunColor = new THREE.Color(0xffffff);
+
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
    
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
@@ -418,7 +421,7 @@
                 }
             } catch (err) {
                 console.error("Firebase Error:", err);
-                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل في تحميل البيانات الحية</div>`;
+                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">Fشل في تحميل البيانات الحية</div>`;
             }
         }
 
@@ -500,12 +503,9 @@
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) })
                         .then(() => { 
                             localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); 
-                            
-                            // إظهار نافذة النجاح
                             const modal = document.getElementById('payment-success-modal');
                             document.getElementById('purchase-details').innerText = `تم اقتناء ${plane.name} بنجاح مقابل ${plane.piCost} π`;
                             modal.style.display = 'block';
-
                             showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); 
                             startBtn.disabled = false; updateShopUI(); 
                         })
@@ -893,6 +893,43 @@
                 if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix(); }
 
                 currentActiveAirplane.position.z -= currentSpeed;
+
+                // --- تأثيرات بصرية سينمائية: محاكاة تعاقب الوقت والطقس ديناميكياً حسب مسافة الطيران ---
+                let travelDist = Math.abs(currentActiveAirplane.position.z);
+                let cycle = (travelDist / 1500) % 4; // كل مرحلة طقس تستمر لمسافة 1500 وحدة وثم تتغير
+                let targetSkyColor = new THREE.Color();
+                let targetSunColor = new THREE.Color();
+                let targetIntensity = 1.4;
+
+                if (cycle < 1) { // المرحلة 1: من النهار الساطع إلى الغروب البرتقالي الدافئ
+                    let t = cycle;
+                    targetSkyColor.setHex(0xcdedfd).lerp(new THREE.Color(0xe67e22), t);
+                    targetSunColor.setHex(0xffffff).lerp(new THREE.Color(0xffaa44), t);
+                    targetIntensity = THREE.MathUtils.lerp(1.4, 1.0, t);
+                } else if (cycle < 2) { // المرحلة 2: من الغروب إلى الغسق الأرجواني السبراني الفاخر
+                    let t = cycle - 1;
+                    targetSkyColor.setHex(0xe67e22).lerp(new THREE.Color(0x4a148c), t);
+                    targetSunColor.setHex(0xffaa44).lerp(new THREE.Color(0xdd88ff), t);
+                    targetIntensity = THREE.MathUtils.lerp(1.0, 0.7, t);
+                } else if (cycle < 3) { // المرحلة 3: من الغسق الأرجواني إلى الليل الكحلي العميق الخافت
+                    let t = cycle - 2;
+                    targetSkyColor.setHex(0x4a148c).lerp(new THREE.Color(0x0b0f19), t);
+                    targetSunColor.setHex(0xdd88ff).lerp(new THREE.Color(0x4466aa), t);
+                    targetIntensity = THREE.MathUtils.lerp(0.7, 0.25, t);
+                } else { // المرحلة 4: من الليل الحالك إلى الشروق الساحر والعودة للنهار الصافي
+                    let t = cycle - 3;
+                    targetSkyColor.setHex(0x0b0f19).lerp(new THREE.Color(0xcdedfd), t);
+                    targetSunColor.setHex(0x4466aa).lerp(new THREE.Color(0xffffff), t);
+                    targetIntensity = THREE.MathUtils.lerp(0.25, 1.4, t);
+                }
+                // دمج الألوان بنعومة وسلاسة عبر الزمن لمنع الانتقال المفاجئ (Smooth Lerp)
+                currentSkyColor.lerp(targetSkyColor, 0.015);
+                currentSunColor.lerp(targetSunColor, 0.015);
+                scene.background.copy(currentSkyColor);
+                sunLight.color.copy(currentSunColor);
+                sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, targetIntensity, 0.015);
+                // ---------------------------------------------------------------------------------
+
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
@@ -972,6 +1009,13 @@
             } else {
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
                 camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
+                
+                // إعادة تعيين الأجواء والمؤثرات الافتراضية الصافية داخل المرآب عند عدم اللعب
+                currentSkyColor.setHex(0xcdedfd);
+                currentSunColor.setHex(0xffffff);
+                scene.background.copy(currentSkyColor);
+                sunLight.color.copy(currentSunColor);
+                sunLight.intensity = 1.4;
             }
             renderer.render(scene, camera);
         }
