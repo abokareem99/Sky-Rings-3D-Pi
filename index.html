@@ -874,7 +874,7 @@
             const geo = new THREE.DodecahedronGeometry(3);
             const mat = new THREE.MeshStandardMaterial({ color: 0x8b0000, emissive: 0xff0000, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
             const target = new THREE.Mesh(geo, mat);
-            target.position.set((Math.random() - 0.5) * 80, Math.random() * 20 + 20, currentZ - 300 - Math.random() * 200);
+            target.position.set((Math.random() - 0.5) * 80, Math.random() * 30 + 60, currentZ - 300 - Math.random() * 200);
             target.userData = { fallSpeed: Math.random() * 0.4 + 0.2, rotationX: Math.random() * 0.05, rotationY: Math.random() * 0.05 };
             scene.add(target);
             targets.push(target);
@@ -890,7 +890,7 @@
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
             const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'bonus' ? 0x4a148c : 0x000000, emissiveIntensity: 0.5 });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 50 + 15, zPos);
+            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 50 + 60, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
         }
@@ -1020,7 +1020,7 @@
             if (isPlaying && currentActiveAirplane) {
                 if (isPaused) { renderer.render(scene, camera); return; }
 
-                let speedMultiplier = keys.space ? 4.5 : 2.2;
+                let speedMultiplier = keys.space ? 7.5 : 3.8;
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1; updateEngineSound(keys.space);
                 let targetFov = keys.space ? 76 : 60;
                 if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix(); }
@@ -1067,22 +1067,22 @@
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                const sensitivityX = 0.8; 
-                const sensitivityY = 0.6;
+                const sensitivityX = 1.6; 
+                const sensitivityY = 1.2;
                 
                 if (!hasTakenOff) {
                     if (inputY > 0) { 
-                        currentActiveAirplane.position.y += 0.3; 
-                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.15, 0.1); 
+                        currentActiveAirplane.position.y += 0.8; 
+                        currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.25, 0.15); 
                         if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                     }
                 } else {
                     currentActiveAirplane.position.y += (0.8 * sensitivityY) * inputY; 
                     currentActiveAirplane.position.x += (1.5 * sensitivityX) * inputX;
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.6 * inputX, 0.15);
-                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.3 * inputY, 0.15);
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -1.0 * inputX, 0.25);
+                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.5 * inputY, 0.25);
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    if(currentActiveAirplane.position.y > 100) currentActiveAirplane.position.y = 100;
+                    if(currentActiveAirplane.position.y > 250) currentActiveAirplane.position.y = 250;
                 }
 
                 if (keys.fire) { generateBullet(); }
