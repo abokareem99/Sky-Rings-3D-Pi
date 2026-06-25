@@ -37,7 +37,6 @@
             touch-action: none;
         }
         
-        /* التعديل: إجبار الواجهة على البقاء في صف واحد */
         #hud-container {
             position: absolute;
             top: 15px; left: 5px; right: 5px;
@@ -158,6 +157,12 @@
             width: 300px; padding: 20px; z-index: 30; text-align: center; border: 2px solid var(--pi-gold);
         }
 
+        /* نافذة النجاح الجديدة */
+        #payment-success-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 280px; padding: 25px; z-index: 2000; text-align: center; border: 2px solid var(--secondary);
+        }
+
         #gameover-mask { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; text-align: center; }
 
         #loading { 
@@ -208,6 +213,13 @@
 <body>
 
     <div id="game-toast" class="glass-panel"></div>
+
+    <div id="payment-success-modal" class="glass-panel">
+        <div style="font-size: 50px; color: var(--secondary); margin-bottom: 10px;">✅</div>
+        <h2 style="color: white; margin: 0;">تم الشراء بنجاح!</h2>
+        <p id="purchase-details" style="color: #ccc; margin: 10px 0;"></p>
+        <button class="main-btn" onclick="document.getElementById('payment-success-modal').style.display='none'">موافق</button>
+    </div>
 
     <div id="hud-container" style="display: none;">
         <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
@@ -294,7 +306,6 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
-        // تم إزالة الضباب للحفاظ على وضوح التضاريس بناءً على طلبك السابق.
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
    
@@ -328,9 +339,6 @@
         const bullets = [];
         const targets = [];
         const explosionParticles = [];
-        let lastFireTime = 0;
-        // التعديل: إلغاء المهلة لجعل الطلقات مستمرة
-        const fireRate = 0; 
 
         const keys = { w: false, s: false, a: false, d: false, space: false, fire: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -458,7 +466,17 @@
                     onReadyForServerApproval: function(paymentId) { fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }); },
                     onReadyForServerCompletion: function(paymentId, txid) {
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) })
-                        .then(() => { localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); startBtn.disabled = false; updateShopUI(); })
+                        .then(() => { 
+                            localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); 
+                            
+                            // إظهار نافذة النجاح
+                            const modal = document.getElementById('payment-success-modal');
+                            document.getElementById('purchase-details').innerText = `تم اقتناء ${plane.name} بنجاح مقابل ${plane.piCost} π`;
+                            modal.style.display = 'block';
+
+                            showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); 
+                            startBtn.disabled = false; updateShopUI(); 
+                        })
                         .catch(() => { startBtn.disabled = false; updateShopUI(); });
                     },
                     onCancel: function() { startBtn.disabled = false; updateShopUI(); }, onError: function() { startBtn.disabled = false; updateShopUI(); }
@@ -523,7 +541,6 @@
             }
         }
 
-        /* التعديل: زر العودة للمرآب */
         function returnToHangar() {
             isPlaying = false;
             stopEngineSound();
@@ -532,7 +549,6 @@
             document.getElementById('touch-controls').style.display = 'none';
             document.getElementById('start-mask').style.display = 'flex';
             
-            // إعادة تعيين موضع الطائرة للمرآب
             if (currentActiveAirplane) {
                 currentActiveAirplane.position.set(0, 2.8, 0);
                 currentActiveAirplane.rotation.set(0.1, 0.5, 0);
@@ -540,7 +556,6 @@
             camera.position.set(0, 3.5, 18);
             camera.lookAt(0, 2.8, 0);
 
-            // تنظيف المشهد من أي طلقات أو أهداف
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
             explosionParticles.forEach(p => scene.remove(p.mesh)); explosionParticles.length = 0;
@@ -676,17 +691,14 @@
         }
 
         function generateBullet() {
-            const now = Date.now();
-            if (now - lastFireTime < fireRate) return;
+            // تم إزالة قيود الوقت لتصبح الطلقات مستمرة
             if (fleet[currentSelectionIndex].type !== 'fighter') return;
-            lastFireTime = now;
             playWeaponShootSound();
             
-            // التعديل: طلقات بلون ناري مشع وكثافة أعلى مع تبعثر
             const bGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 5); bGeo.rotateX(Math.PI / 2); 
             const bMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xff3300, emissiveIntensity: 5.0, metalness: 0.1, roughness: 0.1 });
             const wingDistance = 5.5; 
-            const spread = 2.5; // قوة التبعثر
+            const spread = 2.5; 
 
             const bMeshLeft = new THREE.Mesh(bGeo, bMat); bMeshLeft.position.copy(currentActiveAirplane.position); bMeshLeft.position.z -= 8; bMeshLeft.position.x -= wingDistance;
             bMeshLeft.userData = { vx: (Math.random() - 0.5) * spread, vy: (Math.random() - 0.5) * spread };
@@ -698,14 +710,13 @@
         }
 
         function createExplosion(position) {
-            // التعديل: زيادة الجزيئات وتخصيص ألوان نارية بحتة للانفجار بقوة أكبر
             const particleCount = 150; const geo = new THREE.SphereGeometry(0.6, 5, 5);
             for (let i = 0; i < particleCount; i++) {
-                let colorHex = 0xff2200; // برتقالي مائل للأحمر (لون أساسي)
+                let colorHex = 0xff2200;
                 let r = Math.random();
-                if (r > 0.7) colorHex = 0xffaa00; // برتقالي فاتح
-                else if (r > 0.4) colorHex = 0xff0000; // أحمر ناري
-                else if (r > 0.2) colorHex = 0xffff00; // أصفر مشع
+                if (r > 0.7) colorHex = 0xffaa00;
+                else if (r > 0.4) colorHex = 0xff0000;
+                else if (r > 0.2) colorHex = 0xffff00;
                 
                 const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
                 const mesh = new THREE.Mesh(geo, mat); mesh.position.copy(position);
@@ -853,10 +864,9 @@
                 currentActiveAirplane.position.z -= currentSpeed;
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
-                if (joyState.active) { inputX += joyState.x; inputY += joyState.y; } // تم تطبيق عكس المحور الصادي (السحب لأسفل يرفع الطائرة)
+                if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                // التعديل: تقليل الحساسية بشكل ملحوظ لجعل الطائرة أثقل في المناورات
                 const sensitivityX = 0.8; 
                 const sensitivityY = 0.6;
                 
@@ -879,8 +889,8 @@
                 for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
                     const b = bullets[bIdx]; 
                     b.position.z -= 14; 
-                    b.position.x += b.userData.vx || 0; // تطبيق التبعثر الأفقي
-                    b.position.y += b.userData.vy || 0; // تطبيق التبعثر الرأسي
+                    b.position.x += b.userData.vx || 0;
+                    b.position.y += b.userData.vy || 0;
 
                     if (b.position.z < currentActiveAirplane.position.z - 650) { scene.remove(b); bullets.splice(bIdx, 1); continue; }
                     for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
