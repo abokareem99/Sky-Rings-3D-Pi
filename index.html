@@ -307,7 +307,7 @@
             </div>
 
             <div style="width: 100%; text-align: center; padding-top: 5px; font-size: 11px; color: rgba(255,255,255,0.4); font-family: monospace; letter-spacing: 1px;">
-                Developed by Ateya magzoub
+                Developed by Abu Kareem
             </div>
         </div>
     </div>
@@ -393,6 +393,10 @@
         const bullets = [];
         const targets = [];
         const explosionParticles = [];
+
+        // --- إضافة متغيرات لتنعيم حركة التحكم (Inertia/Weight) ---
+        let smoothInputX = 0;
+        let smoothInputY = 0;
 
         const keys = { w: false, s: false, a: false, d: false, space: false, fire: false };
         const joyState = { x: 0, y: 0, active: false };
@@ -485,8 +489,6 @@
                 } else {
                     const playerDoc = querySnapshot.docs[0];
                     const currentHighestScore = playerDoc.data().score;
-
-                    // منطق التحديث الجديد: تجميع (إضافة) النقاط الجديدة للرصيد القديم
                     const newTotalScore = currentHighestScore + finalScore;
                     
                     await leaderboardRef.doc(playerDoc.id).update({
@@ -873,7 +875,6 @@
             const geo = new THREE.DodecahedronGeometry(3);
             const mat = new THREE.MeshStandardMaterial({ color: 0x8b0000, emissive: 0xff0000, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
             const target = new THREE.Mesh(geo, mat);
-            // تم خفض الأهداف لتصبح بمستوى أقرب لحركة الطائرة (محور Y من 20 إلى 50)
             target.position.set((Math.random() - 0.5) * 80, Math.random() * 30 + 20, currentZ - 300 - Math.random() * 200);
             target.userData = { fallSpeed: Math.random() * 0.4 + 0.2, rotationX: Math.random() * 0.05, rotationY: Math.random() * 0.05 };
             scene.add(target);
@@ -890,7 +891,6 @@
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
             const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'bonus' ? 0x4a148c : 0x000000, emissiveIntensity: 0.5 });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            // تم خفض الحلقات لتصبح بمستوى أقرب للأرض (محور Y من 20 إلى 60)
             ring.position.set((Math.random() - 0.5) * 160, Math.random() * 40 + 20, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
@@ -965,6 +965,11 @@
             const pauseBtn = document.getElementById('pause-btn');
             if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
+            
+            // تصفير مدخلات الحركة لمنع أي قفزات مفاجئة عند البداية
+            smoothInputX = 0;
+            smoothInputY = 0;
+
             score = 0; document.getElementById('points').innerText = score;
             timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
             updateFireButtonUI();
@@ -972,7 +977,7 @@
             timerInterval = setInterval(() => {
                 if(isPlaying && !isPaused) { 
                     timeLeft--; 
-                    fuel -= 2; // يقل الوقود بمقدار 2% في الثانية تلقائياً
+                    fuel -= 2; 
                     if(fuel < 0) fuel = 0;
 
                     document.getElementById('time-left').innerText = timeLeft; 
@@ -1020,7 +1025,6 @@
             if (isPlaying && currentActiveAirplane) {
                 if (isPaused) { renderer.render(scene, camera); return; }
 
-                // تعديل مضاعف السرعة لتصبح الطائرة أسرع بكثير 
                 let speedMultiplier = keys.space ? 12.0 : 6.0;
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1; updateEngineSound(keys.space);
                 let targetFov = keys.space ? 76 : 60;
@@ -1061,14 +1065,18 @@
                 sunLight.color.copy(currentSunColor);
                 sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, targetIntensity, 0.015);
 
+                // --- تحديث نظام الإدخال وتطبيق الوزن (Inertia) للتحكم الاحترافي ---
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                // زيادة حساسية الحركة (Sensitivity) لتصبح أكثر مرونة
-                const sensitivityX = 2.5; 
-                const sensitivityY = 1.8;
+                // تطبيق التنعيم الرياضي لإعطاء ثقل وثبات للطائرة
+                smoothInputX = THREE.MathUtils.lerp(smoothInputX, inputX, 0.06);
+                smoothInputY = THREE.MathUtils.lerp(smoothInputY, inputY, 0.06);
+
+                const sensitivityX = 1.8; 
+                const sensitivityY = 1.2;
                 
                 if (!hasTakenOff) {
                     if (inputY > 0) { 
@@ -1077,13 +1085,15 @@
                         if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                     }
                 } else {
-                    currentActiveAirplane.position.y += (1.2 * sensitivityY) * inputY; 
-                    currentActiveAirplane.position.x += (2.0 * sensitivityX) * inputX;
-                    // زوايا انعطاف أقوى لتشكيل حركة بهلوانية مرنة
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -1.5 * inputX, 0.15);
-                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.6 * inputY, 0.15);
+                    // حركة مرنة واحترافية: مع ملاحظة أن السحب للأسفل (positive Y) يرفع الطائرة للأعلى لتطابق فيزياء الطيران الحقيقية
+                    currentActiveAirplane.position.y += (1.2 * sensitivityY) * smoothInputY; 
+                    currentActiveAirplane.position.x += (2.0 * sensitivityX) * smoothInputX;
+                    
+                    // زوايا ميلان (Bank/Pitch) سلسة وموزونة تعكس وزن الطائرة
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1);
+                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1);
+                    
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    // رفع الحد الأقصى للارتفاع
                     if(currentActiveAirplane.position.y > 450) currentActiveAirplane.position.y = 450;
                 }
 
