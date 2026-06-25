@@ -486,15 +486,14 @@
                     const playerDoc = querySnapshot.docs[0];
                     const currentHighestScore = playerDoc.data().score;
 
-                    if (finalScore > currentHighestScore) {
-                        await leaderboardRef.doc(playerDoc.id).update({
-                            score: finalScore,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log(`تم تحديث أعلى رقم للكابتن ${username} إلى: ${finalScore}`);
-                    } else {
-                        console.log(`لم يتم التحديث. الرقم الحالي (${finalScore}) لم يتخطَ أعلى رقم محفوظ (${currentHighestScore}).`);
-                    }
+                    // منطق التحديث الجديد: تجميع (إضافة) النقاط الجديدة للرصيد القديم
+                    const newTotalScore = currentHighestScore + finalScore;
+                    
+                    await leaderboardRef.doc(playerDoc.id).update({
+                        score: newTotalScore,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log(`تم إضافة ${finalScore} نقطة لـ ${username}. الرصيد الكلي الآن: ${newTotalScore}`);
                 }
             } catch(e) {
                 console.error("خطأ أثناء تحديث النتيجة في قاعدة البيانات:", e);
@@ -874,7 +873,8 @@
             const geo = new THREE.DodecahedronGeometry(3);
             const mat = new THREE.MeshStandardMaterial({ color: 0x8b0000, emissive: 0xff0000, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
             const target = new THREE.Mesh(geo, mat);
-            target.position.set((Math.random() - 0.5) * 80, Math.random() * 30 + 60, currentZ - 300 - Math.random() * 200);
+            // تم خفض الأهداف لتصبح بمستوى أقرب لحركة الطائرة (محور Y من 20 إلى 50)
+            target.position.set((Math.random() - 0.5) * 80, Math.random() * 30 + 20, currentZ - 300 - Math.random() * 200);
             target.userData = { fallSpeed: Math.random() * 0.4 + 0.2, rotationX: Math.random() * 0.05, rotationY: Math.random() * 0.05 };
             scene.add(target);
             targets.push(target);
@@ -890,7 +890,8 @@
             const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
             const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'bonus' ? 0x4a148c : 0x000000, emissiveIntensity: 0.5 });
             const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 50 + 60, zPos);
+            // تم خفض الحلقات لتصبح بمستوى أقرب للأرض (محور Y من 20 إلى 60)
+            ring.position.set((Math.random() - 0.5) * 160, Math.random() * 40 + 20, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
         }
@@ -901,7 +902,7 @@
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
             if(e.key === 'a' || e.key === 'ArrowLeft') keys.a = true; if(e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
             if(e.key === ' ') { if(isPlaying) e.preventDefault(); keys.space = true; }
-            if(e.key.toLowerCase() === 'f' || e.key === 'Enter') keys.fire = true; 
+            if(e.key.toLowerCase() === 'f' || e.key === 'Enter') keys.fire = false; 
             if(e.key.toLowerCase() === 'p') togglePause();
         });
         window.addEventListener('keyup', (e) => {
@@ -977,7 +978,6 @@
                     document.getElementById('time-left').innerText = timeLeft; 
                     document.getElementById('fuel-left').innerText = fuel;
 
-                    // تفعيل نافذة الطوارئ إذا قل الوقت عن 10 ثوانٍ أو الوقود عن 20% ولم تفتح سابقاً في هذه الجولة
                     if ((timeLeft <= 10 || fuel <= 20) && !hasTriggeredEmergencyThisRound) {
                         triggerEmergencyModal();
                     }
@@ -1020,14 +1020,14 @@
             if (isPlaying && currentActiveAirplane) {
                 if (isPaused) { renderer.render(scene, camera); return; }
 
-                let speedMultiplier = keys.space ? 7.5 : 3.8;
+                // تعديل مضاعف السرعة لتصبح الطائرة أسرع بكثير 
+                let speedMultiplier = keys.space ? 12.0 : 6.0;
                 currentSpeed += (speedMultiplier - currentSpeed) * 0.1; updateEngineSound(keys.space);
                 let targetFov = keys.space ? 76 : 60;
                 if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.08); camera.updateProjectionMatrix(); }
 
                 currentActiveAirplane.position.z -= currentSpeed;
 
-                // --- تأثيرات بصرية سينمائية: محاكاة تعاقب الوقت والطقس ديناميكياً حسب مسافة الطيران ---
                 let travelDist = Math.abs(currentActiveAirplane.position.z);
                 let cycle = (travelDist / 1500) % 4; 
                 let targetSkyColor = new THREE.Color();
@@ -1060,15 +1060,15 @@
                 scene.background.copy(currentSkyColor);
                 sunLight.color.copy(currentSunColor);
                 sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, targetIntensity, 0.015);
-                // ---------------------------------------------------------------------------------
 
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                const sensitivityX = 1.6; 
-                const sensitivityY = 1.2;
+                // زيادة حساسية الحركة (Sensitivity) لتصبح أكثر مرونة
+                const sensitivityX = 2.5; 
+                const sensitivityY = 1.8;
                 
                 if (!hasTakenOff) {
                     if (inputY > 0) { 
@@ -1077,12 +1077,14 @@
                         if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                     }
                 } else {
-                    currentActiveAirplane.position.y += (0.8 * sensitivityY) * inputY; 
-                    currentActiveAirplane.position.x += (1.5 * sensitivityX) * inputX;
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -1.0 * inputX, 0.25);
-                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.5 * inputY, 0.25);
+                    currentActiveAirplane.position.y += (1.2 * sensitivityY) * inputY; 
+                    currentActiveAirplane.position.x += (2.0 * sensitivityX) * inputX;
+                    // زوايا انعطاف أقوى لتشكيل حركة بهلوانية مرنة
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -1.5 * inputX, 0.15);
+                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.6 * inputY, 0.15);
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
-                    if(currentActiveAirplane.position.y > 250) currentActiveAirplane.position.y = 250;
+                    // رفع الحد الأقصى للارتفاع
+                    if(currentActiveAirplane.position.y > 450) currentActiveAirplane.position.y = 450;
                 }
 
                 if (keys.fire) { generateBullet(); }
