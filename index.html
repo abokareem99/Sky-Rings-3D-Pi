@@ -209,6 +209,37 @@
         
         #speed-btn { background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); color: var(--pi-purple-dark); border-color: var(--pi-purple-dark); }
         #fire-btn { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); }
+
+        /* نافذة الطوارئ للشراء السريع لزيادة الزمن والوقود */
+        .emergency-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 3000; direction: rtl;
+        }
+        .emergency-box {
+            background: linear-gradient(135deg, #160f29 0%, #0a0514 100%);
+            border: 2px solid var(--accent);
+            border-radius: 20px; padding: 25px; text-align: center;
+            color: #ffffff; width: 85%; max-width: 380px;
+            box-shadow: 0 0 30px rgba(230, 126, 34, 0.6);
+        }
+        .emergency-box h2 { margin: 0 0 8px 0; color: var(--accent); font-weight: 900; font-size: 1.4rem; }
+        .emergency-options { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+        .buy-btn-emergency {
+            background: linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%);
+            border: 1px solid var(--pi-purple); color: var(--pi-purple-dark);
+            padding: 12px 15px; font-family: 'Cairo', sans-serif; font-weight: 900;
+            border-radius: 25px; cursor: pointer; font-size: 14px; transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
+        }
+        .buy-btn-emergency:disabled { background: #555; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; }
+        .skip-btn-emergency {
+            background: transparent; color: #bbb; border: none;
+            font-family: 'Cairo', sans-serif; cursor: pointer; text-decoration: underline; font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -225,7 +256,8 @@
     <div id="hud-container" style="display: none;">
         <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
         <button id="pause-btn" class="glass-panel hud-card" onclick="togglePause()" style="cursor: pointer; border: 1px solid var(--pi-gold); background: rgba(52, 73, 94, 0.8);">⏸️</button>
-        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">30</span>ث</div>
+        <div id="fuel-card" class="glass-panel hud-card" style="color: #f1c40f;">⛽ <span id="fuel-left">100</span>%</div>
+        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">35</span>ث</div>
         <div id="total-score-card" class="glass-panel hud-card">🏆 <span id="total-points">0</span></div>
         <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold);">🪙 <span id="points">0</span></div>
     </div>
@@ -280,6 +312,18 @@
         </div>
     </div>
 
+    <div id="emergency-modal" class="emergency-overlay" style="display: none;">
+        <div class="emergency-box">
+            <h2>⚠️ إنذار طاقة منخفضة!</h2>
+            <p style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">الوقود أو زمن الرحلة يوشك على النفاد. أنقذ جيرتك ونقاطك الحالية فوراً!</p>
+            <div class="emergency-options">
+                <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ شحن وقود كامل (+100%) بـ 0.1 π</button>
+                <button id="emergency-time-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('time', 0.1)">⏱️ تمديد الوقت (+30 ثانية) بـ 0.1 π</button>
+            </div>
+            <button class="skip-btn-emergency" onclick="closeEmergencyModal()">مواصلة الطيران والمخاطرة 🚀</button>
+        </div>
+    </div>
+
     <div id="leaderboard-modal" class="glass-panel">
         <h3 style="color: var(--pi-gold); margin-top:0;">🏆 أعلى الرواد تقييماً</h3>
         <div id="leaderboard-list" style="text-align: right; margin-bottom: 20px;">
@@ -312,7 +356,6 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xcdedfd);
 
-        // متغيرات تتبع تدرج الألوان للطقس والبيئة السينمائية
         let currentSkyColor = new THREE.Color(0xcdedfd);
         let currentSunColor = new THREE.Color(0xffffff);
 
@@ -340,7 +383,9 @@
         let isPaused = false;
         let hasTakenOff = false;
         let score = 0;
-        let timeLeft = 30;
+        let timeLeft = 35;
+        let fuel = 100;
+        let hasTriggeredEmergencyThisRound = false;
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
@@ -421,7 +466,7 @@
                 }
             } catch (err) {
                 console.error("Firebase Error:", err);
-                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">Fشل في تحميل البيانات الحية</div>`;
+                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل في تحميل البيانات الحية</div>`;
             }
         }
 
@@ -568,8 +613,74 @@
                 if (engineGain) engineGain.gain.setValueAtTime(0, audioCtx.currentTime);
             } else {
                 pauseBtn.innerHTML = "⏸️";
-                pauseBtn.style.background = "linear-gradient(135deg, #7f8c8d 0%, #34495e 100%)";
+                pauseBtn.style.background = "rgba(52, 73, 94, 0.8)";
                 if (engineGain) engineGain.gain.setValueAtTime(keys.space ? 1.2 : 0.8, audioCtx.currentTime);
+            }
+        }
+
+        function triggerEmergencyModal() {
+            hasTriggeredEmergencyThisRound = true;
+            isPaused = true;
+            const pauseBtn = document.getElementById('pause-btn');
+            if (pauseBtn) { pauseBtn.innerHTML = "▶️"; pauseBtn.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)"; }
+            if (engineGain) engineGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            document.getElementById('emergency-modal').style.display = 'flex';
+            showNotification("⚠️ تنبيه: مستوى طاقة منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.", true);
+        }
+
+        function closeEmergencyModal() {
+            document.getElementById('emergency-modal').style.display = 'none';
+            isPaused = false;
+            const pauseBtn = document.getElementById('pause-btn');
+            if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
+            if (engineGain) engineGain.gain.setValueAtTime(keys.space ? 1.2 : 0.8, audioCtx.currentTime);
+        }
+
+        async function executeEmergencyPurchase(type, amountPi) {
+            const btn = type === 'fuel' ? document.getElementById('emergency-fuel-btn') : document.getElementById('emergency-time-btn');
+            const originalText = btn.innerText;
+            btn.disabled = true; btn.innerText = "جاري الدفع... ⏳";
+            
+            try {
+                if (!authenticatedPiUser) {
+                    showNotification("يجب ربط محفظة Pi أولاً لإجراء الشراء السريع!", true);
+                    btn.disabled = false; btn.innerText = originalText;
+                    return;
+                }
+                
+                const paymentData = { 
+                    amount: amountPi, 
+                    memo: `إنقاذ رحلة - شحن طوارئ: ${type === 'fuel' ? 'وقود' : 'وقت إضافي'}`, 
+                    metadata: { type: type, developer: "AbuKareem", mode: "emergency" } 
+                };
+                
+                const callbacks = {
+                    onReadyForServerApproval: function(paymentId) { 
+                        fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }); 
+                    },
+                    onReadyForServerCompletion: function(paymentId, txid) {
+                        fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) })
+                        .then(() => { 
+                            if (type === 'fuel') {
+                                fuel = 100;
+                                document.getElementById('fuel-left').innerText = fuel;
+                                showNotification("⛽ تم تزويد خزان الوقود 100% بنجاح! طيران آمن.");
+                            } else {
+                                timeLeft += 30;
+                                document.getElementById('time-left').innerText = timeLeft;
+                                showNotification("⏱️ تم تمديد عداد الزمن بمقدار 30 ثانية بنجاح!");
+                            }
+                            btn.disabled = false; btn.innerText = originalText;
+                            closeEmergencyModal();
+                        })
+                        .catch(() => { btn.disabled = false; btn.innerText = originalText; });
+                    },
+                    onCancel: function() { btn.disabled = false; btn.innerText = originalText; }, 
+                    onError: function() { btn.disabled = false; btn.innerText = originalText; }
+                };
+                await Pi.createPayment(paymentData, callbacks);
+            } catch (err) { 
+                btn.disabled = false; btn.innerText = originalText; 
             }
         }
 
@@ -579,6 +690,7 @@
             clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none';
             document.getElementById('touch-controls').style.display = 'none';
+            document.getElementById('emergency-modal').style.display = 'none';
             document.getElementById('start-mask').style.display = 'flex';
             
             if (currentActiveAirplane) {
@@ -842,9 +954,13 @@
 
         function startGame() {
             isPlaying = true; isPaused = false;
+            hasTriggeredEmergencyThisRound = false;
+            fuel = 100;
+            document.getElementById('fuel-left').innerText = fuel;
             document.getElementById('start-mask').style.display = 'none'; 
             document.getElementById('hud-container').style.display = 'flex';
             document.getElementById('touch-controls').style.display = 'block';
+            document.getElementById('emergency-modal').style.display = 'none';
             const pauseBtn = document.getElementById('pause-btn');
             if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
@@ -853,13 +969,28 @@
             updateFireButtonUI();
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                if(isPlaying && !isPaused) { timeLeft--; document.getElementById('time-left').innerText = timeLeft; if(timeLeft <= 0) endGame(); }
+                if(isPlaying && !isPaused) { 
+                    timeLeft--; 
+                    fuel -= 2; // يقل الوقود بمقدار 2% في الثانية تلقائياً
+                    if(fuel < 0) fuel = 0;
+
+                    document.getElementById('time-left').innerText = timeLeft; 
+                    document.getElementById('fuel-left').innerText = fuel;
+
+                    // تفعيل نافذة الطوارئ إذا قل الوقت عن 10 ثوانٍ أو الوقود عن 20% ولم تفتح سابقاً في هذه الجولة
+                    if ((timeLeft <= 10 || fuel <= 20) && !hasTriggeredEmergencyThisRound) {
+                        triggerEmergencyModal();
+                    }
+
+                    if(timeLeft <= 0 || fuel <= 0) endGame(); 
+                }
             }, 1000);
         }
 
         function endGame() {
             isPlaying = false; stopEngineSound(); clearInterval(timerInterval);
             document.getElementById('hud-container').style.display = 'none'; document.getElementById('touch-controls').style.display = 'none';
+            document.getElementById('emergency-modal').style.display = 'none';
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
             explosionParticles.forEach(p => scene.remove(p.mesh)); explosionParticles.length = 0;
@@ -871,6 +1002,8 @@
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0; isPaused = false;
+            hasTriggeredEmergencyThisRound = false; fuel = 100;
+            document.getElementById('emergency-modal').style.display = 'none';
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
@@ -896,33 +1029,32 @@
 
                 // --- تأثيرات بصرية سينمائية: محاكاة تعاقب الوقت والطقس ديناميكياً حسب مسافة الطيران ---
                 let travelDist = Math.abs(currentActiveAirplane.position.z);
-                let cycle = (travelDist / 1500) % 4; // كل مرحلة طقس تستمر لمسافة 1500 وحدة وثم تتغير
+                let cycle = (travelDist / 1500) % 4; 
                 let targetSkyColor = new THREE.Color();
                 let targetSunColor = new THREE.Color();
                 let targetIntensity = 1.4;
 
-                if (cycle < 1) { // المرحلة 1: من النهار الساطع إلى الغروب البرتقالي الدافئ
+                if (cycle < 1) { 
                     let t = cycle;
                     targetSkyColor.setHex(0xcdedfd).lerp(new THREE.Color(0xe67e22), t);
                     targetSunColor.setHex(0xffffff).lerp(new THREE.Color(0xffaa44), t);
                     targetIntensity = THREE.MathUtils.lerp(1.4, 1.0, t);
-                } else if (cycle < 2) { // المرحلة 2: من الغروب إلى الغسق الأرجواني السبراني الفاخر
+                } else if (cycle < 2) { 
                     let t = cycle - 1;
                     targetSkyColor.setHex(0xe67e22).lerp(new THREE.Color(0x4a148c), t);
                     targetSunColor.setHex(0xffaa44).lerp(new THREE.Color(0xdd88ff), t);
                     targetIntensity = THREE.MathUtils.lerp(1.0, 0.7, t);
-                } else if (cycle < 3) { // المرحلة 3: من الغسق الأرجواني إلى الليل الكحلي العميق الخافت
+                } else if (cycle < 3) { 
                     let t = cycle - 2;
                     targetSkyColor.setHex(0x4a148c).lerp(new THREE.Color(0x0b0f19), t);
                     targetSunColor.setHex(0xdd88ff).lerp(new THREE.Color(0x4466aa), t);
                     targetIntensity = THREE.MathUtils.lerp(0.7, 0.25, t);
-                } else { // المرحلة 4: من الليل الحالك إلى الشروق الساحر والعودة للنهار الصافي
+                } else { 
                     let t = cycle - 3;
                     targetSkyColor.setHex(0x0b0f19).lerp(new THREE.Color(0xcdedfd), t);
                     targetSunColor.setHex(0x4466aa).lerp(new THREE.Color(0xffffff), t);
                     targetIntensity = THREE.MathUtils.lerp(0.25, 1.4, t);
                 }
-                // دمج الألوان بنعومة وسلاسة عبر الزمن لمنع الانتقال المفاجئ (Smooth Lerp)
                 currentSkyColor.lerp(targetSkyColor, 0.015);
                 currentSunColor.lerp(targetSunColor, 0.015);
                 scene.background.copy(currentSkyColor);
@@ -1010,7 +1142,6 @@
                 if (currentActiveAirplane) { currentActiveAirplane.rotation.y += 0.006; currentActiveAirplane.rotation.x = 0.1; currentActiveAirplane.rotation.z = 0; }
                 camera.position.set(0, 3.5, 18); camera.lookAt(0, 2.8, 0); 
                 
-                // إعادة تعيين الأجواء والمؤثرات الافتراضية الصافية داخل المرآب عند عدم اللعب
                 currentSkyColor.setHex(0xcdedfd);
                 currentSunColor.setHex(0xffffff);
                 scene.background.copy(currentSkyColor);
