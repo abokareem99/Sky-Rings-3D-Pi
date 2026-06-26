@@ -385,7 +385,11 @@
         let score = 0;
         let timeLeft = 35;
         let fuel = 100;
-        let hasTriggeredEmergencyThisRound = false;
+
+        // متغيرات التتبع الجديدة المنفصلة لتفادي التكرار
+        let fuelEmergencyTriggered = false;
+        let timeEmergencyTriggered = false;
+
         let currentSpeed = 1.5;
         let timerInterval = null;
         const rings = [];
@@ -546,7 +550,6 @@
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // تفعيل فوري للمشتريات لتجنب توقف اللعبة في بيئة التطوير المحلية
                         localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); 
                         const modal = document.getElementById('payment-success-modal');
                         document.getElementById('purchase-details').innerText = `تم اقتناء ${plane.name} بنجاح مقابل ${plane.piCost} π`;
@@ -554,7 +557,6 @@
                         showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); 
                         startBtn.disabled = false; updateShopUI(); 
                         
-                        // محاولة الإرسال للخادم دون التأثير على تقدم اللاعب
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) }).catch(e => console.warn("Backend sync skipped"));
                     },
                     onCancel: function() { startBtn.disabled = false; updateShopUI(); }, onError: function() { startBtn.disabled = false; updateShopUI(); }
@@ -620,7 +622,6 @@
         }
 
         function triggerEmergencyModal() {
-            hasTriggeredEmergencyThisRound = true;
             isPaused = true;
             const pauseBtn = document.getElementById('pause-btn');
             if (pauseBtn) { pauseBtn.innerHTML = "▶️"; pauseBtn.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)"; }
@@ -660,7 +661,6 @@
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // إضافة الموارد فوراً لتجنب توقف اللعبة في بيئة الهاتف/التطوير
                         if (type === 'fuel') {
                             fuel = 100;
                             document.getElementById('fuel-left').innerText = fuel;
@@ -671,11 +671,9 @@
                             showNotification("⏱️ تم تمديد عداد الزمن بمقدار 30 ثانية بنجاح!");
                         }
                         
-                        hasTriggeredEmergencyThisRound = false; // تصفير متغير الإنذار ليتفعل مرة أخرى مستقبلا
                         btn.disabled = false; btn.innerText = originalText;
-                        closeEmergencyModal(); // العودة للعب مباشرة
+                        closeEmergencyModal(); 
                         
-                        // محاولة مزامنة البيانات دون تعطيل الواجهة
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) }).catch(e => console.warn("Backend sync skipped"));
                     },
                     onCancel: function() { btn.disabled = false; btn.innerText = originalText; }, 
@@ -957,7 +955,11 @@
 
         function startGame() {
             isPlaying = true; isPaused = false;
-            hasTriggeredEmergencyThisRound = false;
+            
+            // تهيئة المتغيرات المنفصلة لإنذار الشراء
+            fuelEmergencyTriggered = false;
+            timeEmergencyTriggered = false;
+            
             fuel = 100;
             document.getElementById('fuel-left').innerText = fuel;
             document.getElementById('start-mask').style.display = 'none'; 
@@ -968,7 +970,6 @@
             if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
             
-            // تصفير مدخلات الحركة لمنع أي قفزات مفاجئة عند البداية
             smoothInputX = 0;
             smoothInputY = 0;
 
@@ -985,9 +986,26 @@
                     document.getElementById('time-left').innerText = timeLeft; 
                     document.getElementById('fuel-left').innerText = fuel;
 
-                    if ((timeLeft <= 10 || fuel <= 20) && !hasTriggeredEmergencyThisRound) {
+                    let needsModalTrigger = false;
+                    
+                    // فحص وقود الطائرة وتفعيل الإنذار إن لم يكن مفعلًا مسبقاً لهذه النسبة
+                    if (fuel <= 20 && !fuelEmergencyTriggered) {
+                        fuelEmergencyTriggered = true;
+                        needsModalTrigger = true;
+                    }
+                    // فحص زمن الرحلة وتفعيل الإنذار
+                    if (timeLeft <= 10 && !timeEmergencyTriggered) {
+                        timeEmergencyTriggered = true;
+                        needsModalTrigger = true;
+                    }
+
+                    if (needsModalTrigger) {
                         triggerEmergencyModal();
                     }
+
+                    // إعادة تهيئة حالة الإنذار إذا تعافى المستوى ديناميكياً (مثلاً عبر الشراء أو الحلقات)
+                    if (fuel > 20) fuelEmergencyTriggered = false;
+                    if (timeLeft > 10) timeEmergencyTriggered = false;
 
                     if(timeLeft <= 0 || fuel <= 0) endGame(); 
                 }
@@ -1009,7 +1027,12 @@
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0; isPaused = false;
-            hasTriggeredEmergencyThisRound = false; fuel = 100;
+            
+            // تصفير الإنذارات
+            fuelEmergencyTriggered = false;
+            timeEmergencyTriggered = false;
+            fuel = 100;
+            
             document.getElementById('emergency-modal').style.display = 'none';
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
@@ -1067,13 +1090,11 @@
                 sunLight.color.copy(currentSunColor);
                 sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, targetIntensity, 0.015);
 
-                // --- تحديث نظام الإدخال وتطبيق الوزن (Inertia) للتحكم الاحترافي ---
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                // تطبيق التنعيم الرياضي لإعطاء ثقل وثبات للطائرة
                 smoothInputX = THREE.MathUtils.lerp(smoothInputX, inputX, 0.06);
                 smoothInputY = THREE.MathUtils.lerp(smoothInputY, inputY, 0.06);
 
@@ -1090,11 +1111,9 @@
                     currentActiveAirplane.position.y += (1.2 * sensitivityY) * smoothInputY; 
                     currentActiveAirplane.position.x += (2.0 * sensitivityX) * smoothInputX;
                     
-                    // زوايا ميلان (Yaw / Bank / Pitch) سلسة وموزونة تعكس وزن الطائرة
-                    // إضافة الالتفاف من الأمام (Yaw) ليسبق أو يتزامن مع الميلان الجانبي
-                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.6 * smoothInputX, 0.08); // حركة مقدمة الطائرة
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1);  // الميلان الجانبي
-                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1);   // الميلان للأعلى والأسفل (سحب العصا للأسفل يرفعها)
+                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.6 * smoothInputX, 0.08); 
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1); 
+                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1); 
                     
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
                     if(currentActiveAirplane.position.y > 450) currentActiveAirplane.position.y = 450;
