@@ -256,7 +256,7 @@
         <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
         <button id="pause-btn" class="glass-panel hud-card" onclick="togglePause()" style="cursor: pointer; border: 1px solid var(--pi-gold); background: rgba(52, 73, 94, 0.8);">⏸️</button>
         <div id="fuel-card" class="glass-panel hud-card" style="color: #f1c40f;">⛽ <span id="fuel-left">100</span>%</div>
-        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">35</span>ث</div>
+        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">60</span>ث</div>
         <div id="total-score-card" class="glass-panel hud-card">🏆 <span id="total-points">0</span></div>
         <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold);">🪙 <span id="points">0</span></div>
     </div>
@@ -313,8 +313,8 @@
 
     <div id="emergency-modal" class="emergency-overlay" style="display: none;">
         <div class="emergency-box">
-            <h2>⚠️ إنذار طاقة منخفضة!</h2>
-            <p style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">الوقود أو زمن الرحلة يوشك على النفاد. أنقذ جيرتك ونقاطك الحالية فوراً!</p>
+            <h2 id="emergency-title">⚠️ إنذار طاقة منخفضة!</h2>
+            <p id="emergency-desc" style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">الوقود أو زمن الرحلة يوشك على النفاد. أنقذ رحلتك ونقاطك الحالية فوراً!</p>
             <div class="emergency-options">
                 <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ شحن وقود كامل (+100%) بـ 0.1 π</button>
                 <button id="emergency-time-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('time', 0.1)">⏱️ تمديد الوقت (+30 ثانية) بـ 0.1 π</button>
@@ -382,7 +382,7 @@
         let isPaused = false;
         let hasTakenOff = false;
         let score = 0;
-        let timeLeft = 35;
+        let timeLeft = 60; // تم التعديل إلى 60 ثانية
         let fuel = 100;
         let hasTriggeredEmergencyThisRound = false;
         let currentSpeed = 1.5;
@@ -615,14 +615,42 @@
             }
         }
 
-        function triggerEmergencyModal() {
+        function triggerEmergencyModal(reason) {
             hasTriggeredEmergencyThisRound = true;
             isPaused = true;
             const pauseBtn = document.getElementById('pause-btn');
             if (pauseBtn) { pauseBtn.innerHTML = "▶️"; pauseBtn.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)"; }
             if (engineGain) engineGain.gain.setValueAtTime(0, audioCtx.currentTime);
             document.getElementById('emergency-modal').style.display = 'flex';
-            showNotification("⚠️ تنبيه: مستوى طاقة منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.", true);
+
+            const titleEl = document.getElementById('emergency-title');
+            const descEl = document.getElementById('emergency-desc');
+            const fuelBtn = document.getElementById('emergency-fuel-btn');
+            const timeBtn = document.getElementById('emergency-time-btn');
+
+            // إظهار الأزرار بشكل افتراضي ثم إخفاء غير المطلوب
+            fuelBtn.style.display = 'block';
+            timeBtn.style.display = 'block';
+
+            let alertMsg = "";
+
+            if (reason === 'fuel') {
+                titleEl.innerText = "⚠️ إنذار: الوقود منخفض!";
+                descEl.innerText = "مستوى الوقود لديك حرج. قم بشحن الخزان فوراً لمواصلة الطيران وتجنب السقوط!";
+                timeBtn.style.display = 'none'; // إخفاء زر الوقت
+                alertMsg = "⚠️ تنبيه: مستوى الوقود منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.";
+            } else if (reason === 'time') {
+                titleEl.innerText = "⚠️ إنذار: الوقت يوشك على الانتهاء!";
+                descEl.innerText = "وقت الرحلة شارف على الانتهاء. قم بتمديد الوقت لمواصلة الطيران وجمع النقاط!";
+                fuelBtn.style.display = 'none'; // إخفاء زر الوقود
+                alertMsg = "⚠️ تنبيه: الوقت يوشك على النفاد! تم إيقاف الحركة مؤقتاً.";
+            } else {
+                titleEl.innerText = "⚠️ إنذار: طوارئ حرجة!";
+                descEl.innerText = "الوقود والوقت يوشكان على النفاد معاً. اختر ما تريد شحنه لإنقاذ الموقف!";
+                alertMsg = "⚠️ تنبيه: مستوى طاقة ووقت منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.";
+            }
+
+            showNotification(alertMsg, true);
         }
 
         function closeEmergencyModal() {
@@ -656,7 +684,6 @@
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // تعديل: تطبيق الموارد فور إتمام عملية الشراء بنجاح
                         if (type === 'fuel') {
                             fuel = 100;
                             document.getElementById('fuel-left').innerText = fuel;
@@ -967,7 +994,7 @@
             smoothInputY = 0;
 
             score = 0; document.getElementById('points').innerText = score;
-            timeLeft = 35; document.getElementById('time-left').innerText = timeLeft;
+            timeLeft = 60; document.getElementById('time-left').innerText = timeLeft; // تم التعديل إلى 60
             updateFireButtonUI();
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -979,8 +1006,15 @@
                     document.getElementById('time-left').innerText = timeLeft; 
                     document.getElementById('fuel-left').innerText = fuel;
 
-                    if ((timeLeft <= 10 || fuel <= 20) && !hasTriggeredEmergencyThisRound) {
-                        triggerEmergencyModal();
+                    if (!hasTriggeredEmergencyThisRound) {
+                        let reason = null;
+                        if (fuel <= 20 && timeLeft <= 10) reason = 'both';
+                        else if (fuel <= 20) reason = 'fuel';
+                        else if (timeLeft <= 10) reason = 'time';
+
+                        if (reason) {
+                            triggerEmergencyModal(reason);
+                        }
                     }
 
                     if(timeLeft <= 0 || fuel <= 0) endGame(); 
