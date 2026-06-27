@@ -502,7 +502,7 @@
             for (let i = 0; i < totalTrees; i++) {
                 const tree = createProceduralTree(); const side = Math.random() > 0.5 ? 1 : -1;
                 const x = (Math.random() * 500 + 60) * side; const z = zPos + (Math.random() - 0.5) * 1000;
-                tree.position.set(x, -10, z); segmentGroup.add(tree);
+                tree.position.set(x, -10, zPos); segmentGroup.add(tree);
             }
 
             const totalClouds = 8;
@@ -1028,6 +1028,8 @@
 
         function startGame() {
             isPlaying = true; isPaused = false;
+            hasTakenOff = false; // الإضافة هنا لحل المشكلة
+            currentSpeed = 1.5;  // إعادة ضبط السرعة
             hasTriggeredEmergencyThisRound = false;
             fuel = 100;
             document.getElementById('fuel-left').innerText = fuel;
