@@ -210,7 +210,6 @@
         #speed-btn { background: linear-gradient(135deg, var(--pi-gold), var(--pi-gold-dark)); color: var(--pi-purple-dark); border-color: var(--pi-purple-dark); }
         #fire-btn { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); }
 
-        /* نافذة الطوارئ للشراء السريع لزيادة الزمن والوقود */
         .emergency-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -394,7 +393,6 @@
         const targets = [];
         const explosionParticles = [];
 
-        // --- إضافة متغيرات لتنعيم حركة التحكم (Inertia/Weight) ---
         let smoothInputX = 0;
         let smoothInputY = 0;
 
@@ -546,7 +544,6 @@
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // تفعيل فوري للمشتريات لتجنب توقف اللعبة في بيئة التطوير المحلية
                         localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); 
                         const modal = document.getElementById('payment-success-modal');
                         document.getElementById('purchase-details').innerText = `تم اقتناء ${plane.name} بنجاح مقابل ${plane.piCost} π`;
@@ -554,7 +551,6 @@
                         showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); 
                         startBtn.disabled = false; updateShopUI(); 
                         
-                        // محاولة الإرسال للخادم دون التأثير على تقدم اللاعب
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) }).catch(e => console.warn("Backend sync skipped"));
                     },
                     onCancel: function() { startBtn.disabled = false; updateShopUI(); }, onError: function() { startBtn.disabled = false; updateShopUI(); }
@@ -660,7 +656,7 @@
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
-                        // إضافة الموارد فوراً لتجنب توقف اللعبة في بيئة الهاتف/التطوير
+                        // تعديل: تطبيق الموارد فور إتمام عملية الشراء بنجاح
                         if (type === 'fuel') {
                             fuel = 100;
                             document.getElementById('fuel-left').innerText = fuel;
@@ -671,11 +667,10 @@
                             showNotification("⏱️ تم تمديد عداد الزمن بمقدار 30 ثانية بنجاح!");
                         }
                         
-                        hasTriggeredEmergencyThisRound = false; // تصفير متغير الإنذار ليتفعل مرة أخرى مستقبلا
+                        hasTriggeredEmergencyThisRound = false; 
                         btn.disabled = false; btn.innerText = originalText;
-                        closeEmergencyModal(); // العودة للعب مباشرة
+                        closeEmergencyModal();
                         
-                        // محاولة مزامنة البيانات دون تعطيل الواجهة
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) }).catch(e => console.warn("Backend sync skipped"));
                     },
                     onCancel: function() { btn.disabled = false; btn.innerText = originalText; }, 
@@ -968,7 +963,6 @@
             if (pauseBtn) { pauseBtn.innerHTML = "⏸️"; pauseBtn.style.background = "rgba(52, 73, 94, 0.8)"; }
             spawnSelectedPlane(fleet[currentSelectionIndex]); initEngineSound();
             
-            // تصفير مدخلات الحركة لمنع أي قفزات مفاجئة عند البداية
             smoothInputX = 0;
             smoothInputY = 0;
 
@@ -1067,13 +1061,11 @@
                 sunLight.color.copy(currentSunColor);
                 sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, targetIntensity, 0.015);
 
-                // --- تحديث نظام الإدخال وتطبيق الوزن (Inertia) للتحكم الاحترافي ---
                 let inputY = 0; let inputX = 0;
                 if (keys.w) inputY -= 1; if (keys.s) inputY += 1;
                 if (joyState.active) { inputX += joyState.x; inputY += joyState.y; }
                 if (screenTouchState.active) { inputX += screenTouchState.x; inputY += screenTouchState.y; }
 
-                // تطبيق التنعيم الرياضي لإعطاء ثقل وثبات للطائرة
                 smoothInputX = THREE.MathUtils.lerp(smoothInputX, inputX, 0.06);
                 smoothInputY = THREE.MathUtils.lerp(smoothInputY, inputY, 0.06);
 
@@ -1090,11 +1082,9 @@
                     currentActiveAirplane.position.y += (1.2 * sensitivityY) * smoothInputY; 
                     currentActiveAirplane.position.x += (2.0 * sensitivityX) * smoothInputX;
                     
-                    // زوايا ميلان (Yaw / Bank / Pitch) سلسة وموزونة تعكس وزن الطائرة
-                    // إضافة الالتفاف من الأمام (Yaw) ليسبق أو يتزامن مع الميلان الجانبي
-                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.6 * smoothInputX, 0.08); // حركة مقدمة الطائرة
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1);  // الميلان الجانبي
-                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1);   // الميلان للأعلى والأسفل (سحب العصا للأسفل يرفعها)
+                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.6 * smoothInputX, 0.08);
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1); 
+                    currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1);
                     
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
                     if(currentActiveAirplane.position.y > 450) currentActiveAirplane.position.y = 450;
