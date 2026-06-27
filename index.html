@@ -382,7 +382,7 @@
         let isPaused = false;
         let hasTakenOff = false;
         let score = 0;
-        let timeLeft = 60; // تم التعديل إلى 60 ثانية
+        let timeLeft = 60;
         let fuel = 100;
         let hasTriggeredEmergencyThisRound = false;
         let currentSpeed = 1.5;
@@ -417,6 +417,124 @@
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
+
+        // ---------------------------------------------------------
+        // إدارة الموارد والأصول لتقليل تعليق الذاكرة (Memory Management)
+        // ---------------------------------------------------------
+        const sharedAssets = {
+            bulletGeo: new THREE.CylinderGeometry(0.1, 0.3, 6, 8).rotateX(Math.PI / 2),
+            bulletMat: new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 4.0, metalness: 0.5, roughness: 0.2 }),
+            targetGeo: new THREE.DodecahedronGeometry(3),
+            targetMat: new THREE.MeshStandardMaterial({ color: 0x8b0000, emissive: 0xff0000, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 }),
+            expGeo: new THREE.SphereGeometry(0.6, 5, 5),
+            expMats: [
+                new THREE.MeshBasicMaterial({ color: 0xff2200, transparent: true, blending: THREE.AdditiveBlending }),
+                new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, blending: THREE.AdditiveBlending }),
+                new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, blending: THREE.AdditiveBlending }),
+                new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, blending: THREE.AdditiveBlending })
+            ],
+            treeTrunkGeo: new THREE.CylinderGeometry(0.3, 0.5, 4, 6),
+            treeTrunkMat: new THREE.MeshStandardMaterial({ color: 0x4a3728 }),
+            treeFoliageGeo1: new THREE.ConeGeometry(2.5, 3, 6),
+            treeFoliageGeo2: new THREE.ConeGeometry(2.0, 3, 6),
+            treeFoliageGeo3: new THREE.ConeGeometry(1.5, 3, 6),
+            treeFoliageMat: new THREE.MeshStandardMaterial({ color: 0x2d5a27, flatShading: true }),
+            cloudGeo: new THREE.IcosahedronGeometry(1, 0),
+            cloudMat: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, flatShading: true }),
+            ringGeos: {
+                1: new THREE.TorusGeometry(12, 1.2, 8, 24),
+                0.85: new THREE.TorusGeometry(12 * 0.85, 1.2, 8, 24),
+                1.1: new THREE.TorusGeometry(12 * 1.1, 1.2, 8, 24)
+            },
+            ringMats: {
+                'normal': new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, emissive: 0x000000 }),
+                'danger': new THREE.MeshStandardMaterial({ color: 0xe74c3c, metalness: 0.8, emissive: 0x000000 }),
+                'bonus': new THREE.MeshStandardMaterial({ color: 0x8a2be2, metalness: 0.8, emissive: 0x4a148c, emissiveIntensity: 0.5 })
+            }
+        };
+
+        const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
+        const envColors = { forestFloor: 0x22441f, runway: 0x222222 };
+        const activeTerrainSegments = []; // مصفوفة لتتبع التضاريس النشطة
+
+        function createProceduralTree() {
+            const treeGroup = new THREE.Group();
+            const trunk = new THREE.Mesh(sharedAssets.treeTrunkGeo, sharedAssets.treeTrunkMat);
+            trunk.position.y = 2; treeGroup.add(trunk);
+            for(let i=0; i<3; i++) {
+                let geo = i === 0 ? sharedAssets.treeFoliageGeo1 : (i === 1 ? sharedAssets.treeFoliageGeo2 : sharedAssets.treeFoliageGeo3);
+                const foliage = new THREE.Mesh(geo, sharedAssets.treeFoliageMat);
+                foliage.position.y = 4 + i*1.5; foliage.castShadow = true; treeGroup.add(foliage);
+            }
+            const scale = Math.random() * 0.8 + 0.8; treeGroup.scale.set(scale, scale, scale);
+            return treeGroup;
+        }
+
+        function createProceduralCloud() {
+            const cloudGroup = new THREE.Group();
+            const count = 5 + Math.floor(Math.random() * 4);
+            for(let i = 0; i < count; i++) {
+                const sphere = new THREE.Mesh(sharedAssets.cloudGeo, sharedAssets.cloudMat);
+                const size = 5 + Math.random() * 8;
+                sphere.scale.set(size, size * 0.6, size);
+                sphere.position.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 30);
+                cloudGroup.add(sphere);
+            }
+            return cloudGroup;
+        }
+
+        function createTerrainSegment(zPos, colorHex, isRunway = false) {
+            const segmentGroup = new THREE.Group();
+            
+            const planeGeo = new THREE.PlaneGeometry(1400, 1000, 4, 4);
+            const terrain = new THREE.Mesh(planeGeo, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
+            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; 
+            segmentGroup.add(terrain);
+            
+            if (isRunway) {
+                const runwayGeo = new THREE.PlaneGeometry(60, 800);
+                const runway = new THREE.Mesh(runwayGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }));
+                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; 
+                segmentGroup.add(runway);
+            }
+
+            const totalTrees = 150; 
+            for (let i = 0; i < totalTrees; i++) {
+                const tree = createProceduralTree(); const side = Math.random() > 0.5 ? 1 : -1;
+                const x = (Math.random() * 500 + 60) * side; const z = zPos + (Math.random() - 0.5) * 1000;
+                tree.position.set(x, -10, z); segmentGroup.add(tree);
+            }
+
+            const totalClouds = 8;
+            for (let i = 0; i < totalClouds; i++) {
+                const cloud = createProceduralCloud(); const x = (Math.random() - 0.5) * 600;
+                const y = Math.random() * 60 + 110; const z = zPos + (Math.random() - 0.5) * 1000;
+                cloud.position.set(x, y, z); segmentGroup.add(cloud);
+            }
+
+            terrainGroup.add(segmentGroup);
+            activeTerrainSegments.push({ group: segmentGroup, zPos: zPos });
+
+            // Garbage Collection: التخلص من التضاريس القديمة لتحرير الذاكرة المؤقتة ومنع التعليق
+            if (activeTerrainSegments.length > 4) {
+                const oldSegment = activeTerrainSegments.shift();
+                terrainGroup.remove(oldSegment.group);
+                oldSegment.group.traverse((child) => {
+                    if (child.isMesh) {
+                        if (child.geometry && child.geometry === planeGeo) child.geometry.dispose();
+                        if (child.material && !Object.values(sharedAssets).includes(child.material)) child.material.dispose();
+                    }
+                });
+            }
+        }
+
+        createTerrainSegment(0, envColors.forestFloor, true); 
+        createTerrainSegment(-1000, envColors.forestFloor); 
+        createTerrainSegment(-2000, envColors.forestFloor);
+
+        // ---------------------------------------------------------
+        // بقية الدوال وأنظمة التحكم الأساسية
+        // ---------------------------------------------------------
 
         function showNotification(text, isError = false) {
             const toast = document.getElementById('game-toast');
@@ -628,7 +746,6 @@
             const fuelBtn = document.getElementById('emergency-fuel-btn');
             const timeBtn = document.getElementById('emergency-time-btn');
 
-            // إظهار الأزرار بشكل افتراضي ثم إخفاء غير المطلوب
             fuelBtn.style.display = 'block';
             timeBtn.style.display = 'block';
 
@@ -637,12 +754,12 @@
             if (reason === 'fuel') {
                 titleEl.innerText = "⚠️ إنذار: الوقود منخفض!";
                 descEl.innerText = "مستوى الوقود لديك حرج. قم بشحن الخزان فوراً لمواصلة الطيران وتجنب السقوط!";
-                timeBtn.style.display = 'none'; // إخفاء زر الوقت
+                timeBtn.style.display = 'none';
                 alertMsg = "⚠️ تنبيه: مستوى الوقود منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.";
             } else if (reason === 'time') {
                 titleEl.innerText = "⚠️ إنذار: الوقت يوشك على الانتهاء!";
                 descEl.innerText = "وقت الرحلة شارف على الانتهاء. قم بتمديد الوقت لمواصلة الطيران وجمع النقاط!";
-                fuelBtn.style.display = 'none'; // إخفاء زر الوقود
+                fuelBtn.style.display = 'none';
                 alertMsg = "⚠️ تنبيه: الوقت يوشك على النفاد! تم إيقاف الحركة مؤقتاً.";
             } else {
                 titleEl.innerText = "⚠️ إنذار: طوارئ حرجة!";
@@ -730,70 +847,6 @@
             explosionParticles.forEach(p => scene.remove(p.mesh)); explosionParticles.length = 0;
         }
 
-        const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { forestFloor: 0x22441f, runway: 0x222222 };
-
-        function createProceduralTree() {
-            const treeGroup = new THREE.Group();
-            const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 4, 6);
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            trunk.position.y = 2;
-            treeGroup.add(trunk);
-
-            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, flatShading: true });
-            for(let i=0; i<3; i++) {
-                const foliage = new THREE.Mesh(new THREE.ConeGeometry(2.5 - i*0.5, 3, 8), foliageMat);
-                foliage.position.y = 4 + i*1.5;
-                foliage.castShadow = true;
-                treeGroup.add(foliage);
-            }
-            const scale = Math.random() * 0.8 + 0.8;
-            treeGroup.scale.set(scale, scale, scale);
-            return treeGroup;
-        }
-
-        function createProceduralCloud() {
-            const cloudGroup = new THREE.Group();
-            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, flatShading: true });
-            const count = 8 + Math.floor(Math.random() * 5);
-            for(let i = 0; i < count; i++) {
-                const size = 5 + Math.random() * 8;
-                const sphere = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 0), cloudMat);
-                sphere.position.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 30);
-                sphere.scale.set(1, 0.6, 1);
-                cloudGroup.add(sphere);
-            }
-            return cloudGroup;
-        }
-
-        function createTerrainSegment(zPos, colorHex, isRunway = false) {
-            const geometry = new THREE.PlaneGeometry(1400, 1000, 4, 4);
-            const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
-            terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; terrainGroup.add(terrain);
-            
-            if (isRunway) {
-                const runway = new THREE.Mesh(new THREE.PlaneGeometry(60, 800), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }));
-                runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; scene.add(runway);
-            }
-
-            const totalTrees = 180; 
-            for (let i = 0; i < totalTrees; i++) {
-                const tree = createProceduralTree(); const side = Math.random() > 0.5 ? 1 : -1;
-                const x = (Math.random() * 500 + 60) * side; const z = zPos + (Math.random() - 0.5) * 1000;
-                tree.position.set(x, -10, z); terrainGroup.add(tree);
-            }
-
-            const totalClouds = 10;
-            for (let i = 0; i < totalClouds; i++) {
-                const cloud = createProceduralCloud(); const x = (Math.random() - 0.5) * 600;
-                const y = Math.random() * 60 + 110; const z = zPos + (Math.random() - 0.5) * 1000;
-                cloud.position.set(x, y, z); terrainGroup.add(cloud);
-            }
-        }
-
-        createTerrainSegment(0, envColors.forestFloor, true); createTerrainSegment(-1000, envColors.forestFloor); createTerrainSegment(-2000, envColors.forestFloor);
-
         const loader = new THREE.GLTFLoader();
         loader.load('airplane.glb', (gltf) => {
             basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI; basePassengerModel.add(gltf.scene);
@@ -863,31 +916,31 @@
             if (fleet[currentSelectionIndex].type !== 'fighter') return;
             playWeaponShootSound();
             
-            const bGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 5); bGeo.rotateX(Math.PI / 2); 
-            const bMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xff3300, emissiveIntensity: 5.0, metalness: 0.1, roughness: 0.1 });
             const wingDistance = 5.5; 
             const spread = 2.5; 
 
-            const bMeshLeft = new THREE.Mesh(bGeo, bMat); bMeshLeft.position.copy(currentActiveAirplane.position); bMeshLeft.position.z -= 8; bMeshLeft.position.x -= wingDistance;
+            // استخدام القذيفة الحمراء الانسيابية من الأصول المشتركة
+            const bMeshLeft = new THREE.Mesh(sharedAssets.bulletGeo, sharedAssets.bulletMat); 
+            bMeshLeft.position.copy(currentActiveAirplane.position); bMeshLeft.position.z -= 8; bMeshLeft.position.x -= wingDistance;
             bMeshLeft.userData = { vx: (Math.random() - 0.5) * spread, vy: (Math.random() - 0.5) * spread };
             
-            const bMeshRight = new THREE.Mesh(bGeo, bMat); bMeshRight.position.copy(currentActiveAirplane.position); bMeshRight.position.z -= 8; bMeshRight.position.x += wingDistance;
+            const bMeshRight = new THREE.Mesh(sharedAssets.bulletGeo, sharedAssets.bulletMat); 
+            bMeshRight.position.copy(currentActiveAirplane.position); bMeshRight.position.z -= 8; bMeshRight.position.x += wingDistance;
             bMeshRight.userData = { vx: (Math.random() - 0.5) * spread, vy: (Math.random() - 0.5) * spread };
 
             scene.add(bMeshLeft); scene.add(bMeshRight); bullets.push(bMeshLeft, bMeshRight);
         }
 
         function createExplosion(position) {
-            const particleCount = 150; const geo = new THREE.SphereGeometry(0.6, 5, 5);
+            const particleCount = 100; // تقليل العدد قليلاً لتخفيف الضغط على المعالج
             for (let i = 0; i < particleCount; i++) {
-                let colorHex = 0xff2200;
                 let r = Math.random();
-                if (r > 0.7) colorHex = 0xffaa00;
-                else if (r > 0.4) colorHex = 0xff0000;
-                else if (r > 0.2) colorHex = 0xffff00;
+                let mat = sharedAssets.expMats[0];
+                if (r > 0.7) mat = sharedAssets.expMats[1];
+                else if (r > 0.4) mat = sharedAssets.expMats[2];
+                else if (r > 0.2) mat = sharedAssets.expMats[3];
                 
-                const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
-                const mesh = new THREE.Mesh(geo, mat); mesh.position.copy(position);
+                const mesh = new THREE.Mesh(sharedAssets.expGeo, mat); mesh.position.copy(position);
                 const theta = Math.random() * Math.PI * 2; const phi = Math.acos((Math.random() * 2) - 1); const speed = Math.random() * 4.0 + 1.5;
                 const velocity = new THREE.Vector3(Math.sin(phi) * Math.cos(theta) * speed, Math.sin(phi) * Math.sin(theta) * speed, Math.cos(phi) * speed);
                 scene.add(mesh);
@@ -896,9 +949,7 @@
         }
 
         function spawnFallingTarget(currentZ) {
-            const geo = new THREE.DodecahedronGeometry(3);
-            const mat = new THREE.MeshStandardMaterial({ color: 0x8b0000, emissive: 0xff0000, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
-            const target = new THREE.Mesh(geo, mat);
+            const target = new THREE.Mesh(sharedAssets.targetGeo, sharedAssets.targetMat);
             target.position.set((Math.random() - 0.5) * 80, Math.random() * 30 + 20, currentZ - 300 - Math.random() * 200);
             target.userData = { fallSpeed: Math.random() * 0.4 + 0.2, rotationX: Math.random() * 0.05, rotationY: Math.random() * 0.05 };
             scene.add(target);
@@ -912,9 +963,7 @@
                 { type: 'bonus', color: 0x8a2be2, points: 30, time: 8, scale: 1.1 }        
             ];
             let rand = Math.random(); let selected = rand < 0.65 ? ringTypes[0] : (rand < 0.90 ? ringTypes[1] : ringTypes[2]);
-            const ringGeometry = new THREE.TorusGeometry(12 * selected.scale, 1.2, 8, 24);
-            const ringMaterial = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.8, emissive: selected.type === 'bonus' ? 0x4a148c : 0x000000, emissiveIntensity: 0.5 });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            const ring = new THREE.Mesh(sharedAssets.ringGeos[selected.scale], sharedAssets.ringMats[selected.type]);
             ring.position.set((Math.random() - 0.5) * 160, Math.random() * 40 + 20, zPos);
             ring.userData = { type: selected.type, points: selected.points, time: selected.time, scale: selected.scale, oscillationSpeed: selected.type === 'bonus' ? (Math.random() * 0.03 + 0.02) : 0 };
             scene.add(ring); rings.push(ring);
@@ -994,7 +1043,7 @@
             smoothInputY = 0;
 
             score = 0; document.getElementById('points').innerText = score;
-            timeLeft = 60; document.getElementById('time-left').innerText = timeLeft; // تم التعديل إلى 60
+            timeLeft = 60; document.getElementById('time-left').innerText = timeLeft; 
             updateFireButtonUI();
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1071,7 +1120,7 @@
                 if (cycle < 1) { 
                     let t = cycle;
                     targetSkyColor.setHex(0xcdedfd).lerp(new THREE.Color(0xe67e22), t);
-                    targetSunColor.setHex(0xffffff).lerp(new THREE.Color(0xffaa44), t);
+                    targetSunColor.setHex(0xffaa44).lerp(new THREE.Color(0xffaa44), t);
                     targetIntensity = THREE.MathUtils.lerp(1.4, 1.0, t);
                 } else if (cycle < 2) { 
                     let t = cycle - 1;
@@ -1103,7 +1152,8 @@
                 smoothInputX = THREE.MathUtils.lerp(smoothInputX, inputX, 0.06);
                 smoothInputY = THREE.MathUtils.lerp(smoothInputY, inputY, 0.06);
 
-                const sensitivityX = 1.8; 
+                // تقليل حساسية الانحراف لتصبح أهدأ (X تم تخفيضه من 1.8 إلى 0.8)
+                const sensitivityX = 0.8; 
                 const sensitivityY = 1.2;
                 
                 if (!hasTakenOff) {
@@ -1116,8 +1166,9 @@
                     currentActiveAirplane.position.y += (1.2 * sensitivityY) * smoothInputY; 
                     currentActiveAirplane.position.x += (2.0 * sensitivityX) * smoothInputX;
                     
-                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.6 * smoothInputX, 0.08);
-                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.8 * smoothInputX, 0.1); 
+                    // تم تقليل الدوران الجانبي لتكون الحركة انسيابية
+                    currentActiveAirplane.rotation.y = THREE.MathUtils.lerp(currentActiveAirplane.rotation.y, -0.4 * smoothInputX, 0.08);
+                    currentActiveAirplane.rotation.z = THREE.MathUtils.lerp(currentActiveAirplane.rotation.z, -0.5 * smoothInputX, 0.1); 
                     currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.4 * smoothInputY, 0.1);
                     
                     if(currentActiveAirplane.position.y < -7) currentActiveAirplane.position.y = -7;
@@ -1151,7 +1202,7 @@
                 for (let i = explosionParticles.length - 1; i >= 0; i--) {
                     const p = explosionParticles[i]; p.mesh.position.add(p.velocity); p.velocity.multiplyScalar(0.95); p.life -= p.decay;
                     p.mesh.material.opacity = p.life; p.mesh.scale.setScalar(p.life * p.initialScale);
-                    if (p.life <= 0) { scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose(); explosionParticles.splice(i, 1); }
+                    if (p.life <= 0) { scene.remove(p.mesh); explosionParticles.splice(i, 1); } // Material & Geo disposal handled centrally now if needed
                 }
                 if (fleet[currentSelectionIndex].type === 'fighter' && targets.length < 5 && Math.random() < 0.02) { spawnFallingTarget(currentActiveAirplane.position.z); }
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.08);
