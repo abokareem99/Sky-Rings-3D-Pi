@@ -363,12 +363,28 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
+        
+        // تفعيل الظلال لإضفاء أقصى درجات الواقعية
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
+        // إضاءة محيطية (Hemisphere) تعطي واقعية للسماء وتنعكس على التضاريس (بديل احترافي للـ AmbientLight البسيط)
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        hemiLight.position.set(0, 500, 0);
+        scene.add(hemiLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
         sunLight.position.set(100, 300, 100);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 1500;
+        sunLight.shadow.camera.left = -600;
+        sunLight.shadow.camera.right = 600;
+        sunLight.shadow.camera.top = 600;
+        sunLight.shadow.camera.bottom = -600;
         scene.add(sunLight);
 
         let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
@@ -419,7 +435,7 @@
         let authenticatedPiUser = null;
 
         // ---------------------------------------------------------
-        // إدارة الموارد والأصول لتقليل تعليق الذاكرة (Memory Management)
+        // إدارة الموارد والأصول لتقليل تعليق الذاكرة (مع بيئات واقعية)
         // ---------------------------------------------------------
         const sharedAssets = {
             bulletGeo: new THREE.CylinderGeometry(0.1, 0.3, 6, 8).rotateX(Math.PI / 2),
@@ -433,14 +449,14 @@
                 new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, blending: THREE.AdditiveBlending }),
                 new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, blending: THREE.AdditiveBlending })
             ],
-            treeTrunkGeo: new THREE.CylinderGeometry(0.3, 0.5, 4, 6),
-            treeTrunkMat: new THREE.MeshStandardMaterial({ color: 0x4a3728 }),
-            treeFoliageGeo1: new THREE.ConeGeometry(2.5, 3, 6),
-            treeFoliageGeo2: new THREE.ConeGeometry(2.0, 3, 6),
-            treeFoliageGeo3: new THREE.ConeGeometry(1.5, 3, 6),
-            treeFoliageMat: new THREE.MeshStandardMaterial({ color: 0x2d5a27, flatShading: true }),
-            cloudGeo: new THREE.IcosahedronGeometry(1, 0),
-            cloudMat: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, flatShading: true }),
+            treeTrunkGeo: new THREE.CylinderGeometry(0.4, 0.6, 4, 6),
+            treeTrunkMat: new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.9 }),
+            treeTrunkSnowMat: new THREE.MeshStandardMaterial({ color: 0x6a5acd, roughness: 0.8 }),
+            treeFoliageGeo1: new THREE.ConeGeometry(3.0, 4, 7),
+            treeFoliageGeo2: new THREE.ConeGeometry(2.5, 4, 7),
+            treeFoliageGeo3: new THREE.ConeGeometry(1.8, 3, 7),
+            cloudGeo: new THREE.IcosahedronGeometry(1, 1), // زيادة التفاصيل قليلاً لغيوم واقعية
+            cloudMat: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1.0, flatShading: false, transparent: true, opacity: 0.95 }),
             ringGeos: {
                 1: new THREE.TorusGeometry(12, 1.2, 8, 24),
                 0.85: new THREE.TorusGeometry(12 * 0.85, 1.2, 8, 24),
@@ -453,18 +469,42 @@
             }
         };
 
+        const biomeMats = {
+            forest: new THREE.MeshStandardMaterial({ color: 0x24421b, roughness: 0.95, flatShading: true }),
+            snow: new THREE.MeshStandardMaterial({ color: 0xf0f8ff, roughness: 0.7, metalness: 0.1, flatShading: true }),
+            desert: new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 1.0, flatShading: true }),
+            runway: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 })
+        };
+
+        const treeMats = {
+            forest: new THREE.MeshStandardMaterial({ color: 0x224a1e, flatShading: true }),
+            snow: new THREE.MeshStandardMaterial({ color: 0xe6e6fa, flatShading: true }),
+            desert: new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 1.0, flatShading: true }) // صخور ميتة للصحراء
+        };
+
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-        const envColors = { forestFloor: 0x22441f, runway: 0x222222 };
         const activeTerrainSegments = []; 
 
-        function createProceduralTree() {
+        function createProceduralTree(biome) {
             const treeGroup = new THREE.Group();
-            const trunk = new THREE.Mesh(sharedAssets.treeTrunkGeo, sharedAssets.treeTrunkMat);
-            trunk.position.y = 2; treeGroup.add(trunk);
-            for(let i=0; i<3; i++) {
-                let geo = i === 0 ? sharedAssets.treeFoliageGeo1 : (i === 1 ? sharedAssets.treeFoliageGeo2 : sharedAssets.treeFoliageGeo3);
-                const foliage = new THREE.Mesh(geo, sharedAssets.treeFoliageMat);
-                foliage.position.y = 4 + i*1.5; foliage.castShadow = true; treeGroup.add(foliage);
+            
+            if (biome !== 'desert') {
+                const trunkMat = biome === 'snow' ? sharedAssets.treeTrunkSnowMat : sharedAssets.treeTrunkMat;
+                const trunk = new THREE.Mesh(sharedAssets.treeTrunkGeo, trunkMat);
+                trunk.position.y = 2; trunk.castShadow = true; trunk.receiveShadow = true; treeGroup.add(trunk);
+                
+                for(let i=0; i<3; i++) {
+                    let geo = i === 0 ? sharedAssets.treeFoliageGeo1 : (i === 1 ? sharedAssets.treeFoliageGeo2 : sharedAssets.treeFoliageGeo3);
+                    const foliage = new THREE.Mesh(geo, treeMats[biome]);
+                    foliage.position.y = 4 + i*1.8; foliage.castShadow = true; foliage.receiveShadow = true; treeGroup.add(foliage);
+                }
+            } else {
+                // تضاريس صحراوية: استخدام صخور متناثرة بدلاً من الأشجار
+                const rock = new THREE.Mesh(sharedAssets.targetGeo, treeMats.desert);
+                rock.scale.set(Math.random()*1.5 + 0.5, Math.random()*2 + 0.5, Math.random()*1.5 + 0.5);
+                rock.position.y = rock.scale.y * 1.5;
+                rock.castShadow = true; rock.receiveShadow = true;
+                treeGroup.add(rock);
             }
             const scale = Math.random() * 0.8 + 0.8; treeGroup.scale.set(scale, scale, scale);
             return treeGroup;
@@ -472,44 +512,86 @@
 
         function createProceduralCloud() {
             const cloudGroup = new THREE.Group();
-            const count = 5 + Math.floor(Math.random() * 4);
+            const count = 5 + Math.floor(Math.random() * 5);
             for(let i = 0; i < count; i++) {
                 const sphere = new THREE.Mesh(sharedAssets.cloudGeo, sharedAssets.cloudMat);
-                const size = 5 + Math.random() * 8;
-                sphere.scale.set(size, size * 0.6, size);
-                sphere.position.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 30);
+                const size = 6 + Math.random() * 10;
+                sphere.scale.set(size, size * 0.5, size * 0.8);
+                sphere.position.set((Math.random() - 0.5) * 35, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 35);
+                sphere.castShadow = true;
                 cloudGroup.add(sphere);
             }
             return cloudGroup;
         }
 
-        function createTerrainSegment(zPos, colorHex, isRunway = false) {
+        function createTerrainSegment(zPos, isRunway = false) {
             const segmentGroup = new THREE.Group();
             
-            const planeGeo = new THREE.PlaneGeometry(1400, 1000, 4, 4);
-            const terrain = new THREE.Mesh(planeGeo, new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.95, flatShading: true }));
+            // تحديد نوع البيئة بناءً على المسافة لعمل انتقال واقعي (غابة -> ثلج -> صحراء)
+            const dist = Math.abs(zPos);
+            let cycleNum = Math.floor(dist / 10000) % 3;
+            let biome = 'forest';
+            if (cycleNum === 1) biome = 'snow';
+            if (cycleNum === 2) biome = 'desert';
+
+            // زيادة التقسيمات لتمكين إزاحة الرؤوس لعمل تلال/جبال/كثبان
+            const planeGeo = new THREE.PlaneGeometry(1800, 1000, 32, 20);
+            const pos = planeGeo.attributes.position;
+            
+            for (let i = 0; i < pos.count; i++) {
+                let x = pos.getX(i);
+                let distFromCenter = Math.abs(x);
+                // إبقاء منطقة المنتصف مسطحة نسبياً للطيران المريح
+                if (distFromCenter > 80) {
+                    let h = (Math.random() * 35 + 10) * ((distFromCenter - 80) / 820);
+                    if (biome === 'desert') h = h * 0.6 + Math.sin(x * 0.05) * 15; // كثبان رملية ناعمة
+                    if (biome === 'snow') h = h * 1.8 + Math.cos(x * 0.03) * 25;   // جبال ثلجية قاسية
+                    pos.setZ(i, h); // Z لأنه سيتم تدوير السطح لاحقاً
+                }
+            }
+            pos.needsUpdate = true;
+            planeGeo.computeVertexNormals();
+
+            const terrain = new THREE.Mesh(planeGeo, biomeMats[biome]);
             terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, -10, zPos); terrain.receiveShadow = true; 
             segmentGroup.add(terrain);
             
             if (isRunway) {
                 const runwayGeo = new THREE.PlaneGeometry(60, 800);
-                const runway = new THREE.Mesh(runwayGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }));
+                const runway = new THREE.Mesh(runwayGeo, biomeMats.runway);
                 runway.rotation.x = -Math.PI / 2; runway.position.set(0, -9.8, zPos + 100); runway.receiveShadow = true; 
                 segmentGroup.add(runway);
             }
 
-            const totalTrees = 150; 
+            const totalTrees = biome === 'desert' ? 60 : 180; 
             for (let i = 0; i < totalTrees; i++) {
-                const tree = createProceduralTree(); const side = Math.random() > 0.5 ? 1 : -1;
-                const x = (Math.random() * 500 + 60) * side; const z = zPos + (Math.random() - 0.5) * 1000;
-                tree.position.set(x, -10, zPos); segmentGroup.add(tree);
+                const tree = createProceduralTree(biome); 
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const x = (Math.random() * 700 + 90) * side; 
+                const z = zPos + (Math.random() - 0.5) * 1000;
+                
+                // حساب تقريبي لارتفاع التلال لوضع العناصر عليها بدقة
+                let distCenter = Math.abs(x);
+                let hEst = -10;
+                if (distCenter > 80) {
+                    let baseH = 27.5 * ((distCenter - 80) / 820);
+                    if (biome === 'desert') hEst += baseH * 0.6 + Math.sin(x * 0.05) * 15;
+                    else if (biome === 'snow') hEst += baseH * 1.8 + Math.cos(x * 0.03) * 25;
+                    else hEst += baseH;
+                }
+
+                tree.position.set(x, hEst, z); 
+                segmentGroup.add(tree);
             }
 
-            const totalClouds = 8;
+            const totalClouds = 10;
             for (let i = 0; i < totalClouds; i++) {
-                const cloud = createProceduralCloud(); const x = (Math.random() - 0.5) * 600;
-                const y = Math.random() * 60 + 110; const z = zPos + (Math.random() - 0.5) * 1000;
-                cloud.position.set(x, y, z); segmentGroup.add(cloud);
+                const cloud = createProceduralCloud(); 
+                const x = (Math.random() - 0.5) * 800;
+                const y = Math.random() * 80 + 130; // رفع الغيوم قليلاً لواقعية أفضل
+                const z = zPos + (Math.random() - 0.5) * 1000;
+                cloud.position.set(x, y, z); 
+                segmentGroup.add(cloud);
             }
 
             terrainGroup.add(segmentGroup);
@@ -521,15 +603,15 @@
                 oldSegment.group.traverse((child) => {
                     if (child.isMesh) {
                         if (child.geometry && child.geometry === planeGeo) child.geometry.dispose();
-                        if (child.material && !Object.values(sharedAssets).includes(child.material)) child.material.dispose();
+                        if (child.material && !Object.values(sharedAssets).includes(child.material) && !Object.values(biomeMats).includes(child.material) && !Object.values(treeMats).includes(child.material)) child.material.dispose();
                     }
                 });
             }
         }
 
-        createTerrainSegment(0, envColors.forestFloor, true); 
-        createTerrainSegment(-1000, envColors.forestFloor); 
-        createTerrainSegment(-2000, envColors.forestFloor);
+        createTerrainSegment(0, true); 
+        createTerrainSegment(-1000); 
+        createTerrainSegment(-2000);
 
         // ---------------------------------------------------------
         // إدارة التنبيهات والربط واللوحات
@@ -857,23 +939,30 @@
             const box = new THREE.Box3().setFromObject(gltf.scene);
             gltf.scene.position.y -= box.min.y;
             
+            // تفعيل الظلال للمجسم
+            gltf.scene.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
+            
             basePassengerModel.add(gltf.scene);
             basePassengerModel.scale.set(4.55, 4.55, 4.55); checkAllLoaded();
         }, undefined, () => {
-            basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff})); checkAllLoaded();
+            basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            basePassengerModel.castShadow = true; checkAllLoaded();
         });
         
         loader.load('Fighter.glb.glb', (gltf) => { 
             baseFighterModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI;
             
-            // تصحيح نقطة الأصل للموديل الحربي (Pivot Correction) ليكون على المدرج ولا يبدأ طائراً
+            // تصحيح نقطة الأصل للموديل الحربي
             const box = new THREE.Box3().setFromObject(gltf.scene);
             gltf.scene.position.y -= box.min.y;
+            
+            gltf.scene.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
             
             baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2); checkAllLoaded();
         }, undefined, () => {
-            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); baseFighterModel.rotation.x = Math.PI/2; checkAllLoaded();
+            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); 
+            baseFighterModel.rotation.x = Math.PI/2; baseFighterModel.castShadow = true; checkAllLoaded();
         });
         
         let loadedCount = 0;
@@ -992,7 +1081,7 @@
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
         // ---------------------------------------------------------
-        // إدارة المدخلات والتحكم (تتوافق مع السحب للخلف للإقلاع)
+        // إدارة المدخلات والتحكم (متوافقة مع ديناميكية الطيران الواقعية)
         // ---------------------------------------------------------
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
@@ -1137,31 +1226,31 @@
                 currentActiveAirplane.position.z -= currentSpeed;
 
                 let travelDist = Math.abs(currentActiveAirplane.position.z);
-                let cycle = (travelDist / 1500) % 4; 
+                let cycle = (travelDist / 1800) % 4; 
                 let targetSkyColor = new THREE.Color();
                 let targetSunColor = new THREE.Color();
-                let targetIntensity = 1.4;
+                let targetIntensity = 1.2;
 
                 if (cycle < 1) { 
                     let t = cycle;
                     targetSkyColor.setHex(0xcdedfd).lerp(new THREE.Color(0xe67e22), t);
-                    targetSunColor.setHex(0xffaa44).lerp(new THREE.Color(0xffaa44), t);
-                    targetIntensity = THREE.MathUtils.lerp(1.4, 1.0, t);
+                    targetSunColor.setHex(0xffffff).lerp(new THREE.Color(0xffaa44), t);
+                    targetIntensity = THREE.MathUtils.lerp(1.2, 0.9, t);
                 } else if (cycle < 2) { 
                     let t = cycle - 1;
                     targetSkyColor.setHex(0xe67e22).lerp(new THREE.Color(0x4a148c), t);
                     targetSunColor.setHex(0xffaa44).lerp(new THREE.Color(0xdd88ff), t);
-                    targetIntensity = THREE.MathUtils.lerp(1.0, 0.7, t);
+                    targetIntensity = THREE.MathUtils.lerp(0.9, 0.6, t);
                 } else if (cycle < 3) { 
                     let t = cycle - 2;
                     targetSkyColor.setHex(0x4a148c).lerp(new THREE.Color(0x0b0f19), t);
                     targetSunColor.setHex(0xdd88ff).lerp(new THREE.Color(0x4466aa), t);
-                    targetIntensity = THREE.MathUtils.lerp(0.7, 0.25, t);
+                    targetIntensity = THREE.MathUtils.lerp(0.6, 0.25, t);
                 } else { 
                     let t = cycle - 3;
                     targetSkyColor.setHex(0x0b0f19).lerp(new THREE.Color(0xcdedfd), t);
                     targetSunColor.setHex(0x4466aa).lerp(new THREE.Color(0xffffff), t);
-                    targetIntensity = THREE.MathUtils.lerp(0.25, 1.4, t);
+                    targetIntensity = THREE.MathUtils.lerp(0.25, 1.2, t);
                 }
                 currentSkyColor.lerp(targetSkyColor, 0.015);
                 currentSunColor.lerp(targetSunColor, 0.015);
@@ -1180,7 +1269,6 @@
                 const sensitivityX = 0.8; 
                 const sensitivityY = 1.2;
                 
-                // التحكم متوافق مع الديناميكية الهوائية (سحب العصا للخلف/لأسفل يؤدي للارتفاع)
                 if (!hasTakenOff) {
                     if (inputY > 0) { 
                         currentActiveAirplane.position.y += 0.8; 
@@ -1229,7 +1317,6 @@
                     if (p.life <= 0) { scene.remove(p.mesh); explosionParticles.splice(i, 1); } 
                 }
                 
-                // تعديل: توليد الأهداف يبدأ فقط وحصرياً بعد إتمام الإقلاع بنجاح
                 if (hasTakenOff && fleet[currentSelectionIndex].type === 'fighter' && targets.length < 5 && Math.random() < 0.02) { 
                     spawnFallingTarget(currentActiveAirplane.position.z); 
                 }
@@ -1237,10 +1324,21 @@
                 camera.position.x = THREE.MathUtils.lerp(camera.position.x, currentActiveAirplane.position.x, 0.08);
                 camera.position.y = THREE.MathUtils.lerp(camera.position.y, currentActiveAirplane.position.y + 7, 0.08);
                 camera.position.z = currentActiveAirplane.position.z + 40;
+                
                 if (cameraShakeIntensity > 0) { camera.position.x += (Math.random() - 0.5) * cameraShakeIntensity; camera.position.y += (Math.random() - 0.5) * cameraShakeIntensity; cameraShakeIntensity *= 0.9; }
+                
                 camera.lookAt(new THREE.Vector3(currentActiveAirplane.position.x, currentActiveAirplane.position.y + 1, currentActiveAirplane.position.z - 40));
+                
+                // تحديث موقع إضاءة الشمس لضمان حركة الظلال بسلاسة مع الطائرة
                 sunLight.position.set(currentActiveAirplane.position.x + 100, camera.position.y + 200, currentActiveAirplane.position.z + 100);
-                if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { lastTerrainZ -= 1000; createTerrainSegment(lastTerrainZ, envColors.forestFloor); }
+                sunLight.target.position.set(currentActiveAirplane.position.x, currentActiveAirplane.position.y, currentActiveAirplane.position.z);
+                sunLight.target.updateMatrixWorld();
+                
+                if (currentActiveAirplane.position.z < lastTerrainZ + 1500) { 
+                    lastTerrainZ -= 1000; 
+                    createTerrainSegment(lastTerrainZ); 
+                }
+                
                 for (let i = rings.length - 1; i >= 0; i--) {
                     const ring = rings[i]; ring.rotation.y += 0.01;
                     if (ring.userData.type === 'danger') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
@@ -1265,7 +1363,7 @@
                 currentSunColor.setHex(0xffffff);
                 scene.background.copy(currentSkyColor);
                 sunLight.color.copy(currentSunColor);
-                sunLight.intensity = 1.4;
+                sunLight.intensity = 1.2;
             }
             renderer.render(scene, camera);
         }
