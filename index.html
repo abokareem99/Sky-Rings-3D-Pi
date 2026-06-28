@@ -255,7 +255,7 @@
     <div id="hud-container" style="display: none;">
         <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
         <button id="pause-btn" class="glass-panel hud-card" onclick="togglePause()" style="cursor: pointer; border: 1px solid var(--pi-gold); background: rgba(52, 73, 94, 0.8);">⏸️</button>
-        <div id="fuel-card" class="glass-panel hud-card" style="color: #f1c40f;">⛽ <span id="fuel-left">100</span>%</div>
+        <div id="fuel-card" class="glass-panel hud-card" style="color: #f1c40f;">⛽ <span id="fuel-left">200</span>%</div>
         <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">60</span>ث</div>
         <div id="total-score-card" class="glass-panel hud-card">🏆 <span id="total-points">0</span></div>
         <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold);">🪙 <span id="points">0</span></div>
@@ -316,7 +316,7 @@
             <h2 id="emergency-title">⚠️ إنذار طاقة منخفضة!</h2>
             <p id="emergency-desc" style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">الوقود أو زمن الرحلة يوشك على النفاد. أنقذ رحلتك ونقاطك الحالية فوراً!</p>
             <div class="emergency-options">
-                <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ شحن وقود كامل (+100%) بـ 0.1 π</button>
+                <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ شحن وقود كامل (+200%) بـ 0.1 π</button>
                 <button id="emergency-time-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('time', 0.1)">⏱️ تمديد الوقت (+30 ثانية) بـ 0.1 π</button>
             </div>
             <button class="skip-btn-emergency" onclick="closeEmergencyModal()">مواصلة الطيران والمخاطرة 🚀</button>
@@ -369,7 +369,7 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // إضاءة محيطية (Hemisphere) تعطي واقعية للسماء وتنعكس على التضاريس (بديل احترافي للـ AmbientLight البسيط)
+        // إضاءة محيطية (Hemisphere) تعطي واقعية للسماء وتنعكس على التضاريس
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
         hemiLight.position.set(0, 500, 0);
         scene.add(hemiLight);
@@ -399,7 +399,7 @@
         let hasTakenOff = false;
         let score = 0;
         let timeLeft = 60;
-        let fuel = 100;
+        let fuel = 200;
         let hasTriggeredEmergencyThisRound = false;
         let currentSpeed = 1.5;
         let timerInterval = null;
@@ -435,7 +435,7 @@
         let authenticatedPiUser = null;
 
         // ---------------------------------------------------------
-        // إدارة الموارد والأصول لتقليل تعليق الذاكرة (مع بيئات واقعية)
+        // إدارة الموارد والأصول لتقليل تعليق الذاكرة
         // ---------------------------------------------------------
         const sharedAssets = {
             bulletGeo: new THREE.CylinderGeometry(0.1, 0.3, 6, 8).rotateX(Math.PI / 2),
@@ -455,7 +455,7 @@
             treeFoliageGeo1: new THREE.ConeGeometry(3.0, 4, 7),
             treeFoliageGeo2: new THREE.ConeGeometry(2.5, 4, 7),
             treeFoliageGeo3: new THREE.ConeGeometry(1.8, 3, 7),
-            cloudGeo: new THREE.IcosahedronGeometry(1, 1), // زيادة التفاصيل قليلاً لغيوم واقعية
+            cloudGeo: new THREE.IcosahedronGeometry(1, 1),
             cloudMat: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1.0, flatShading: false, transparent: true, opacity: 0.95 }),
             ringGeos: {
                 1: new THREE.TorusGeometry(12, 1.2, 8, 24),
@@ -479,7 +479,7 @@
         const treeMats = {
             forest: new THREE.MeshStandardMaterial({ color: 0x224a1e, flatShading: true }),
             snow: new THREE.MeshStandardMaterial({ color: 0xe6e6fa, flatShading: true }),
-            desert: new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 1.0, flatShading: true }) // صخور ميتة للصحراء
+            desert: new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 1.0, flatShading: true })
         };
 
         const terrainGroup = new THREE.Group(); scene.add(terrainGroup);
@@ -499,7 +499,6 @@
                     foliage.position.y = 4 + i*1.8; foliage.castShadow = true; foliage.receiveShadow = true; treeGroup.add(foliage);
                 }
             } else {
-                // تضاريس صحراوية: استخدام صخور متناثرة بدلاً من الأشجار
                 const rock = new THREE.Mesh(sharedAssets.targetGeo, treeMats.desert);
                 rock.scale.set(Math.random()*1.5 + 0.5, Math.random()*2 + 0.5, Math.random()*1.5 + 0.5);
                 rock.position.y = rock.scale.y * 1.5;
@@ -526,27 +525,23 @@
 
         function createTerrainSegment(zPos, isRunway = false) {
             const segmentGroup = new THREE.Group();
-            
-            // تحديد نوع البيئة بناءً على المسافة لعمل انتقال واقعي (غابة -> ثلج -> صحراء)
             const dist = Math.abs(zPos);
             let cycleNum = Math.floor(dist / 10000) % 3;
             let biome = 'forest';
             if (cycleNum === 1) biome = 'snow';
             if (cycleNum === 2) biome = 'desert';
 
-            // زيادة التقسيمات لتمكين إزاحة الرؤوس لعمل تلال/جبال/كثبان
             const planeGeo = new THREE.PlaneGeometry(1800, 1000, 32, 20);
             const pos = planeGeo.attributes.position;
             
             for (let i = 0; i < pos.count; i++) {
                 let x = pos.getX(i);
                 let distFromCenter = Math.abs(x);
-                // إبقاء منطقة المنتصف مسطحة نسبياً للطيران المريح
                 if (distFromCenter > 80) {
                     let h = (Math.random() * 35 + 10) * ((distFromCenter - 80) / 820);
-                    if (biome === 'desert') h = h * 0.6 + Math.sin(x * 0.05) * 15; // كثبان رملية ناعمة
-                    if (biome === 'snow') h = h * 1.8 + Math.cos(x * 0.03) * 25;   // جبال ثلجية قاسية
-                    pos.setZ(i, h); // Z لأنه سيتم تدوير السطح لاحقاً
+                    if (biome === 'desert') h = h * 0.6 + Math.sin(x * 0.05) * 15;
+                    if (biome === 'snow') h = h * 1.8 + Math.cos(x * 0.03) * 25;
+                    pos.setZ(i, h);
                 }
             }
             pos.needsUpdate = true;
@@ -570,7 +565,6 @@
                 const x = (Math.random() * 700 + 90) * side; 
                 const z = zPos + (Math.random() - 0.5) * 1000;
                 
-                // حساب تقريبي لارتفاع التلال لوضع العناصر عليها بدقة
                 let distCenter = Math.abs(x);
                 let hEst = -10;
                 if (distCenter > 80) {
@@ -588,7 +582,7 @@
             for (let i = 0; i < totalClouds; i++) {
                 const cloud = createProceduralCloud(); 
                 const x = (Math.random() - 0.5) * 800;
-                const y = Math.random() * 80 + 130; // رفع الغيوم قليلاً لواقعية أفضل
+                const y = Math.random() * 80 + 130;
                 const z = zPos + (Math.random() - 0.5) * 1000;
                 cloud.position.set(x, y, z); 
                 segmentGroup.add(cloud);
@@ -883,9 +877,9 @@
                     },
                     onReadyForServerCompletion: function(paymentId, txid) {
                         if (type === 'fuel') {
-                            fuel = 100;
+                            fuel = 200;
                             document.getElementById('fuel-left').innerText = fuel;
-                            showNotification("⛽ تم تزويد خزان الوقود 100% بنجاح! طيران آمن.");
+                            showNotification("⛽ تم تزويد خزان الوقود 200% بنجاح! طيران آمن.");
                         } else {
                             timeLeft += 30;
                             document.getElementById('time-left').innerText = timeLeft;
@@ -932,14 +926,19 @@
         // تحميل وضبط الكائنات ثلاثية الأبعاد ومعايرة الأرضية
         // ---------------------------------------------------------
         const loader = new THREE.GLTFLoader();
+        
         loader.load('airplane.glb', (gltf) => {
-            basePassengerModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI;
+            basePassengerModel = new THREE.Group(); 
+            gltf.scene.rotation.y = Math.PI;
             
-            // محاذاة أسفل المجسم تلقائياً لتطابق مستوى عجلات المدرج عند الصفر المحلي
+            // محاذاة الصندوق المحيط بدقة متناهية لأسفل المجسم لضمان الالتصاق بالأرض
             const box = new THREE.Box3().setFromObject(gltf.scene);
-            gltf.scene.position.y -= box.min.y;
+            const center = box.getCenter(new THREE.Vector3());
             
-            // تفعيل الظلال للمجسم
+            gltf.scene.position.x = -center.x;
+            gltf.scene.position.z = -center.z;
+            gltf.scene.position.y = -box.min.y;
+            
             gltf.scene.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
             
             basePassengerModel.add(gltf.scene);
@@ -950,11 +949,16 @@
         });
         
         loader.load('Fighter.glb.glb', (gltf) => { 
-            baseFighterModel = new THREE.Group(); gltf.scene.rotation.y = Math.PI;
+            baseFighterModel = new THREE.Group(); 
+            gltf.scene.rotation.y = Math.PI;
             
-            // تصحيح نقطة الأصل للموديل الحربي
+            // تصحيح نقطة الأصل للموديل الحربي لضمان عدم طيرانه عند البداية وجعله يلامس المدرج تماماً
             const box = new THREE.Box3().setFromObject(gltf.scene);
-            gltf.scene.position.y -= box.min.y;
+            const center = box.getCenter(new THREE.Vector3());
+            
+            gltf.scene.position.x = -center.x;
+            gltf.scene.position.z = -center.z;
+            gltf.scene.position.y = -box.min.y;
             
             gltf.scene.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
             
@@ -1081,7 +1085,7 @@
         for (let i = 1; i <= 20; i++) { createRing(-i * 160); }
 
         // ---------------------------------------------------------
-        // إدارة المدخلات والتحكم (متوافقة مع ديناميكية الطيران الواقعية)
+        // إدارة المدخلات والتحكم
         // ---------------------------------------------------------
         window.addEventListener('keydown', (e) => {
             if(e.key === 'w' || e.key === 'ArrowUp') keys.w = true; if(e.key === 's' || e.key === 'ArrowDown') keys.s = true;
@@ -1143,7 +1147,7 @@
             hasTakenOff = false; 
             currentSpeed = 1.5;  
             hasTriggeredEmergencyThisRound = false;
-            fuel = 100;
+            fuel = 200;
             document.getElementById('fuel-left').innerText = fuel;
             document.getElementById('start-mask').style.display = 'none'; 
             document.getElementById('hud-container').style.display = 'flex';
@@ -1171,8 +1175,8 @@
 
                     if (!hasTriggeredEmergencyThisRound) {
                         let reason = null;
-                        if (fuel <= 20 && timeLeft <= 10) reason = 'both';
-                        else if (fuel <= 20) reason = 'fuel';
+                        if (fuel <= 40 && timeLeft <= 10) reason = 'both';
+                        else if (fuel <= 40) reason = 'fuel';
                         else if (timeLeft <= 10) reason = 'time';
 
                         if (reason) {
@@ -1200,7 +1204,7 @@
 
         function restartGame() {
             document.getElementById('gameover-mask').style.display = 'none'; hasTakenOff = false; currentSpeed = 1.5; cameraShakeIntensity = 0; isPaused = false;
-            hasTriggeredEmergencyThisRound = false; fuel = 100;
+            hasTriggeredEmergencyThisRound = false; fuel = 200;
             document.getElementById('emergency-modal').style.display = 'none';
             camera.fov = 60; camera.updateProjectionMatrix(); document.getElementById('shop-carousel').style.display = 'flex';
             if(currentActiveAirplane) scene.remove(currentActiveAirplane);
