@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>أسياد الأجواء - مرآب الطائرات المحترف</title>
+    <title>Sky Lords - Pro Aircraft Hangar</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -216,7 +216,7 @@
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             display: flex; justify-content: center; align-items: center;
-            z-index: 3000; direction: rtl;
+            z-index: 3000; direction: ltr;
         }
         .emergency-box {
             background: linear-gradient(135deg, #160f29 0%, #0a0514 100%);
@@ -247,16 +247,16 @@
 
     <div id="payment-success-modal" class="glass-panel">
         <div style="font-size: 50px; color: var(--secondary); margin-bottom: 10px;">✅</div>
-        <h2 style="color: white; margin: 0;">تم الشراء بنجاح!</h2>
+        <h2 style="color: white; margin: 0;">Purchase Successful!</h2>
         <p id="purchase-details" style="color: #ccc; margin: 10px 0;"></p>
-        <button class="main-btn" onclick="document.getElementById('payment-success-modal').style.display='none'">موافق</button>
+        <button class="main-btn" onclick="document.getElementById('payment-success-modal').style.display='none'">OK</button>
     </div>
 
     <div id="hud-container" style="display: none;">
         <button id="back-btn" class="glass-panel hud-card" onclick="returnToHangar()" style="cursor: pointer; border: 1px solid var(--danger); background: rgba(231, 76, 60, 0.6);">🔙</button>
         <button id="pause-btn" class="glass-panel hud-card" onclick="togglePause()" style="cursor: pointer; border: 1px solid var(--pi-gold); background: rgba(52, 73, 94, 0.8);">⏸️</button>
         <div id="fuel-card" class="glass-panel hud-card" style="color: #f1c40f;">⛽ <span id="fuel-left">200</span>%</div>
-        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">60</span>ث</div>
+        <div id="time-card" class="glass-panel hud-card" style="color: #ff7675;">⏱️ <span id="time-left">60</span>s</div>
         <div id="total-score-card" class="glass-panel hud-card">🏆 <span id="total-points">0</span></div>
         <div id="score-card" class="glass-panel hud-card" style="color: var(--pi-gold);">🪙 <span id="points">0</span></div>
     </div>
@@ -270,7 +270,7 @@
     </div>
 
     <div id="loading">
-        <div class="loading-text">جاري تجهيز حظيرة الطائرات...</div>
+        <div class="loading-text">Preparing the hangar...</div>
         <div class="loading-bar-container"><div class="loading-bar"></div></div>
     </div>
     
@@ -283,7 +283,7 @@
         <div id="shop-carousel" class="glass-panel"> 
             <button class="carousel-btn" onclick="prevPlane()">◀</button>
             <div class="plane-info">
-                <h3 id="cp-name" class="plane-name">جاري التحميل...</h3>
+                <h3 id="cp-name" class="plane-name">Loading...</h3>
                 <p id="cp-status" class="plane-status">-</p>
            </div>
             <button class="carousel-btn" onclick="nextPlane()">▶</button>
@@ -291,17 +291,17 @@
 
         <div class="btn-area-bottom">
             <div class="pi-features-bar">
-                <button id="wallet-connect-btn" class="feature-icon-btn" onclick="connectPiWallet()">🔗 ربط المحفظة</button>
-                <button class="feature-icon-btn" onclick="showLeaderboard()">🏆 لوحة الصدارة</button>
+                <button id="wallet-connect-btn" class="feature-icon-btn" onclick="connectPiWallet()">🔗 Connect Wallet</button>
+                <button class="feature-icon-btn" onclick="showLeaderboard()">🏆 Leaderboard</button>
             </div>
             
             <div class="action-container-main">
-                <button id="start-btn" class="main-btn" onclick="handleStartOrPurchase()">إقلاع الآن 🚀</button>
-                <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">إخفاء الواجهة 👁️</button>
+                <button id="start-btn" class="main-btn" onclick="handleStartOrPurchase()">Take Off Now 🚀</button>
+                <button id="hangar-btn" class="secondary-btn" onclick="toggleHangar()">Hide UI 👁️</button>
             </div>
 
             <div class="pi-bottom-status">
-                <div>🔒 باي: <span id="auth-status-label" style="color: #e74c3c;">غير مرتبط</span></div>
+                <div>🔒 Pi: <span id="auth-status-label" style="color: #e74c3c;">Not Connected</span></div>
                 <div>SECURE WALLET v2.0-TEST</div>
             </div>
 
@@ -313,30 +313,30 @@
 
     <div id="emergency-modal" class="emergency-overlay" style="display: none;">
         <div class="emergency-box">
-            <h2 id="emergency-title">⚠️ إنذار طاقة منخفضة!</h2>
-            <p id="emergency-desc" style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">الوقود أو زمن الرحلة يوشك على النفاد. أنقذ رحلتك ونقاطك الحالية فوراً!</p>
+            <h2 id="emergency-title">⚠️ Low Energy Alert!</h2>
+            <p id="emergency-desc" style="font-size: 14px; color: #ccc; margin: 5px 0 15px 0;">Fuel or flight time is running out. Save your flight and current points immediately!</p>
             <div class="emergency-options">
-                <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ شحن وقود كامل (+200%) بـ 0.1 π</button>
-                <button id="emergency-time-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('time', 0.1)">⏱️ تمديد الوقت (+30 ثانية) بـ 0.1 π</button>
+                <button id="emergency-fuel-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('fuel', 0.1)">⚡ Full Fuel Refill (+200%) for 0.1 π</button>
+                <button id="emergency-time-btn" class="buy-btn-emergency" onclick="executeEmergencyPurchase('time', 0.1)">⏱️ Extend Time (+30 sec) for 0.1 π</button>
             </div>
-            <button class="skip-btn-emergency" onclick="closeEmergencyModal()">مواصلة الطيران والمخاطرة 🚀</button>
+            <button class="skip-btn-emergency" onclick="closeEmergencyModal()">Continue Flying & Take the Risk 🚀</button>
         </div>
     </div>
 
     <div id="leaderboard-modal" class="glass-panel">
-        <h3 style="color: var(--pi-gold); margin-top:0;">🏆 أعلى الرواد تقييماً</h3>
-        <div id="leaderboard-list" style="text-align: right; margin-bottom: 20px;">
-            <div style="text-align:center; color:#aaa; font-size:13px;">جاري جلب قائمة المتصدرين...</div>
+        <h3 style="color: var(--pi-gold); margin-top:0;">🏆 Top Pioneers Leaderboard</h3>
+        <div id="leaderboard-list" style="text-align: left; margin-bottom: 20px;">
+            <div style="text-align:center; color:#aaa; font-size:13px;">Fetching leaderboard...</div>
         </div>
-        <button class="secondary-btn" onclick="toggleLeaderboardModal(false)">إغلاق</button>
+        <button class="secondary-btn" onclick="toggleLeaderboardModal(false)">Close</button>
     </div>
 
     <div id="gameover-mask" class="overlay-mask" style="display:none;">
-        <h1 style="font-size: 3rem; margin-bottom: 10px; color: #e74c3c;">انتهى الوقت! ⏱️</h1>
+        <h1 style="font-size: 3rem; margin-bottom: 10px; color: #e74c3c;">Time's Up! ⏱️</h1>
         <div class="glass-panel" style="padding: 15px 30px; margin-bottom: 20px; border: 1px solid var(--pi-gold);">
-            <h2 style="font-size: 20px; color: var(--pi-gold); margin: 0;">نقاط الجولة: <span id="final-score" style="font-size: 28px;">0</span></h2>
+            <h2 style="font-size: 20px; color: var(--pi-gold); margin: 0;">Round Points: <span id="final-score" style="font-size: 28px;">0</span></h2>
         </div>
-        <button class="main-btn" onclick="restartGame()">العودة للمرآب 🔄</button>
+        <button class="main-btn" onclick="restartGame()">Return to Hangar 🔄</button>
     </div>
 
     <script>
@@ -364,12 +364,10 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         
-        // تفعيل الظلال لإضفاء أقصى درجات الواقعية
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // إضاءة محيطية (Hemisphere) تعطي واقعية للسماء وتنعكس على التضاريس
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
         hemiLight.position.set(0, 500, 0);
         scene.add(hemiLight);
@@ -387,7 +385,11 @@
         sunLight.shadow.camera.bottom = -600;
         scene.add(sunLight);
 
-        let totalPoints = parseInt(localStorage.getItem('flight_totalPoints')) || 0;
+        // متغير لحفظ اسم اللاعب الحالي
+        let currentPlayerName = "Guest";
+        
+        // استدعاء النقاط المرتبطة باسم اللاعب
+        let totalPoints = parseInt(localStorage.getItem(`flight_totalPoints_${currentPlayerName}`)) || 0;
         document.getElementById('total-points').innerText = totalPoints;
 
         let basePassengerModel = null; 
@@ -420,21 +422,20 @@
         let cameraShakeIntensity = 0;
 
         const fleet = [
-            { id: 0, piCost: 0, type: 'passenger', name: 'طائرة ركاب B-737', colorHex: null }, 
-            { id: 1, piCost: 0.1, type: 'passenger', name: 'طائرة ركاب (ياقوت)', colorHex: 0xff3333 },
-            { id: 2, piCost: 0.2, type: 'passenger', name: 'طائرة ركاب (محيط)', colorHex: 0x3366ff },
-            { id: 3, piCost: 0.3, type: 'passenger', name: 'طائرة ركاب (زمرد)', colorHex: 0x33ff33 },
-            { id: 4, piCost: 0.5, type: 'passenger', name: 'طائرة ركاب (ملكية)', colorHex: 0xffd700 },
-            { id: 5, piCost: 1.0, type: 'fighter', name: 'طائرة خاصة G-650', colorHex: null },
-            { id: 6, piCost: 1.5, type: 'fighter', name: 'مقاتلة (شبح)', colorHex: 0x222222 },
-            { id: 7, piCost: 2.0, type: 'fighter', name: 'مقاتلة (عاصفة)', colorHex: 0xcc9955 },
-            { id: 8, piCost: 3.0, type: 'fighter', name: 'مروحية R-44', colorHex: 0x003366 },
-            { id: 9, piCost: 5.0, type: 'fighter', name: 'مقاتلة الفضاء', colorHex: 0x8b0000 }
+            { id: 0, piCost: 0, type: 'passenger', name: 'Passenger Plane B-737', colorHex: null }, 
+            { id: 1, piCost: 0.1, type: 'passenger', name: 'Passenger Plane (Ruby)', colorHex: 0xff3333 },
+            { id: 2, piCost: 0.2, type: 'passenger', name: 'Passenger Plane (Ocean)', colorHex: 0x3366ff },
+            { id: 3, piCost: 0.3, type: 'passenger', name: 'Passenger Plane (Emerald)', colorHex: 0x33ff33 },
+            { id: 4, piCost: 0.5, type: 'passenger', name: 'Passenger Plane (Royal)', colorHex: 0xffd700 },
+            { id: 5, piCost: 1.0, type: 'fighter', name: 'Private Jet G-650', colorHex: null },
+            { id: 6, piCost: 1.5, type: 'fighter', name: 'Fighter (Stealth)', colorHex: 0x222222 },
+            { id: 7, piCost: 2.0, type: 'fighter', name: 'Fighter (Storm)', colorHex: 0xcc9955 },
+            { id: 8, piCost: 3.0, type: 'fighter', name: 'Helicopter R-44', colorHex: 0x003366 },
+            { id: 9, piCost: 5.0, type: 'fighter', name: 'Space Fighter', colorHex: 0x8b0000 }
         ];
         let currentSelectionIndex = 0;
         let authenticatedPiUser = null;
 
-        // إدارة الموارد والأصول لتقليل تعليق الذاكرة
         const sharedAssets = {
             bulletGeo: new THREE.CylinderGeometry(0.1, 0.3, 6, 8).rotateX(Math.PI / 2),
             bulletMat: new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 4.0, metalness: 0.5, roughness: 0.2 }),
@@ -626,7 +627,7 @@
             const displayStatus = (carousel.style.visibility === 'hidden') ? 'visible' : 'hidden';
             carousel.style.visibility = displayStatus;
             features.style.visibility = displayStatus;
-            document.getElementById('hangar-btn').innerText = displayStatus === 'hidden' ? "إظهار الواجهة 👁️" : "إخفاء الواجهة 👁️";
+            document.getElementById('hangar-btn').innerText = displayStatus === 'hidden' ? "Show UI 👁️" : "Hide UI 👁️";
         }
 
         function toggleLeaderboardModal(show) { document.getElementById('leaderboard-modal').style.display = show ? 'block' : 'none'; }
@@ -634,12 +635,12 @@
         async function showLeaderboard() {
             toggleLeaderboardModal(true);
             const listContainer = document.getElementById('leaderboard-list');
-            listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">جاري جلب المتصدرين...</div>`;
+            listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">Fetching leaderboard...</div>`;
             
             try {
                 const snapshot = await db.collection('leaderboard').orderBy('score', 'desc').limit(5).get();
                 if (snapshot.empty) {
-                    listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">لا توجد أرقام مسجلة بعد، كن الأول!</div>`;
+                    listContainer.innerHTML = `<div style="text-align:center; color:#aaa;">No scores recorded yet, be the first!</div>`;
                 } else {
                     listContainer.innerHTML = "";
                     let index = 1;
@@ -648,14 +649,14 @@
                         listContainer.innerHTML += `
                             <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <span>${index}. ${data.username}</span>
-                                <span style="color: var(--pi-gold);">${data.score} نقطة</span>
+                                <span style="color: var(--pi-gold);">${data.score} Points</span>
                             </div>`;
                         index++;
                     });
                 }
             } catch (err) {
                 console.error("Firebase Error:", err);
-                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">فشل في تحميل البيانات الحية</div>`;
+                listContainer.innerHTML = `<div style="text-align:center; color:#e74c3c;">Failed to fetch live data</div>`;
             }
         }
 
@@ -681,51 +682,57 @@
                     });
                 }
             } catch(e) {
-                console.error("خطأ أثناء تحديث النتيجة في قاعدة البيانات:", e);
+                console.error("Error updating score in database:", e);
             }
         }
 
         async function connectPiWallet() {
             const walletBtn = document.getElementById('wallet-connect-btn');
-            walletBtn.disabled = true; walletBtn.innerText = "جاري الاتصال... ⏳";
+            walletBtn.disabled = true; walletBtn.innerText = "Connecting... ⏳";
             try {
                 const scopes = ['username', 'payments'];
                 const auth = await Pi.authenticate(scopes, onPiAuthIncomplete);
                 handlePiAuthSuccess(auth);
             } catch (err) {
-                showNotification("فشل الاتصال بالمحفظة. تحقق من متصفح Pi", true);
-                walletBtn.disabled = false; walletBtn.innerText = "🔗 ربط المحفظة";
+                showNotification("Wallet connection failed. Check Pi Browser.", true);
+                walletBtn.disabled = false; walletBtn.innerText = "🔗 Connect Wallet";
             }
         }
 
-        function onPiAuthIncomplete(auth) { showNotification("الرجاء تأكيد الإذن في تطبيق Pi البوب-أب"); }
+        function onPiAuthIncomplete(auth) { showNotification("Please confirm permission in the Pi popup app."); }
 
         function handlePiAuthSuccess(auth) {
             authenticatedPiUser = auth.user;
+            
+            // تحديث اسم اللاعب وتحميل نقاطه المحفوظة السابقة بناءً على الاسم
+            currentPlayerName = auth.user.username;
+            totalPoints = parseInt(localStorage.getItem(`flight_totalPoints_${currentPlayerName}`)) || 0;
+            document.getElementById('total-points').innerText = totalPoints;
+
             document.getElementById('pi-protocol-text').innerText = `USER: ${auth.user.username.toUpperCase()}`;
             document.getElementById('pi-user-badge').innerText = `π (${auth.user.username})`;
             const statusLabel = document.getElementById('auth-status-label');
-            statusLabel.innerText = "متصل بنجاح"; statusLabel.style.color = "var(--pi-gold)";
+            statusLabel.innerText = "Connected Successfully"; statusLabel.style.color = "var(--pi-gold)";
             const walletBtn = document.getElementById('wallet-connect-btn');
-            walletBtn.innerText = "✔️ المحفظة مرتبطة"; walletBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
+            walletBtn.innerText = "✔️ Wallet Connected"; walletBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
             walletBtn.style.color = "var(--pi-purple-dark)"; walletBtn.style.borderColor = "var(--pi-purple-dark)";
-            showNotification(`أهلاً بك كابتن ${auth.user.username}! تم ربط محفظتك بنجاح.`);
+            showNotification(`Welcome Captain ${auth.user.username}! Wallet connected successfully.`);
             updateShopUI();
         }
 
         function handleStartOrPurchase() {
             const planeData = fleet[currentSelectionIndex];
             if (isPlaneUnlocked(planeData)) { startGame(); } else {
-                if (!authenticatedPiUser) { showNotification("يجب ربط محفظة Pi أولاً لتتمكن من الشراء!", true); return; }
+                if (!authenticatedPiUser) { showNotification("You must connect your Pi Wallet first to purchase!", true); return; }
                 executePiPayment(planeData);
             }
         }
 
         async function executePiPayment(plane) {
             const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true; startBtn.innerText = "جاري استدعاء بوابة الدفع π...";
+            startBtn.disabled = true; startBtn.innerText = "Calling Pi Payment Gateway...";
             try {
-                const paymentData = { amount: plane.piCost, memo: "شراء " + plane.name, metadata: { planeId: String(plane.id), developer: "AbuKareem" } };
+                const paymentData = { amount: plane.piCost, memo: "Purchase " + plane.name, metadata: { planeId: String(plane.id), developer: "AbuKareem" } };
                 const callbacks = {
                     onReadyForServerApproval: function(paymentId) { 
                         fetch('/api/approve-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }).catch(e => console.warn("Skip server logic")); 
@@ -733,9 +740,9 @@
                     onReadyForServerCompletion: function(paymentId, txid) {
                         localStorage.setItem(`pi_fleet_unlocked_${plane.id}`, 'true'); 
                         const modal = document.getElementById('payment-success-modal');
-                        document.getElementById('purchase-details').innerText = `تم اقتناء ${plane.name} بنجاح مقابل ${plane.piCost} π`;
+                        document.getElementById('purchase-details').innerText = `Successfully acquired ${plane.name} for ${plane.piCost} π`;
                         modal.style.display = 'block';
-                        showNotification(`تم شراء وتفعيل طائرة ${plane.name} بنجاح عبر Pi! 🚀`); 
+                        showNotification(`Successfully purchased and activated ${plane.name} via Pi! 🚀`); 
                         startBtn.disabled = false; updateShopUI(); 
                         
                         fetch('/api/complete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) }).catch(e => console.warn("Backend sync skipped"));
@@ -821,19 +828,19 @@
             let alertMsg = "";
 
             if (reason === 'fuel') {
-                titleEl.innerText = "⚠️ إنذار: الوقود منخفض!";
-                descEl.innerText = "مستوى الوقود لديك حرج. قم بشحن الخزان فوراً لمواصلة الطيران وتجنب السقوط!";
+                titleEl.innerText = "⚠️ Alert: Low Fuel!";
+                descEl.innerText = "Fuel level is critical. Refill immediately to continue flying and avoid crashing!";
                 timeBtn.style.display = 'none';
-                alertMsg = "⚠️ تنبيه: مستوى الوقود منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.";
+                alertMsg = "⚠️ Warning: Low fuel! Movement temporarily paused to secure your aircraft.";
             } else if (reason === 'time') {
-                titleEl.innerText = "⚠️ إنذار: الوقت يوشك على الانتهاء!";
-                descEl.innerText = "وقت الرحلة شارف على الانتهاء. قم بتمديد الوقت لمواصلة الطيران وجمع النقاط!";
+                titleEl.innerText = "⚠️ Alert: Time is running out!";
+                descEl.innerText = "Flight time is almost up. Extend time to continue flying and collecting points!";
                 fuelBtn.style.display = 'none';
-                alertMsg = "⚠️ تنبيه: الوقت يوشك على النفاد! تم إيقاف الحركة مؤقتاً.";
+                alertMsg = "⚠️ Warning: Time is running out! Movement temporarily paused.";
             } else {
-                titleEl.innerText = "⚠️ إنذار: طوارئ حرجة!";
-                descEl.innerText = "الوقود والوقت يوشكان على النفاد معاً. اختر ما تريد شحنه لإنقاذ الموقف!";
-                alertMsg = "⚠️ تنبيه: مستوى طاقة ووقت منخفض! تم إيقاف الحركة مؤقتاً لتأمين طائرتك.";
+                titleEl.innerText = "⚠️ Alert: Critical Emergency!";
+                descEl.innerText = "Fuel and time are running out. Choose what to refill to save the situation!";
+                alertMsg = "⚠️ Warning: Low energy and time! Movement temporarily paused.";
             }
 
             showNotification(alertMsg, true);
@@ -850,18 +857,18 @@
         async function executeEmergencyPurchase(type, amountPi) {
             const btn = type === 'fuel' ? document.getElementById('emergency-fuel-btn') : document.getElementById('emergency-time-btn');
             const originalText = btn.innerText;
-            btn.disabled = true; btn.innerText = "جاري الدفع... ⏳";
+            btn.disabled = true; btn.innerText = "Processing Payment... ⏳";
             
             try {
                 if (!authenticatedPiUser) {
-                    showNotification("يجب ربط محفظة Pi أولاً لإجراء الشراء السريع!", true);
+                    showNotification("You must connect Pi Wallet first for quick purchase!", true);
                     btn.disabled = false; btn.innerText = originalText;
                     return;
                 }
                 
                 const paymentData = { 
                     amount: amountPi, 
-                    memo: `إنقاذ رحلة - شحن طوارئ: ${type === 'fuel' ? 'وقود' : 'وقت إضافي'}`, 
+                    memo: `Flight Rescue - Emergency Refill: ${type === 'fuel' ? 'Fuel' : 'Extra Time'}`, 
                     metadata: { type: type, developer: "AbuKareem", mode: "emergency" } 
                 };
                 
@@ -873,11 +880,11 @@
                         if (type === 'fuel') {
                             fuel = 200;
                             document.getElementById('fuel-left').innerText = fuel;
-                            showNotification("⛽ تم تزويد خزان الوقود 200% بنجاح! طيران آمن.");
+                            showNotification("⛽ Fuel tank refilled 200% successfully! Safe flight.");
                         } else {
                             timeLeft += 30;
                             document.getElementById('time-left').innerText = timeLeft;
-                            showNotification("⏱️ تم تمديد عداد الزمن بمقدار 30 ثانية بنجاح!");
+                            showNotification("⏱️ Timer extended by 30 seconds successfully!");
                         }
                         
                         hasTriggeredEmergencyThisRound = false; 
@@ -986,11 +993,11 @@
             const statusEl = document.getElementById('cp-status'); const startBtn = document.getElementById('start-btn');
             if(!isPlaying) { spawnSelectedPlane(planeData); }
             if (isPlaneUnlocked(planeData)) {
-                statusEl.innerText = "متاحة في الحظيرة ✔️"; statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "إقلاع الآن 🚀";
+                statusEl.innerText = "Available in Hangar ✔️"; statusEl.style.color = "var(--pi-gold)"; startBtn.innerText = "Take Off Now 🚀";
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-purple) 0%, var(--pi-purple-dark) 100%)";
                 startBtn.style.color = "var(--pi-gold)"; startBtn.style.borderColor = "var(--pi-gold)";
             } else {
-                statusEl.innerText = `مغلقة (تحتاج دفع بمحفظة Pi)`; statusEl.style.color = "#ff7675"; startBtn.innerText = `شراء عبر Pi Wallet (${planeData.piCost} π) ⚡`;
+                statusEl.innerText = `Locked (Requires Pi Payment)`; statusEl.style.color = "#ff7675"; startBtn.innerText = `Buy via Pi Wallet (${planeData.piCost} π) ⚡`;
                 startBtn.style.background = "linear-gradient(135deg, var(--pi-gold) 0%, var(--pi-gold-dark) 100%)";
                 startBtn.style.color = "var(--pi-purple-dark)"; startBtn.style.borderColor = "var(--pi-purple-dark)";
             }
@@ -1016,7 +1023,7 @@
             currentActiveAirplane.traverse(c => { if (c.isMesh && c.material) { c.material = c.material.clone(); if (planeData.colorHex !== null) { c.material.color.setHex(planeData.colorHex); } } });
             
             if (isPlaying) { 
-                currentActiveAirplane.position.set(0, -9.5, 300); // إبقاء الطائرة على المدرج
+                currentActiveAirplane.position.set(0, -9.5, 300); 
                 currentActiveAirplane.rotation.set(0, 0, 0); 
             } 
             else { 
@@ -1193,9 +1200,14 @@
             bullets.forEach(b => scene.remove(b)); bullets.length = 0;
             targets.forEach(t => scene.remove(t)); targets.length = 0;
             explosionParticles.forEach(p => scene.remove(p.mesh)); explosionParticles.length = 0;
-            totalPoints += score; localStorage.setItem('flight_totalPoints', totalPoints);
-            document.getElementById('total-points').innerText = totalPoints; document.getElementById('final-score').innerText = score;
+            
+            // حفظ وإضافة النقاط لاسم اللاعب التراكمي
+            totalPoints += score; 
+            localStorage.setItem(`flight_totalPoints_${currentPlayerName}`, totalPoints);
+            document.getElementById('total-points').innerText = totalPoints; 
+            document.getElementById('final-score').innerText = score;
             document.getElementById('gameover-mask').style.display = 'flex';
+            
             if (authenticatedPiUser) { uploadScoreToFirebase(authenticatedPiUser.username, score); }
         }
 
@@ -1270,15 +1282,12 @@
                 const sensitivityX = 0.8; 
                 const sensitivityY = 1.2;
                 
-                // --- منطق الإقلاع الواقعي الجديد ---
                 if (!hasTakenOff) {
-                    // يشترط الضغط للأسفل (سحب المقود) وزيادة السرعة لأكثر من 4 للإقلاع
                     if (inputY > 0 && currentSpeed > 4.0) { 
                         currentActiveAirplane.position.y += 0.25; 
                         currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0.25, 0.15); 
                         if (currentActiveAirplane.position.y > -1) hasTakenOff = true; 
                     } else {
-                        // إبقاء الطائرة ملتصقة بالمدرج ما لم تتم شروط الإقلاع
                         currentActiveAirplane.position.y = -9.5;
                         currentActiveAirplane.rotation.x = THREE.MathUtils.lerp(currentActiveAirplane.rotation.x, 0, 0.1);
                     }
@@ -1306,10 +1315,10 @@
                         const t = targets[tIdx];
                         if (b.position.distanceTo(t.position) < 6.5) {
                             score += 15; 
-                            timeLeft += 15; // --- زيادة الزمن بـ 15 ثانية كاملة ---
+                            timeLeft += 15; 
                             document.getElementById('points').innerText = score;
                             document.getElementById('time-left').innerText = timeLeft;
-                            showNotification("🎯 تم تدمير هدف عسكري! +15 نقطة و +15 ثانية", false);
+                            showNotification("🎯 Military target destroyed! +15 points & +15 seconds", false);
                             cameraShakeIntensity = 0.8;
                             createExplosion(t.position);
                             scene.remove(t); targets.splice(tIdx, 1); scene.remove(b); bullets.splice(bIdx, 1); break;
@@ -1353,8 +1362,8 @@
                     if (ring.userData.type === 'danger') { ring.position.x += Math.sin(Date.now() * ring.userData.oscillationSpeed) * 1.2; }
                     if (currentActiveAirplane.position.distanceTo(ring.position) < (18 * (ring.userData.scale || 1))) {
                         score += ring.userData.points; timeLeft += ring.userData.time; if (score < 0) score = 0;
-                        if (ring.userData.type === 'danger') { showNotification("⚠️ منطقة خطر! تم خصم وقت ونقاط", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
-                        else if (ring.userData.type === 'bonus') { showNotification("⚡ مكافأة Pi Network مضاعفة!", false); currentSpeed *= 1.3; }
+                        if (ring.userData.type === 'danger') { showNotification("⚠️ Danger zone! Time and points deducted", true); currentSpeed *= 0.5; cameraShakeIntensity = 1.8; } 
+                        else if (ring.userData.type === 'bonus') { showNotification("⚡ Double Pi Network Bonus!", false); currentSpeed *= 1.3; }
                         document.getElementById('points').innerText = score; document.getElementById('time-left').innerText = timeLeft;
                         scene.remove(ring); rings.splice(i, 1); 
                         let lastSpawnZ = rings.length > 0 ? rings[rings.length - 1].position.z : currentActiveAirplane.position.z; createRing(lastSpawnZ - 160); continue;
