@@ -13,7 +13,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <script>Pi.init({ version: "2.0" });</script>
+    <script>
+        // تعريف oAuth Client ID الخاص باللعبة لربطها ببوابة Pi
+        const PI_CLIENT_ID = "k5HAs0t9TYMg3zL_P4OENUT_ljo9rfZCGF";
+        
+        Pi.init({ 
+            version: "2.0",
+            sandbox: true // تم التفعيل لأن اللعبة حالياً على شبكة Testnet
+        });
+    </script>
     
     <style>
         :root {
