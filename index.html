@@ -944,8 +944,12 @@
             basePassengerModel.add(gltf.scene);
             basePassengerModel.scale.set(4.55, 4.55, 4.55); checkAllLoaded();
         }, undefined, () => {
-            basePassengerModel = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff}));
-            basePassengerModel.castShadow = true; checkAllLoaded();
+            basePassengerModel = new THREE.Group();
+            const fallbackMesh = new THREE.Mesh(new THREE.BoxGeometry(6,2,11), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            fallbackMesh.position.y = 1;
+            fallbackMesh.castShadow = true;
+            basePassengerModel.add(fallbackMesh);
+            checkAllLoaded();
         });
         
         loader.load('Fighter.glb.glb', (gltf) => { 
@@ -965,8 +969,13 @@
             baseFighterModel.add(gltf.scene);
             baseFighterModel.scale.set(1.2, 1.2, 1.2); checkAllLoaded();
         }, undefined, () => {
-            baseFighterModel = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); 
-            baseFighterModel.rotation.x = Math.PI/2; baseFighterModel.castShadow = true; checkAllLoaded();
+            baseFighterModel = new THREE.Group();
+            const fallbackMesh = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), new THREE.MeshStandardMaterial({color: 0x444444})); 
+            fallbackMesh.rotation.x = Math.PI / 2;
+            fallbackMesh.position.y = 3; 
+            fallbackMesh.castShadow = true; 
+            baseFighterModel.add(fallbackMesh);
+            checkAllLoaded();
         });
         
         let loadedCount = 0;
@@ -1302,8 +1311,11 @@
                     for (let tIdx = targets.length - 1; tIdx >= 0; tIdx--) {
                         const t = targets[tIdx];
                         if (b.position.distanceTo(t.position) < 6.5) {
-                            score += 15; document.getElementById('points').innerText = score;
-                            showNotification("🎯 تم تدمير هدف عسكري! +15", false);
+                            score += 15; 
+                            timeLeft += 5;
+                            document.getElementById('points').innerText = score;
+                            document.getElementById('time-left').innerText = timeLeft;
+                            showNotification("🎯 تم تدمير هدف عسكري! +15 نقطة و +5ث", false);
                             cameraShakeIntensity = 0.8;
                             createExplosion(t.position);
                             scene.remove(t); targets.splice(tIdx, 1); scene.remove(b); bullets.splice(bIdx, 1); break;
